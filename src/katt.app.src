@@ -1,0 +1,9 @@
+%%-*- mode: erlang -*-
+{application, katt, [ {description,  "Klarna API Testing Tool"}
+                    , {vsn,          git}
+                    , {modules,      []}
+                    , {registered,   []}
+                    , {applications, [ kernel
+                                     , stdlib
+                                     ]}
+                    ]}.
