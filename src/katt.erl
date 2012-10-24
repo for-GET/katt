@@ -3,6 +3,9 @@
 %%%
 %%% Use for shooting json requests against any kind of http interface
 %%%
+%%% @copyright 2012 Klarna AB
+%%% @end
+%%%
 %%% Instructions for the json files expected by this tool
 %%%
 %%% * Place the files in a dir named after the test case. The tool does not
@@ -20,8 +23,9 @@
 %%%   (but it only matters if there are non latin-1 characters)
 %%%
 %%% * Url can be given either as a "url" parameter or as host/port/ssl/path
-%%%   Host defaults to the kred vip and should not be changed unless running
-%%%   tests against a remote system. Including "host" will override the default.
+%%%   Host defaults to the 127.0.0.1 but could be configured with the
+%%%   application environment variable default_host. Including "host"
+%%%   will override the default.
 %%%
 %%% * Tags with special meaning in response files:
 %%%    ">>_"   Match anything (i.e. no real validation, only check existence)
@@ -35,8 +39,6 @@
 %%%
 %%% * Any difference between expected and actual responses will cause a failure.
 %%%
-%%% @copyright 2012 Klarna AB
-%%% @end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%_* Module declaration ===============================================
@@ -52,7 +54,6 @@
         ]).
 
 %%%_* Defines ==========================================================
--define(ESTORE_SECRET,    "dr.alban"). % Used to print digest
 -define(BODY_SUFFIX,      "_body").
 -define(KEY_PREFIX,       "api_test_").
 -define(EXTRACT_TAG,      "<<").
@@ -129,7 +130,7 @@ read_request(RequestFile) ->
   Headers = lk("headers", Data),
   RawBody = read_body(RequestFile),
   #request{ url      = lk("url", Data)
-          , host     = lk("host", Data, "127.0.0.1")
+          , host     = lk("host", Data, default_host())
           , port     = lk("port", Data)
           , ssl      = lk("ssl", Data)
           , path     = lk("path", Data)
@@ -349,6 +350,13 @@ from_utf8(X)                   -> X.
 %% Transform list to utf8 encoded binary, ignore everything else
 to_utf8(X) when is_list(X) -> unicode:characters_to_binary(X, utf8);
 to_utf8(X)                 -> X.
+
+default_host() ->
+  case application:get_env(katt, default_host) of
+    {ok, {M, F, A}} -> apply(M, F, A);
+    {ok, Value}     -> Value;
+    undefined       -> "127.0.0.1"
+  end.
 
 %%%_* Emacs ============================================================
 %%% Local Variables:
