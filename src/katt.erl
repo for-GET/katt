@@ -124,7 +124,7 @@ run_scenario([{ReqFile, RespFile}|T], DefaultHost, Acc) ->
     pass -> ok;
     _    -> print_debug(ReqFile, Request, ExpResponse, ActualResponse)
   end,
-  run_scenario(T, [{ReqFile, Result} | Acc]).
+  run_scenario(T, DefaultHost, [{ReqFile, Result} | Acc]).
 
 print_debug(ReqFile, Request, ExpResponse, ActualResponse) ->
   ct:pal("~p:~n~p~n~n"
@@ -239,7 +239,7 @@ http_request(R = #request{url=undefined}) ->
                 , ?REQUEST_TIMEOUT
                 , []
                 );
-http_request(R) ->
+http_request(R)                           ->
   lhttpc:request( R#request.url
                 , R#request.method
                 , R#request.headers
