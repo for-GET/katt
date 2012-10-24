@@ -23,9 +23,8 @@
 %%%   (but it only matters if there are non latin-1 characters)
 %%%
 %%% * Url can be given either as a "url" parameter or as host/port/ssl/path
-%%%   Host defaults to the 127.0.0.1 but could be configured with the
-%%%   application environment variable default_host. Including "host"
-%%%   will override the default.
+%%%   Default host is 127.0.0.1 in run/1 but could be passed in run/2
+%%%   as well. Including "host" will override the default.
 %%%
 %%% * Tags with special meaning in response files:
 %%%    ">>_"   Match anything (i.e. no real validation, only check existence)
@@ -47,10 +46,11 @@
 %%%_* Exports ==========================================================
 %% API
 -export([ run/1
+        , run/2
         ]).
 
 %% Internal exports
--export([ run_test/2
+-export([ run_test/3
         ]).
 
 %%%_* Defines ==========================================================
@@ -86,15 +86,22 @@
                       | {error, any()}].
 %% @doc Run test scenario. Argument is the full path to the testcase dir.
 %% @end
-run(TestcaseDir) ->
-  spawn_link(?MODULE, run_test, [self(), TestcaseDir]),
+run(TestcaseDir) -> run(TestcaseDir, "127.0.0.1").
+
+-spec ?MODULE:run(string(), string()) ->
+                     [{string(), pass | {fail, {atom(), any()}}}
+                      | {error, any()}].
+%% @doc Run test scenario. Argument is the full path to the testcase dir.
+%% @end
+run(TestcaseDir, DefaultHost) ->
+  spawn_link(?MODULE, run_test, [self(), TestcaseDir, DefaultHost]),
   receive {done, Result}    -> Result
   after   ?TESTCASE_TIMEOUT -> {error, testcase_timeout}
   end.
 
 %%%_* Internal export --------------------------------------------------
-run_test(Caller, TestcaseDir) ->
-  Result = run_scenario(get_scenario(TestcaseDir)),
+run_test(Caller, TestcaseDir, DefaultHost) ->
+  Result = run_scenario(get_scenario(TestcaseDir), DefaultHost),
   Caller ! {done, Result}.
 
 %%%_* Internal =========================================================
@@ -106,11 +113,11 @@ get_scenario(Dir0) ->
   ResponseFiles = get_files(Dir, "response"),
   lists:zip(RequestFiles, ResponseFiles).
 
-run_scenario(S) -> run_scenario(S, []).
+run_scenario(S, DefaultHost) -> run_scenario(S, DefaultHost, []).
 
-run_scenario([], Acc)                      -> lists:reverse(Acc);
-run_scenario([{ReqFile, RespFile}|T], Acc) ->
-  Request        = read_request(ReqFile),
+run_scenario([], _DefaultHost, Acc)                     -> lists:reverse(Acc);
+run_scenario([{ReqFile, RespFile}|T], DefaultHost, Acc) ->
+  Request        = read_request(ReqFile, DefaultHost),
   ExpResponse    = read_response(RespFile),
   ActualResponse = make_request(Request),
   case Result = validate_response(ExpResponse, ActualResponse) of
@@ -125,12 +132,12 @@ print_debug(ReqFile, Request, ExpResponse, ActualResponse) ->
          "Actual response:~n~p~n",
          [ReqFile, Request, ExpResponse, ActualResponse]).
 
-read_request(RequestFile) ->
+read_request(RequestFile, DefaultHost) ->
   Data    = parse_file(RequestFile),
   Headers = lk("headers", Data),
   RawBody = read_body(RequestFile),
   #request{ url      = lk("url", Data)
-          , host     = lk("host", Data, default_host())
+          , host     = lk("host", Data, DefaultHost)
           , port     = lk("port", Data)
           , ssl      = lk("ssl", Data)
           , path     = lk("path", Data)
@@ -350,13 +357,6 @@ from_utf8(X)                   -> X.
 %% Transform list to utf8 encoded binary, ignore everything else
 to_utf8(X) when is_list(X) -> unicode:characters_to_binary(X, utf8);
 to_utf8(X)                 -> X.
-
-default_host() ->
-  case application:get_env(katt, default_host) of
-    {ok, {M, F, A}} -> apply(M, F, A);
-    {ok, Value}     -> Value;
-    undefined       -> "127.0.0.1"
-  end.
 
 %%%_* Emacs ============================================================
 %%% Local Variables:
