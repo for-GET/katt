@@ -1,6 +1,6 @@
 suite=$(if $(SUITE), suite=$(SUITE), )
 
-.PHONY:	all compile get-deps doc xref test eunit conf_clean clean
+.PHONY:	all compile get-deps docs xref test eunit conf_clean clean
 
 all: get-deps compile
 
@@ -10,7 +10,7 @@ compile:
 get-deps:
 	./rebar get-deps
 
-doc:
+docs:
 	./rebar doc skip_deps=true
 
 xref:
