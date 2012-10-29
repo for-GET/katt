@@ -47,6 +47,7 @@
 %% API
 -export([ run/1
         , run/2
+        , get_requests_with_bodies/1
         ]).
 
 %% Internal exports
@@ -98,6 +99,14 @@ run(TestcaseDir, DefaultHost) ->
   receive {done, Result}    -> Result
   after   ?TESTCASE_TIMEOUT -> {error, testcase_timeout}
   end.
+
+-spec ?MODULE:get_requests_with_bodies(string()) -> [{string(), binary()}
+                                                     | {error, any()}].
+%% @doc Get a list of all requests in a testcase dir together with their bodies
+%% @end
+get_requests_with_bodies(TestcaseDir) ->
+  RequestFiles = get_files(TestcaseDir, "request"),
+  [{F, strip(read_body(F))} || F <- RequestFiles].
 
 %%%_* Internal export --------------------------------------------------
 run_test(Caller, TestcaseDir, DefaultHost) ->
