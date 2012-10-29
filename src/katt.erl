@@ -239,14 +239,18 @@ http_request(R = #request{url=undefined}) ->
                 , ?REQUEST_TIMEOUT
                 , []
                 );
-http_request(R)                           ->
+http_request(R = #request{url=[_|_]})     ->
   lhttpc:request( R#request.url
                 , R#request.method
                 , R#request.headers
                 , strip(R#request.raw_body)
                 , ?REQUEST_TIMEOUT
                 , []
-                ).
+                );
+http_request(#request{url=Url})           ->
+  {error, {bad_request_url, Url}};
+http_request(R)                           ->
+  {error, {bad_request, R}}.
 
 validate_response(#response{status_code=?RESPONSE_ERROR}, {error, _})  ->
   pass;
