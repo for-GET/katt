@@ -351,17 +351,25 @@ do_ensure_trailing_slash(Dir)          -> lists:reverse([$/|Dir]).
 to_lower(S) when is_list(S) -> string:to_lower(S);
 to_lower(V)                 -> V.
 
-%% Strip spaces and newlines, but do not change anything inside quotes
+%% Strip spaces and newlines, but not inside quotes ("...") or xml tags (<...>)
+%% Output is always a binary string
 strip(Input) -> to_utf8(strip(from_utf8(Input), [])).
 
 strip([], Acc)        -> lists:reverse(Acc);
-strip([$"|Str], Acc)  ->
-  Pos = string:str(Str, "\""), % Find the second '"'
-  {Quote,Tail} = lists:split(Pos, Str),
-  strip(Tail, lists:reverse([$"|Quote]) ++ Acc);
 strip(" " ++ T, Acc)  -> strip(T, Acc);
 strip("\n" ++ T, Acc) -> strip(T, Acc);
-strip([H|T], Acc)     -> strip(T, [H|Acc]).
+strip([H|T], Acc)     ->
+  {NewT, NewAcc} = get_new_values(H, T, Acc),
+  strip(NewT, NewAcc).
+
+get_new_values($", Str, Acc) -> do_get_new_values({$", $"}, Str, Acc);
+get_new_values($<, Str, Acc) -> do_get_new_values({$<, $>}, Str, Acc);
+get_new_values(C,  Str, Acc) -> {Str, [C|Acc]}.
+
+do_get_new_values({C1, C2}, Str, Acc) ->
+  Position      = string:str(Str, [C2]), % Search for the closing char
+  {Quote, Tail} = lists:split(Position, Str),
+  {Tail, lists:reverse([C1|Quote]) ++ Acc}.
 
 %% Transform (possibly utf8 encoded) binary to list, ignore everything else
 from_utf8(X) when is_binary(X) -> unicode:characters_to_list(X, utf8);
