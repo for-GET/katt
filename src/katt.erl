@@ -1,44 +1,47 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% @doc Klarna Api Testing Tool.
 %%%
-%%% Use for shooting json requests against any kind of http interface
+%%% Use for shooting requests against any kind of http interface
+%%% (e.g. json, xml) and verifying the response.
 %%%
 %%% @copyright 2012 Klarna AB
 %%% @end
 %%%
-%%% Instructions for the json files expected by this tool
 %%%
-%%% * Place the files in a dir named after the test case. The tool does not
-%%%   care, but it is obviously a good practice.
+%%% Instructions for the input files expected by this tool:
 %%%
-%%% * Naming: XX_request.json,XX_response.json where XX = 01,02,03,..
+%%% * Place the files in a dir named after the test case.
 %%%
-%%% * Optional body is kept in separate files named 01_request_body.json,
-%%%   02_request_body.html, 01_response_body.json etc.
+%%% * Naming: XX_request.json,XX_response.json where XX = 01,02,03...
+%%%   These files must be json, even if the body is in another format.
 %%%
-%%% * Body file can be in any format (json, html, text..). Should match whatever
-%%%   is given in the Content-Type header
+%%% * The bodies (optional) are kept in separate files named
+%%%   XX_request_body.json, XX_response_body.json etc.
+%%%
+%%% * Body files can be in any format (json, xml, html, text..).
+%%%   Note that the body is stripped of spaces and newlines before it is sent,
+%%%   except inside quotes "..." or xml/html tags <...>
 %%%
 %%% * Files must be encoded in utf-8
-%%%   (but it only matters if there are non latin-1 characters)
 %%%
 %%% * Url can be given either as a "url" parameter or as host/port/ssl/path
 %%%   Default host is 127.0.0.1 in run/1 but could be passed in run/2
-%%%   as well. Including "host" will override the default.
+%%%   as well. Including "host" in the input file will override the default.
 %%%
-%%% * Tags with special meaning in response files:
+%%% * Tags with special meaning in response files. Try not to overuse these:
 %%%    ">>_"   Match anything (i.e. no real validation, only check existence)
 %%%    ">>01"  Store value of the whole string. 01 can be any two characters
 %%%            (must be unique within testcase)
 %%%    "ERROR" as a status code means we are expecting to get an error back
-%%%            instead of a proper http code
+%%%            instead of a proper http code (Probably not used very often)
 %%%
 %%% * Tags with special meaning in all files:
-%%%    "<<01"  Recall stored value. 01 can be any two characters
+%%%    "<<01"  Recall stored value. 01 can be any two (alphanumeric) characters
 %%%
 %%% * Any difference between expected and actual responses will cause a failure.
 %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 %%%_* Module declaration ===============================================
 -module(katt).
