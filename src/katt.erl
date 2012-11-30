@@ -36,7 +36,10 @@
 %%%            instead of a proper http code (Probably not used very often)
 %%%
 %%% * Tags with special meaning in all files:
-%%%    "<<01"  Recall stored value. 01 can be any two (alphanumeric) characters
+%%%    "<<01"    Recall stored value. 01 can be any two (alphanumeric)
+%%%              characters
+%%%    ">>key<<" Substitute with key with parameter passed in parameter list in
+%%%              run/3
 %%%
 %%% * Any difference between expected and actual responses will cause a failure.
 %%%
@@ -50,11 +53,12 @@
 %% API
 -export([ run/1
         , run/2
+        , run/3
         , get_requests_with_bodies/1
         ]).
 
 %% Internal exports
--export([ run_test/3
+-export([ run_test/4
         ]).
 
 %%%_* Defines ==========================================================
@@ -63,6 +67,8 @@
 -define(EXTRACT_TAG,      "<<").
 -define(STORE_TAG,        ">>").
 -define(MATCH_ANY,        ">>_").
+-define(SUB_BEGIN_TAG,    ">>").
+-define(SUB_END_TAG,      "<<").
 -define(RESPONSE_ERROR,   "ERROR").
 -define(REQUEST_TIMEOUT,  20000).
 -define(TESTCASE_TIMEOUT, 120000).
@@ -97,8 +103,16 @@ run(TestcaseDir) -> run(TestcaseDir, "127.0.0.1").
                       | {error, any()}].
 %% @doc Run test scenario. Argument is the full path to the testcase dir.
 %% @end
-run(TestcaseDir, DefaultHost) ->
-  spawn_link(?MODULE, run_test, [self(), TestcaseDir, DefaultHost]),
+run(TestCaseDir, DefaultHost) -> run(TestCaseDir, DefaultHost, []).
+
+-spec ?MODULE:run(string(), string(), list()) ->
+                     [{string(), pass | {fail, {atom(), any()}}}
+                      | {error, any()}].
+%% @doc Run test scenario. Argument is the full path to the testcase dir.
+%% Last argument is a key-value list of substitute parameters.
+%% @end
+run(TestcaseDir, DefaultHost, Params) ->
+  spawn_link(?MODULE, run_test, [self(), TestcaseDir, DefaultHost, Params]),
   receive {done, Result}    -> Result
   after   ?TESTCASE_TIMEOUT -> {error, testcase_timeout}
   end.
@@ -109,11 +123,11 @@ run(TestcaseDir, DefaultHost) ->
 %% @end
 get_requests_with_bodies(TestcaseDir) ->
   RequestFiles = get_files(TestcaseDir, "request"),
-  [{F, strip(read_body(F))} || F <- RequestFiles].
+  [{F, strip(read_body(F, []))} || F <- RequestFiles].
 
 %%%_* Internal export --------------------------------------------------
-run_test(Caller, TestcaseDir, DefaultHost) ->
-  Result = run_scenario(get_scenario(TestcaseDir), DefaultHost),
+run_test(Caller, TestcaseDir, DefaultHost, Params) ->
+  Result = run_scenario(get_scenario(TestcaseDir), DefaultHost, Params),
   Caller ! {done, Result}.
 
 %%%_* Internal =========================================================
@@ -125,18 +139,20 @@ get_scenario(Dir0) ->
   ResponseFiles = get_files(Dir, "response"),
   lists:zip(RequestFiles, ResponseFiles).
 
-run_scenario(S, DefaultHost) -> run_scenario(S, DefaultHost, []).
+run_scenario(S, DefaultHost, Params) ->
+  run_scenario(S, DefaultHost, Params, []).
 
-run_scenario([], _DefaultHost, Acc)                     -> lists:reverse(Acc);
-run_scenario([{ReqFile, RespFile}|T], DefaultHost, Acc) ->
-  Request        = read_request(ReqFile, DefaultHost),
-  ExpResponse    = read_response(RespFile),
+run_scenario([], _DefaultHost, _Params, Acc)                    ->
+  lists:reverse(Acc);
+run_scenario([{ReqFile, RespFile}|T], DefaultHost, Params, Acc) ->
+  Request        = read_request(ReqFile, DefaultHost, Params),
+  ExpResponse    = read_response(RespFile, Params),
   ActualResponse = make_request(Request),
   case Result = validate_response(ExpResponse, ActualResponse) of
     pass -> ok;
     _    -> print_debug(ReqFile, Request, ExpResponse, ActualResponse)
   end,
-  run_scenario(T, DefaultHost, [{ReqFile, Result} | Acc]).
+  run_scenario(T, DefaultHost, Params, [{ReqFile, Result} | Acc]).
 
 print_debug(ReqFile, Request, ExpResponse, ActualResponse) ->
   ct:pal("~p:~n~p~n~n"
@@ -144,10 +160,10 @@ print_debug(ReqFile, Request, ExpResponse, ActualResponse) ->
          "Actual response:~n~p~n",
          [ReqFile, Request, ExpResponse, ActualResponse]).
 
-read_request(RequestFile, DefaultHost) ->
-  Data    = parse_file(RequestFile),
+read_request(RequestFile, DefaultHost, Params) ->
+  Data    = parse_file(RequestFile, Params),
   Headers = lk("headers", Data),
-  RawBody = read_body(RequestFile),
+  RawBody = read_body(RequestFile, Params),
   #request{ url      = lk("url", Data)
           , host     = lk("host", Data, DefaultHost)
           , port     = lk("port", Data)
@@ -159,18 +175,19 @@ read_request(RequestFile, DefaultHost) ->
           , raw_body = RawBody
           }.
 
-read_response(ResponseFile) ->
-  Data    = parse_file(ResponseFile),
+read_response(ResponseFile, Params) ->
+  Data    = parse_file(ResponseFile, Params),
   Headers = lk("headers", Data, []),
   #response{ status_code = lk("status_code", Data)
            , headers     = Headers
-           , body        = maybe_parse_body(Headers, read_body(ResponseFile))
+           , body        =
+               maybe_parse_body(Headers, read_body(ResponseFile, Params))
            }.
 
 %% Get body from a file if the file exists
-read_body(File)    ->
+read_body(File, Params)    ->
   case file:read_file(get_body_file(all_body_files(File))) of
-    {ok, Data}      -> Data;
+    {ok, Data}      -> substitute(Data, Params);
     {error, enoent} -> ""
   end.
 
@@ -191,9 +208,9 @@ maybe_parse_body(Headers, Body) ->
     _ -> parse_json(Body)
   end.
 
-parse_file(File) ->
+parse_file(File, Params) ->
   {ok, Contents} = file:read_file(File),
-  parse_json(Contents).
+  parse_json(substitute(Contents, Params)).
 
 parse_json([])  -> [];
 parse_json(Bin) -> to_proplist(mochijson2:decode(Bin)).
@@ -212,6 +229,11 @@ to_proplist(Str) when is_binary(Str)     ->
   replace_variables(from_utf8(Str));
 to_proplist(Value)                       ->
   Value.
+
+substitute(Str, [])         -> Str;
+substitute(Str, [{K, V}|T]) ->
+  substitute(re:replace(Str, ?SUB_BEGIN_TAG ++ to_list(K) ++ ?SUB_END_TAG,
+                        to_list(V), [{return, binary}]), T).
 
 %% Replace "extract" tags with actual values
 replace_variables(Str) when is_list(Str) -> replace_variables(Str, []);
@@ -381,6 +403,12 @@ from_utf8(X)                   -> X.
 %% Transform list to utf8 encoded binary, ignore everything else
 to_utf8(X) when is_list(X) -> unicode:characters_to_binary(X, utf8);
 to_utf8(X)                 -> X.
+
+to_list(X) when is_list(X)    -> X;
+to_list(X) when is_atom(X)    -> atom_to_list(X);
+to_list(X) when is_tuple(X)   -> tuple_to_list(X);
+to_list(X) when is_binary(X)  -> binary_to_list(X);
+to_list(X) when is_integer(X) -> integer_to_list(X).
 
 %%%_* Emacs ============================================================
 %%% Local Variables:
