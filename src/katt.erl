@@ -233,7 +233,7 @@ to_proplist(Value)                       ->
 substitute(Str, [])         -> Str;
 substitute(Str, [{K, V}|T]) ->
   substitute(re:replace(Str, ?SUB_BEGIN_TAG ++ to_list(K) ++ ?SUB_END_TAG,
-                        to_list(V), [{return, binary}]), T).
+                        to_list(V), [{return, binary} | global]), T).
 
 %% Replace "extract" tags with actual values
 replace_variables(Str) when is_list(Str) -> replace_variables(Str, []);
