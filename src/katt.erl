@@ -310,6 +310,8 @@ do_validate_response(_, Exp = [{_,_}|_], Actual = [{_,_}|_])  ->
   [do_validate_response(K, lk(K, Exp), lk(K, Actual)) || K <- Keys];
 %% Unwrap lists of proplists by changing them to nested proplists
 do_validate_response(K, E = [[{_,_}|_]|_], A = [[{_,_}|_]|_]) ->
+  [do_validate_response(K, Exp, Actual) || {Exp, Actual} <- lists:zip(E, A)];
+do_validate_response(K, E = [[_|_]|_], A = [[_|_]|_])         ->
   do_validate_response(K, enumerate(E, K), enumerate(A, K));
 %% Here comes the actual validation
 do_validate_response(Key, Exp, undefined)                     ->
@@ -334,7 +336,7 @@ compare(Key, Exp, Actual) -> {not_equal, {Key, Exp, Actual}}.
 
 %% Transform simple list to proplist with keys named Name1, Name2 etc.
 enumerate(L, Name) ->
-  Keys = [Name ++ integer_to_list(N) || N <- lists:seq(1, length(L))],
+  Keys = [to_list(Name) ++ integer_to_list(N) || N <- lists:seq(1, length(L))],
   lists:zip(Keys, L).
 
 %% Transform response record to proplist for validation.
