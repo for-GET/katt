@@ -103,7 +103,7 @@ run(TestcaseDir) -> run(TestcaseDir, [{host, "127.0.0.1"}]).
                       | {error, any()}].
 %% @doc Run test scenario. Argument is the full path to the testcase dir.
 %% @end
-run(TestCaseDir, Request) -> run(TestCaseDir, Request, []).
+run(TestCaseDir, RequestParams) -> run(TestCaseDir, RequestParams, []).
 
 -spec ?MODULE:run(string(), list(), list()) ->
                      [{string(), pass | {fail, {atom(), any()}}}
@@ -111,8 +111,8 @@ run(TestCaseDir, Request) -> run(TestCaseDir, Request, []).
 %% @doc Run test scenario. Argument is the full path to the testcase dir.
 %% Last argument is a key-value list of substitute parameters.
 %% @end
-run(TestcaseDir, Request, Params) ->
-  spawn_link(?MODULE, run_test, [self(), TestcaseDir, Request, Params]),
+run(TestcaseDir, RequestParams, Params) ->
+  spawn_link(?MODULE, run_test, [self(), TestcaseDir, RequestParams, Params]),
   receive {done, Result}    -> Result
   after   ?TESTCASE_TIMEOUT -> {error, testcase_timeout}
   end.
@@ -126,8 +126,8 @@ get_requests_with_bodies(TestcaseDir) ->
   [{F, strip(read_body(F, []))} || F <- RequestFiles].
 
 %%%_* Internal export --------------------------------------------------
-run_test(Caller, TestcaseDir, Request, Params) ->
-  Result = run_scenario(get_scenario(TestcaseDir), Request, Params),
+run_test(Caller, TestcaseDir, RequestParams, Params) ->
+  Result = run_scenario(get_scenario(TestcaseDir), RequestParams, Params),
   Caller ! {done, Result}.
 
 %%%_* Internal =========================================================
@@ -139,20 +139,20 @@ get_scenario(Dir0) ->
   ResponseFiles = get_files(Dir, "response"),
   lists:zip(RequestFiles, ResponseFiles).
 
-run_scenario(S, Request, Params) ->
-  run_scenario(S, Request, Params, []).
+run_scenario(S, RequestParams, Params) ->
+  run_scenario(S, RequestParams, Params, []).
 
-run_scenario([], _Request, _Params, Acc)                    ->
+run_scenario([], _RequestParams, _Params, Acc)                    ->
   lists:reverse(Acc);
-run_scenario([{ReqFile, RespFile}|T], Request, Params, Acc) ->
-  Request        = read_request(ReqFile, Request, Params),
+run_scenario([{ReqFile, RespFile}|T], RequestParams, Params, Acc) ->
+  Request        = read_request(ReqFile, RequestParams, Params),
   ExpResponse    = read_response(RespFile, Params),
   ActualResponse = make_request(Request),
   case Result = validate_response(ExpResponse, ActualResponse) of
     pass -> ok;
     _    -> print_debug(ReqFile, Request, ExpResponse, ActualResponse)
   end,
-  run_scenario(T, Request, Params, [{ReqFile, Result} | Acc]).
+  run_scenario(T, RequestParams, Params, [{ReqFile, Result} | Acc]).
 
 print_debug(ReqFile, Request, ExpResponse, ActualResponse) ->
   ct:pal("~p:~n~p~n~n"
@@ -160,16 +160,16 @@ print_debug(ReqFile, Request, ExpResponse, ActualResponse) ->
          "Actual response:~n~p~n",
          [ReqFile, Request, ExpResponse, ActualResponse]).
 
-read_request(RequestFile, Request, Params) ->
+read_request(RequestFile, RequestParams, Params) ->
   Data    = parse_file(RequestFile, Params),
   Headers = lk("headers", Data),
   RawBody = read_body(RequestFile, Params),
-  #request{ url      = lk(url, Request, lk("url", Data))
-          , host     = lk(host, Request, lk("host", Data))
-          , port     = lk(port, Request, lk("port", Data))
-          , ssl      = lk(ssl, Request, lk("ssl", Data))
-          , path     = lk(path, Request, lk("path", Data))
-          , method   = lk(method, Request, lk("method", Data))
+  #request{ url      = lk(url, RequestParams, lk("url", Data))
+          , host     = lk(host, RequestParams, lk("host", Data))
+          , port     = lk(port, RequestParams, lk("port", Data))
+          , ssl      = lk(ssl, RequestParams, lk("ssl", Data))
+          , path     = lk(path, RequestParams, lk("path", Data))
+          , method   = lk(method, RequestParams, lk("method", Data))
           , headers  = Headers
           , body     = maybe_parse_body(Headers, RawBody)
           , raw_body = RawBody
