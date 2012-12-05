@@ -26,7 +26,7 @@
 %%%
 %%% * Url can be given either as a "url" parameter or as host/port/ssl/path
 %%%   Default host is 127.0.0.1 in run/1 but could be passed in run/2
-%%%   as well. Request parameters overrides the ones in the request files.
+%%%   as well. Request parameters override the ones in the request files.
 %%%
 %%% * Tags with special meaning in response files. Try not to overuse these:
 %%%    ">>_"   Match anything (i.e. no real validation, only check existence)
@@ -38,8 +38,7 @@
 %%% * Tags with special meaning in all files:
 %%%    "<<01"    Recall stored value. 01 can be any two (alphanumeric)
 %%%              characters
-%%%    ">>key<<" Substitute with key with parameter passed in parameter list in
-%%%              run/3
+%%%    ">>key<<" Substitute with value from SubstituteParams list in run/3
 %%%
 %%% * Any difference between expected and actual responses will cause a failure.
 %%%
@@ -111,8 +110,9 @@ run(TestCaseDir, RequestParams) -> run(TestCaseDir, RequestParams, []).
 %% @doc Run test scenario. Argument is the full path to the testcase dir.
 %% Last argument is a key-value list of substitute parameters.
 %% @end
-run(TestcaseDir, RequestParams, Params) ->
-  spawn_link(?MODULE, run_test, [self(), TestcaseDir, RequestParams, Params]),
+run(TestcaseDir, RequestParams, SubstituteParams) ->
+  spawn_link(?MODULE, run_test,
+             [self(), TestcaseDir, RequestParams, SubstituteParams]),
   receive {done, Result}    -> Result
   after   ?TESTCASE_TIMEOUT -> {error, testcase_timeout}
   end.
@@ -126,8 +126,9 @@ get_requests_with_bodies(TestcaseDir) ->
   [{F, strip(read_body(F, []))} || F <- RequestFiles].
 
 %%%_* Internal export --------------------------------------------------
-run_test(Caller, TestcaseDir, RequestParams, Params) ->
-  Result = run_scenario(get_scenario(TestcaseDir), RequestParams, Params),
+run_test(Caller, TestcaseDir, RequestParams, SubstituteParams) ->
+  Result =
+    run_scenario(get_scenario(TestcaseDir), RequestParams, SubstituteParams),
   Caller ! {done, Result}.
 
 %%%_* Internal =========================================================
@@ -139,20 +140,20 @@ get_scenario(Dir0) ->
   ResponseFiles = get_files(Dir, "response"),
   lists:zip(RequestFiles, ResponseFiles).
 
-run_scenario(S, RequestParams, Params) ->
-  run_scenario(S, RequestParams, Params, []).
+run_scenario(S, RequestParams, SubstituteParams) ->
+  run_scenario(S, RequestParams, SubstituteParams, []).
 
-run_scenario([], _RequestParams, _Params, Acc)                    ->
+run_scenario([], _RequestParams, _SubstituteParams, Acc)                    ->
   lists:reverse(Acc);
-run_scenario([{ReqFile, RespFile}|T], RequestParams, Params, Acc) ->
-  Request        = read_request(ReqFile, RequestParams, Params),
-  ExpResponse    = read_response(RespFile, Params),
+run_scenario([{ReqFile, RespFile}|T], RequestParams, SubstituteParams, Acc) ->
+  Request        = read_request(ReqFile, RequestParams, SubstituteParams),
+  ExpResponse    = read_response(RespFile, SubstituteParams),
   ActualResponse = make_request(Request),
   case Result = validate_response(ExpResponse, ActualResponse) of
     pass -> ok;
     _    -> print_debug(ReqFile, Request, ExpResponse, ActualResponse)
   end,
-  run_scenario(T, RequestParams, Params, [{ReqFile, Result} | Acc]).
+  run_scenario(T, RequestParams, SubstituteParams, [{ReqFile, Result} | Acc]).
 
 print_debug(ReqFile, Request, ExpResponse, ActualResponse) ->
   ct:pal("~p:~n~p~n~n"
@@ -160,10 +161,10 @@ print_debug(ReqFile, Request, ExpResponse, ActualResponse) ->
          "Actual response:~n~p~n",
          [ReqFile, Request, ExpResponse, ActualResponse]).
 
-read_request(RequestFile, RequestParams, Params) ->
-  Data    = parse_file(RequestFile, Params),
+read_request(RequestFile, RequestParams, SubstituteParams) ->
+  Data    = parse_file(RequestFile, SubstituteParams),
   Headers = lk("headers", Data),
-  RawBody = read_body(RequestFile, Params),
+  RawBody = read_body(RequestFile, SubstituteParams),
   #request{ url      = lk(url, RequestParams, lk("url", Data))
           , host     = lk(host, RequestParams, lk("host", Data))
           , port     = lk(port, RequestParams, lk("port", Data))
@@ -175,19 +176,19 @@ read_request(RequestFile, RequestParams, Params) ->
           , raw_body = RawBody
           }.
 
-read_response(ResponseFile, Params) ->
-  Data    = parse_file(ResponseFile, Params),
+read_response(ResponseFile, SubstituteParams) ->
+  Data    = parse_file(ResponseFile, SubstituteParams),
   Headers = lk("headers", Data, []),
   #response{ status_code = lk("status_code", Data)
            , headers     = Headers
-           , body        =
-               maybe_parse_body(Headers, read_body(ResponseFile, Params))
+           , body        = maybe_parse_body(
+                             Headers, read_body(ResponseFile, SubstituteParams))
            }.
 
 %% Get body from a file if the file exists
-read_body(File, Params)    ->
+read_body(File, SubstituteParams)    ->
   case file:read_file(get_body_file(all_body_files(File))) of
-    {ok, Data}      -> substitute(Data, Params);
+    {ok, Data}      -> substitute(Data, SubstituteParams);
     {error, enoent} -> ""
   end.
 
@@ -208,9 +209,9 @@ maybe_parse_body(Headers, Body) ->
     _ -> parse_json(Body)
   end.
 
-parse_file(File, Params) ->
+parse_file(File, SubstituteParams) ->
   {ok, Contents} = file:read_file(File),
-  parse_json(substitute(Contents, Params)).
+  parse_json(substitute(Contents, SubstituteParams)).
 
 parse_json([])  -> [];
 parse_json(Bin) -> to_proplist(mochijson2:decode(Bin)).
