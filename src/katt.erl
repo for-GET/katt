@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% @doc Klarna Api Testing Tool.
+%%% @doc Klarna API Testing Tool.
 %%%
 %%% Use for shooting requests against any kind of http interface
 %%% (e.g. json, xml) and verifying the response.
@@ -231,10 +231,12 @@ to_proplist(Str) when is_binary(Str)     ->
 to_proplist(Value)                       ->
   Value.
 
-substitute(Str, [])         -> Str;
-substitute(Str, [{K, V}|T]) ->
-  substitute(re:replace(Str, ?SUB_BEGIN_TAG ++ to_list(K) ++ ?SUB_END_TAG,
-                        to_list(V), [{return, binary}, global]), T).
+substitute(Bin, [])         -> Bin;
+substitute(Bin, [{K, V}|T]) -> substitute(substitute(Bin, K, V), T).
+
+substitute(Bin, K, V) ->
+  re:replace(Bin, ?SUB_BEGIN_TAG ++ tulib_lists:to_list(K) ++ ?SUB_END_TAG,
+             tulib_lists:to_list(V), [{return, binary}, global]).
 
 %% Replace "extract" tags with actual values
 replace_variables(Str) when is_list(Str) -> replace_variables(Str, []);
@@ -337,7 +339,8 @@ compare(Key, Exp, Actual) -> {not_equal, {Key, Exp, Actual}}.
 
 %% Transform simple list to proplist with keys named Name1, Name2 etc.
 enumerate(L, Name) ->
-  Keys = [to_list(Name) ++ integer_to_list(N) || N <- lists:seq(1, length(L))],
+  Keys = [tulib_lists:to_list(Name) ++ integer_to_list(N)
+          || N <- lists:seq(1, length(L))],
   lists:zip(Keys, L).
 
 %% Transform response record to proplist for validation.
@@ -406,12 +409,6 @@ from_utf8(X)                   -> X.
 %% Transform list to utf8 encoded binary, ignore everything else
 to_utf8(X) when is_list(X) -> unicode:characters_to_binary(X, utf8);
 to_utf8(X)                 -> X.
-
-to_list(X) when is_list(X)    -> X;
-to_list(X) when is_atom(X)    -> atom_to_list(X);
-to_list(X) when is_tuple(X)   -> tuple_to_list(X);
-to_list(X) when is_binary(X)  -> binary_to_list(X);
-to_list(X) when is_integer(X) -> integer_to_list(X).
 
 %%%_* Emacs ============================================================
 %%% Local Variables:
