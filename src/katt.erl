@@ -235,8 +235,8 @@ substitute(Bin, [])         -> Bin;
 substitute(Bin, [{K, V}|T]) -> substitute(substitute(Bin, K, V), T).
 
 substitute(Bin, K, V) ->
-  re:replace(Bin, ?SUB_BEGIN_TAG ++ tulib_lists:to_list(K) ++ ?SUB_END_TAG,
-             tulib_lists:to_list(V), [{return, binary}, global]).
+  re:replace(Bin, ?SUB_BEGIN_TAG ++ katt2_util:to_list(K) ++ ?SUB_END_TAG,
+             katt2_util:to_list(V), [{return, binary}, global]).
 
 %% Replace "extract" tags with actual values
 replace_variables(Str) when is_list(Str) -> replace_variables(Str, []);
@@ -339,7 +339,7 @@ compare(Key, Exp, Actual) -> {not_equal, {Key, Exp, Actual}}.
 
 %% Transform simple list to proplist with keys named Name1, Name2 etc.
 enumerate(L, Name) ->
-  Keys = [tulib_lists:to_list(Name) ++ integer_to_list(N)
+  Keys = [katt2_util:to_list(Name) ++ integer_to_list(N)
           || N <- lists:seq(1, length(L))],
   lists:zip(Keys, L).
 
