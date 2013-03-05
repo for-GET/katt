@@ -1,14 +1,20 @@
 suite=$(if $(SUITE), suite=$(SUITE), )
 
-.PHONY:	all compile get-deps docs xref test eunit conf_clean clean
+.PHONY:	all compile get-deps update-deps delete-deps doc xref test eunit clean
 
-all: get-deps compile
+all: get-deps compile xref
 
 compile:
 	./rebar compile
 
 get-deps:
 	./rebar get-deps
+
+update-deps:
+	./rebar update-deps
+
+delete-deps:
+	./rebar delete-deps
 
 docs:
 	./rebar doc skip_deps=true
