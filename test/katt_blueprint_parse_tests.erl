@@ -3,29 +3,29 @@
 %%% in the api_blueprint module's tests.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
--module(katt_blueprint_parser_tests).
+-module(katt_blueprint_parse_tests).
 
 -include_lib("eunit/include/eunit.hrl").
 -include("blueprint_types.hrl").
 
--ifdef(EUNIT).
-
 -define(EXAMPLE_FILE, "../test/examples/example1.apib").
+-define(INVALID_FILE, "../test/examples/example_invalid1.apib").
 
 
 parse_string_test()->
   ?assertEqual(
     {ok, #api_blueprint{ name=(<<"¿Title · hello"/utf8>>) }},
-    katt_blueprint_parser:parse("--- ¿Title · hello ---\n---\n---\n")).
+    katt_blueprint_parse:string("--- ¿Title · hello ---\n---\n---\n")).
 
 
-parse_invalid_string_test()->
-  ?assertMatch(
-    {error, _},
-    katt_blueprint_parser:parse("")),
-  ?assertMatch(
-    {error, _},
-    katt_blueprint_parser:parse("--- API ---\n\n---\n---\n---\n")).
+parse_invalid_string_test_()->
+  [ ?_assertError(
+      {badmatch, _},
+      {ok, _} = katt_blueprint_parse:string(""))
+  , ?_assertError(
+      {badmatch, _},
+      {ok, _} = katt_blueprint_parse:string("--- API ---\n\n---\n---\n---\n"))
+  ].
 
 
 parse_file_test()->
@@ -40,15 +40,21 @@ parse_file_test()->
                                     , #operation{}
                                     ]
                        }},
-    katt_blueprint_parser:parse_file(?EXAMPLE_FILE)).
+    katt_blueprint_parse:file(?EXAMPLE_FILE)).
 
 
-parse_invalid_file_test()->
-  ?assertMatch(
-    {error, _},
-    katt_blueprint_parser:parse_file("...")).
+parse_invalid_file_test_()->
+  [ ?_assertError(
+      {badmatch, _},
+      {ok, _} = katt_blueprint_parse:file("..."))
+  , ?_assertError(
+      {badmatch, _},
+      {ok, _} = katt_blueprint_parse:file(?INVALID_FILE))
+  , ?_assertError(
+      {badmatch, _},
+      {ok, _} = katt_blueprint_parse:file("/dev/null"))
+  ].
 
--endif.
 
 %%%_* Emacs ============================================================
 %%% Local Variables:

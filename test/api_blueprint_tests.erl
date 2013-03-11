@@ -7,10 +7,7 @@
 -include_lib("eunit/include/eunit.hrl").
 -include("blueprint_types.hrl").
 
--ifdef(EUNIT).
-
 -define(EXAMPLE_FILE, "../test/examples/example1.apib").
-
 
 parse_api_test_()->
   Expected = #api_blueprint{ name=(<<"API tæst"/utf8>>)
@@ -621,7 +618,7 @@ parse_response_header_test() ->
     ")).
 
 parse_http_status_test_() ->
-  % Test a small sample of valid HTTP codes.
+  %% Test a small sample of valid HTTP codes.
   [ ?_assertEqual(
       #api_blueprint{ name=utf8("API")
                     , operations=[ #operation{ response=#response{ status=N }}
@@ -637,7 +634,7 @@ parse_http_status_test_() ->
 
 
 fail_parse_invalid_http_status_test_() ->
-  % Test a small sample of invalid HTTP codes.
+  %% Test a small sample of invalid HTTP codes.
   [ ?_assertMatch(
       {fail, _},
       parse_unindented("
@@ -830,9 +827,6 @@ parse_file_test() ->
 %%% Consider adding tests for simple_body, simple_body_line, out, in, text0,
 %%% text1, empty_line, eolf, eol, eof, s.
 %%% For now these are at least mostly covered through higer-level tests.
-
-
--endif.
 
 
 %%% Helpers

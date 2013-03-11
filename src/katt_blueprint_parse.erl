@@ -3,17 +3,18 @@
 %%%
 %%% This is an interface module which provides access to the main functionality
 %%% of katt_blueprint_parser, i.e. parsing a KATT Blueprint string or file.
+%%%
 %%% @copyright 2013 Klarna AB
 %%% @end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%_* Module declaration ===============================================
--module(katt_blueprint_parser).
+-module(katt_blueprint_parse).
 
 %%%_* Exports ==========================================================
 %% API
--export([ parse/1
-        , parse_file/1
+-export([ string/1
+        , file/1
         ]).
 %% Types
 -export_type([ katt_blueprint/0
@@ -23,31 +24,23 @@
 
 -include("blueprint_types.hrl").
 
-
-%%%_* API ==============================================================
+%%%_* Types ============================================================
 
 -type katt_blueprint() :: #api_blueprint{}.
 
--spec parse(string()) -> {ok, katt_blueprint()} | {error, any()}.
+%%%_* API ==============================================================
+
+-spec string(string()) -> {ok, katt_blueprint()}.
 %% @doc Parse a KATT Blueprint string.
-parse(Str) ->
-  blueprint_or_error(api_blueprint:parse(Str)).
+string(Str) ->
+  #api_blueprint{} = BP = api_blueprint:parse(Str),
+  {ok, BP}.
 
--spec parse_file(file:name()) -> {ok, katt_blueprint()} | {error, any()}.
+-spec file(file:name()) -> {ok, katt_blueprint()}.
 %% @doc Parse a KATT Blueprint file.
-parse_file(File) ->
-  try
-    api_blueprint:file(File)
-  of
-    BP=#api_blueprint{} -> blueprint_or_error(BP)
-  catch
-    error:Error -> blueprint_or_error(Error)
-  end.
-
-%%%_* Internal functions ===============================================
-
-blueprint_or_error(Blueprint=#api_blueprint{})  -> {ok, Blueprint};
-blueprint_or_error({_, Reason})                 -> {error, Reason}.
+file(File) ->
+  #api_blueprint{} = BP = api_blueprint:file(File),
+  {ok, BP}.
 
 %%%_* Emacs ============================================================
 %%% Local Variables:

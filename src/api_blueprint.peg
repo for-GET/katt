@@ -82,12 +82,12 @@ operation <-
   `;
 
 operation_description <-
-  operation_descriptionLine+
+  operation_description_line+
   `
     concatenate_lines(Node)
   `;
 
-operation_descriptionLine <-
+operation_description_line <-
   !http_method text:text0 eol
   `
     proplists:get_value(text, Node)
