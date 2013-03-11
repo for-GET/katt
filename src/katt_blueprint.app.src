@@ -1,0 +1,11 @@
+%%-*- mode: erlang -*-
+{ application, katt_blueprint, [ {description,  "katt_blueprint"}
+                               , {vsn,          git}
+                               , {modules,      [ katt_blueprint_parser
+                                                ]}
+                               , {registered,   []}
+                               , {applications, [ kernel
+                                                , stdlib
+                                                ]}
+                               , {env,          []}
+                               ]}.
