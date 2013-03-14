@@ -7,7 +7,9 @@
 -type utf8_string() :: unicode:unicode_binary().
 -type http_header() :: {string(), utf8_string()|integer()}.
 
--record(request,          { headers = []           :: [http_header()]
+-record(request,          { method = "GET"         :: string()
+                          , url = <<"/">>          :: utf8_string()
+                          , headers = []           :: [http_header()]
                           , body                   :: utf8_string()
                           }).
 
@@ -17,8 +19,6 @@
                           }).
 
 -record(operation,        { description            :: utf8_string()
-                          , method = "GET"         :: string()
-                          , url = <<"/">>          :: utf8_string()
                           , request = #request{}   :: #request{}
                           , response = #response{} :: #response{}
                           }).

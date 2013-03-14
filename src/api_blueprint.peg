@@ -63,19 +63,15 @@ operations_tail <-
 
 operation <-
   description:operation_description?
-  signature:signature
   request:request
   response:response
   `
-    {Method, Url} = proplists:get_value(signature, Node),
     Description = proplists:get_value(description, Node),
     Request = proplists:get_value(request, Node),
     Response = proplists:get_value(response, Node),
 
     #operation{
       description=undefined_if_empty(Description),
-      method=Method,
-      url=Url,
       request=Request,
       response=Response
     }
@@ -113,11 +109,14 @@ http_method <-
   `;
 
 request <-
-  headers:request_headers body:body?
+  signature:signature headers:request_headers body:body?
   `
+    {Method, Url} = proplists:get_value(signature, Node),
     Headers = proplists:get_value(headers, Node),
     Body = proplists:get_value(body, Node),
     #request{
+      method=Method,
+      url=Url,
       headers=Headers,
       body=undefined_if_empty(Body)
     }

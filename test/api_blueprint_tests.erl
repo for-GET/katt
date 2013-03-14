@@ -12,9 +12,9 @@
 parse_api_test_()->
   Expected = #api_blueprint{ name=(<<"API tæst"/utf8>>)
                            , description=(<<"¿Test ÄPI?"/utf8>>)
-                           , operations=[ #operation{ url=utf8("/one") }
-                                        , #operation{ url=utf8("/two") }
-                                        , #operation{ url=utf8("/three") }
+                           , operations=[ op_url("/one")
+                                        , op_url("/two")
+                                        , op_url("/three")
                                         ]
                            },
   [ ?_assertEqual(
@@ -143,13 +143,13 @@ parse_operations_test_() ->
   Expected0 = #api_blueprint{ name=utf8("API")
                             },
   Expected1 = #api_blueprint{ name=utf8("API")
-                            , operations=[ #operation{ url=utf8("/one") }
+                            , operations=[ op_url("/one")
                                          ]
                             },
   Expected2 = #api_blueprint{ name=utf8("API")
-                            , operations=[ #operation{ url=utf8("/one") }
-                                         , #operation{ url=utf8("/two") }
-                                         , #operation{ url=utf8("/three") }
+                            , operations=[ op_url("/one")
+                                         , op_url("/two")
+                                         , op_url("/three")
                                          ]
                             },
   [ ?_assertEqual(
@@ -247,12 +247,12 @@ parse_operation_test_() ->
       "))
   , ?_assertEqual(
       #api_blueprint{ name=utf8("API")
-                    , operations=[ #operation{url=utf8("url")}
-                                 , #operation{url=utf8("/url")}
-                                 , #operation{url=utf8("/")}
-                                 , #operation{url=utf8("http://host:80/")}
-                                 , #operation{url=utf8("{{<var}}")}
-                                 , #operation{url=utf8("/url/{{<var}}")}
+                    , operations=[ op_url("url")
+                                 , op_url("/url")
+                                 , op_url("/")
+                                 , op_url("http://host:80/")
+                                 , op_url("{{<var}}")
+                                 , op_url("/url/{{<var}}")
                                  ]
                     },
       parse_unindented("
@@ -324,7 +324,7 @@ fail_parse_invalid_operation_description_test() ->
 parse_http_method_test_() ->
   [ ?_assertEqual(
       #api_blueprint{ name=utf8("API")
-                    , operations=[ #operation{method=Method}
+                    , operations=[ op_method(Method)
                                  ]
                     },
       parse_unindented("
@@ -830,6 +830,12 @@ parse_file_test() ->
 
 
 %%% Helpers
+
+op_url(Url) ->
+  #operation{ request=#request{ url = utf8(Url) } }.
+
+op_method(Method) ->
+  #operation{ request=#request{ method = Method } }.
 
 %% Unindent the blueprint before parsing it.
 parse_unindented(BlueprintString) ->
