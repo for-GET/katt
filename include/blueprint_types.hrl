@@ -5,7 +5,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -type utf8_string() :: unicode:unicode_binary().
--type http_header() :: {string(), utf8_string()|integer()}.
+-type http_header() :: {string(), string()|integer()}.
 
 -record(request,          { method = "GET"         :: string()
                           , url = <<"/">>          :: utf8_string()

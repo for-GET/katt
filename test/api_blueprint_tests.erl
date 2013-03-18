@@ -203,13 +203,13 @@ parse_operations_test_() ->
 
 parse_operation_test_() ->
   Request = #request{ headers=[ { "Content-Type"
-                                , utf8("application/json")
+                                , "application/json"
                                 }
                               ]
                     , body=utf8("{ \"status\": \"ok\" }")
                     },
   Response = #response{ headers=[ { "Content-Type"
-                                  , utf8("application/json")
+                                  , "application/json"
                                   }
                                 ]
                       , body=utf8("{ \"id\": 1 }")
@@ -368,7 +368,7 @@ parse_request_test_() ->
         operations=[
           #operation{
             request=#request{
-              headers=[{"Content-Type", utf8("application/json")}],
+              headers=[{"Content-Type", "application/json"}],
               body=undefined
             }
           }
@@ -387,7 +387,7 @@ parse_request_test_() ->
         operations=[
           #operation{
             request=#request{
-              headers=[{"Content-Type", utf8("application/json")}],
+              headers=[{"Content-Type", "application/json"}],
               body=utf8("{ \"status\": \"ok\" }")
             }
           }
@@ -422,7 +422,7 @@ parse_request_headers_test_() ->
         operations=[
           #operation{
             request=#request{
-              headers=[{"Content-Type", utf8("application/json")}]
+              headers=[{"Content-Type", "application/json"}]
             }
           }
         ]
@@ -441,9 +441,9 @@ parse_request_headers_test_() ->
           #operation{
             request=#request{
               headers=[
-                {"Content-Type", utf8("application/json")},
-                {"Content-Length", utf8("153")},
-                {"Cache-Control", utf8("no-cache")}
+                {"Content-Type", "application/json"},
+                {"Content-Length", "153"},
+                {"Cache-Control", "no-cache"}
               ]
             }
           }
@@ -469,7 +469,7 @@ parse_response_test_() ->
           #operation{
             response=#response{
               headers=[
-                {"Content-Type", utf8("application/json")}
+                {"Content-Type", "application/json"}
               ],
               body=utf8("{ \"id\": 1 }")
             }
@@ -491,7 +491,7 @@ parse_response_test_() ->
           #operation{
             response=#response{
               headers=[
-                {"Content-Type", utf8("application/json")}
+                {"Content-Type", "application/json"}
               ],
               body=undefined
             }
@@ -556,7 +556,7 @@ parse_response_headers_test_() ->
         operations=[
           #operation{
             response=#response{
-              headers=[{"Content-Type", utf8("application/json")}]
+              headers=[{"Content-Type", "application/json"}]
             }
           }
         ]
@@ -575,9 +575,9 @@ parse_response_headers_test_() ->
           #operation{
             response=#response{
               headers=[
-                {"Content-Type", utf8("application/json")},
-                {"Content-Length", utf8("153")},
-                {"Cache-Control", utf8("no-cache")}
+                {"Content-Type", "application/json"},
+                {"Content-Length", "153"},
+                {"Cache-Control", "no-cache"}
               ]
             }
           }
@@ -603,7 +603,7 @@ parse_response_header_test() ->
         #operation{
           response=#response{
             headers=[
-              {"Content-Type", utf8("application/json")}
+              {"Content-Type", "application/json"}
             ]
           }
         }
@@ -674,7 +674,7 @@ parse_http_header_test_() ->
           #operation{
             response=#response{
               headers=[
-                {"Content-Type", utf8("application/json")}
+                {"Content-Type", "application/json"}
               ]
             }
           }
@@ -701,7 +701,7 @@ parse_http_header_name_test_() ->
           #operation{
             response=#response{
               headers=[
-                {HeaderName, utf8("application/json")}
+                {HeaderName, "application/json"}
               ]
             }
           }
@@ -725,7 +725,7 @@ parse_http_header_value_test_() ->
           #operation{
             response=#response{
               headers=[
-                {"X-Some-Header", utf8(HeaderValue)}
+                {"X-Some-Header", HeaderValue}
               ]
             }
           }
