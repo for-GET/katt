@@ -8,14 +8,14 @@
 -type http_header() :: {string(), string()|integer()}.
 
 -record(request,          { method = "GET"         :: string()
-                          , url = <<"/">>          :: utf8_string()
+                          , url = "/"              :: string()
                           , headers = []           :: [http_header()]
-                          , body                   :: utf8_string()
+                          , body                   :: binary()
                           }).
 
 -record(response,         { status = 200           :: integer()
                           , headers = []           :: [http_header()]
-                          , body                   :: utf8_string()
+                          , body                   :: binary()
                           }).
 
 -record(operation,        { description            :: utf8_string()

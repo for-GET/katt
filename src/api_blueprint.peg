@@ -190,7 +190,7 @@ signature <-
   method:http_method s+ url:text1 eol
   `
     Method = proplists:get_value(method, Node),
-    Url = unicode(proplists:get_value(url, Node)),
+    Url = proplists:get_value(url, Node),
     {Method, Url}
   `;
 

@@ -202,17 +202,13 @@ parse_operations_test_() ->
 
 
 parse_operation_test_() ->
-  Request = #request{ headers=[ { "Content-Type"
-                                , "application/json"
-                                }
-                              ]
-                    , body=utf8("{ \"status\": \"ok\" }")
-                    },
-  Response = #response{ headers=[ { "Content-Type"
-                                  , "application/json"
-                                  }
+  Request = #request{ headers = [ {"Content-Type", "application/json"}
                                 ]
-                      , body=utf8("{ \"id\": 1 }")
+                    , body = <<"{ \"status\": \"ok\" }">>
+                    },
+  Response = #response{ headers = [ {"Content-Type", "application/json"}
+                                  ]
+                      , body = <<"{ \"id\": 1 }">>
                       },
   Op = #operation{ request=Request, response=Response },
   [ ?_assertEqual(
@@ -832,7 +828,7 @@ parse_file_test() ->
 %%% Helpers
 
 op_url(Url) ->
-  #operation{ request=#request{ url = utf8(Url) } }.
+  #operation{ request=#request{ url = Url } }.
 
 op_method(Method) ->
   #operation{ request=#request{ method = Method } }.
