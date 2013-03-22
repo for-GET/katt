@@ -1,11 +1,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% @doc Klarna API Testing Tool v2 Utils
+%%% @doc Klarna API Testing Tool Utils
 %%% @end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%_* Module declaration ===============================================
 %% @private
--module(katt2_util).
+-module(katt_util).
 
 %%%_* Exports ==========================================================
 %% API
@@ -18,6 +18,7 @@
         ]).
 
 %%%_* API ==============================================================
+
 to_list(X) when is_list(X)    -> X;
 to_list(X) when is_atom(X)    -> atom_to_list(X);
 to_list(X) when is_binary(X)  -> binary_to_list(X);
