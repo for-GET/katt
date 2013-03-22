@@ -1,0 +1,275 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% KATT Blueprint format grammar and transformations
+%%%
+%%% This grammar is used by Neotoma to generate the parser (api_blueprint.erl).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+api <-
+  empty_line*
+  name:api_name
+  empty_line*
+  description:api_description?
+  empty_line*
+  operations:operations
+  empty_line*
+  eof
+  `
+    Name = proplists:get_value(name, Node),
+    Description = proplists:get_value(description, Node),
+    Operations = proplists:get_value(operations, Node),
+    #api_blueprint{
+      name=undefined_if_empty(Name),
+      description=undefined_if_empty(Description),
+      operations=Operations
+    }
+  `;
+
+api_name <-
+  "---" s+ name:text1 eolf
+  `
+    Name = unicode(proplists:get_value(name, Node)),
+    re:replace(Name, "\s+---$", "", [{return, binary}])
+  `;
+
+api_description <-
+  "---" s* eol lines:api_description_line* "---" s* eolf
+  `
+    concatenate_lines(proplists:get_value(lines, Node))
+  `;
+
+api_description_line <-
+  !("---" s* eolf) text:text0 eol
+  `
+    unicode(proplists:get_value(text, Node))
+  `;
+
+operations <-
+  head:operation?
+  tail:operations_tail*
+  `
+    Head = proplists:get_value(head, Node),
+    Tail = proplists:get_value(tail, Node),
+    case Head of
+      [] -> Tail;
+      _  -> [Head | Tail]
+    end
+  `;
+
+operations_tail <-
+  empty_line* operation:operation
+  `
+  proplists:get_value(operation, Node)
+  `;
+
+operation <-
+  description:operation_description?
+  request:request
+  response:response
+  `
+    Description = proplists:get_value(description, Node),
+    Request = proplists:get_value(request, Node),
+    Response = proplists:get_value(response, Node),
+
+    #operation{
+      description=undefined_if_empty(Description),
+      request=Request,
+      response=Response
+    }
+  `;
+
+operation_description <-
+  operation_description_line+
+  `
+    concatenate_lines(Node)
+  `;
+
+operation_description_line <-
+  !http_method text:text0 eol
+  `
+    unicode(proplists:get_value(text, Node))
+  `;
+
+%% Assembled from RFC 2616, 5323, 5789.
+http_method <-
+  "GET"
+  / "POST"
+  / "PUT"
+  / "DELETE"
+  / "OPTIONS"
+  / "PATCH"
+  / "PROPPATCH"
+  / "LOCK"
+  / "UNLOCK"
+  / "COPY"
+  / "MOVE"
+  / "MKCOL"
+  / "HEAD"
+  `
+    binary:bin_to_list(Node)
+  `;
+
+request <-
+  signature:signature headers:request_headers body:body?
+  `
+    {Method, Url} = proplists:get_value(signature, Node),
+    Headers = proplists:get_value(headers, Node),
+    Body = proplists:get_value(body, Node),
+    #request{
+      method=Method,
+      url=Url,
+      headers=Headers,
+      body=undefined_if_empty(Body)
+    }
+  `;
+
+request_headers <- request_header* ~;
+
+request_header <-
+  in header:http_header
+  `
+    proplists:get_value(header, Node)
+  `;
+
+response <-
+  status:response_status headers:response_headers body:body?
+  `
+    Status = proplists:get_value(status, Node),
+    Headers = proplists:get_value(headers, Node),
+    Body = proplists:get_value(body, Node),
+    #response{
+      status=Status,
+      headers=Headers,
+      body=undefined_if_empty(Body)
+    }
+  `;
+
+response_status <-
+  out status:http_status s* eolf
+  `
+    proplists:get_value(status, Node)
+  `;
+
+response_headers <- response_header* ~;
+
+response_header <-
+  out http_header
+  `
+    [_, Header] = Node,
+    Header
+  `;
+
+http_status <-
+  [1-5] [0-9] [0-9]
+  `
+    {Int, _Rest} = string:to_integer(concatenate_chars(Node)),
+    Int
+  `;
+
+http_header <-
+  name:http_header_name ":" s* value:http_header_value eolf
+  `
+    Name = proplists:get_value(name, Node),
+    Value = proplists:get_value(value, Node),
+    {Name, Value}
+  `;
+
+%% See RFC 822, 3.1.2: "The field-name must be composed of printable ASCII
+%% characters (i.e., characters that have values between 33. and 126., decimal,
+%% except colon)."
+http_header_name <-
+  [\x21-\x39\x3B-\x7E]+
+  `
+    concatenate_chars(Node)
+  `;
+
+
+%% Assuming that the header value can contain unicode chars.
+http_header_value <- text0 ~;
+
+signature <-
+  method:http_method s+ url:text1 eol
+  `
+    Method = proplists:get_value(method, Node),
+    Url = proplists:get_value(url, Node),
+    {Method, Url}
+  `;
+
+
+%% We don't support DelimitedBodyFixed / DelimitedBodyVariable.
+%% TODO: Add support for them?
+body <- simple_body ~;
+
+simple_body <-
+  !"<<<" lines:simple_body_line+
+  `
+    concatenate_lines(proplists:get_value(lines, Node))
+  `;
+
+simple_body_line <-
+  !in !out !empty_line text:text1 eolf
+  `
+    unicode(proplists:get_value(text, Node))
+  `;
+
+in <- ">" s+ ~;
+
+out <- "<" s+ ~;
+
+
+%%% Helper rules
+
+text0 <- [^\n\r]*
+  `
+  concatenate_chars(Node)
+  `;
+
+text1 <- [^\n\r]+
+  `
+  concatenate_chars(Node)
+  `;
+
+empty_line <- s* eol ~;
+
+eolf <- eol / eof ~;
+
+eol <-
+  "\n"
+  / "\r\n"
+  / "\r"
+  ~;
+
+eof <- !. ` <<>> `;
+
+
+%% TODO: add support for the following unicode whitespace characters:
+%% \u00A0\u1680\u180E\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007
+%% \u2008\u2009\u200A\u202F\u205F\u3000\uFEFF
+%% I.e. make support for what "\s" matches in JavaScript regexps,
+%% sans "\r", "\n", "\u2028" and "\u2029".
+%% See ECMA-262, 5.1 ed., 15.10.2.12.
+s <- [\t\v\f ] ~;
+
+
+%%% Records and extra functions
+`
+%%% This file is generated by neotoma.
+
+-include("blueprint_types.hrl").
+
+undefined_if_empty([])      -> 'undefined';
+undefined_if_empty(String)  -> String.
+
+unicode(Chars) -> unicode:characters_to_binary(Chars).
+
+concatenate_lines([H|_]=Lines) when is_binary(H) ->
+  StringList = lists:map(fun unicode:characters_to_list/1, Lines),
+  unicode:characters_to_binary(string:join(StringList, "\n"));
+concatenate_lines([]) ->
+  [].
+
+concatenate_chars(Chars) ->
+  F = fun(Bin) -> binary:bin_to_list(Bin) end,
+  CharList = lists:map(F, Chars),
+  string:join(CharList, "").
+
+`

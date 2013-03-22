@@ -1,0 +1,11 @@
+*.app
+*.beam
+*.d
+*.plt
+*.html
+*edoc-info
+*erlang.png
+*stylesheet.css
+.#*
+.eunit
+deps/
