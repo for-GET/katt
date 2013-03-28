@@ -92,10 +92,9 @@ run_scenario([#operation{request=Req, response=Rsp}|T], Params, SubVars, Acc) ->
   ExpectedResponse = response(Rsp, SubVars),
   ActualResponse   = make_request(Request),
   case Result = validate(ExpectedResponse, ActualResponse) of
-    pass -> ok;
+    pass -> run_scenario(T, Params, SubVars, [{Request, Result}|Acc]);
     _    -> dbg(Request, ExpectedResponse, ActualResponse, Result)
-  end,
-  run_scenario(T, Params, SubVars, [{Request, Result}|Acc]);
+  end;
 run_scenario([], _, _, Acc) ->
   Acc.
 
