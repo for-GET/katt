@@ -9,8 +9,6 @@
 %%%   "{{_}}"     Match anything (i.e. no real validation, only check existence)
 %%%   "{{>key}}"  Store value of the whole string
 %%%               (key must be unique within testcase)
-%%%   "ERROR"     as a status code means we are expecting to get an error back
-%%%               instead of a proper http code.
 %%%   "{{<key}}"  Recall stored value.
 %%%   "{{>key<}" Substitute with value from SubVars list in run/3
 %%%
@@ -48,7 +46,6 @@
 -define(MATCH_ANY,         "{{_}}").
 -define(SUB_BEGIN_TAG,     "{{>").
 -define(SUB_END_TAG,       "<}}").
--define(ERROR,             "ERROR").
 -define(SCENARIO_TIMEOUT,  120000).
 -define(REQUEST_TIMEOUT,   20000).
 
@@ -201,8 +198,6 @@ substitute(Bin, K, V) ->
              to_list(V), [{return, binary}, global]).
 
 %%%_* Validation -------------------------------------------------------
-validate(#response{status=?ERROR}, {error, _})  -> pass;
-validate(#response{status=?ERROR}, #response{}) -> {fail, expected_error};
 validate(E = #response{}, A = #response{})           ->
   Result = [validate_status(E, A), validate_headers(E, A), validate_body(E, A)],
   case lists:filter(fun(X) -> X =/= pass end, lists:flatten(Result)) of
