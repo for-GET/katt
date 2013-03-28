@@ -33,9 +33,7 @@
 
 %%%_* Imports ==========================================================
 -import(katt_util,  [ to_list/1
-                    , to_lower/1
                     , from_utf8/1
-                    , strip/1
                     ]).
 
 %%%_* Includes ==========================================================
@@ -138,7 +136,7 @@ maybe_parse_body(_Hdrs, undefined) ->
 maybe_parse_body(Hdrs, Body) ->
   case is_json_body(Hdrs, Body) of
     true  -> parse_json(Body);
-    false -> strip(from_utf8(Body))
+    false -> from_utf8(Body)
   end.
 
 is_json_body(_Hdrs, <<>>) -> false;
@@ -178,7 +176,7 @@ make_request(R = #request{}) ->
 http_request(R = #request{}) ->
   Body = case R#request.body of
     undefined -> <<>>;
-    Bin       -> strip(Bin)
+    Bin       -> Bin
   end,
   lhttpc:request( R#request.url
                 , R#request.method
@@ -254,7 +252,7 @@ do_validate(_Key, ?STORE_BEGIN_TAG ++ Rest, A)         ->
   put(?KEY_PREFIX ++ Key, A),
   pass;
 do_validate(Key, E, A)                                 ->
-  compare(Key, to_lower(extract(E)), to_lower(extract(A))).
+  compare(Key, extract(E), extract(A)).
 
 compare(_Key, E, E) -> pass;
 compare(Key, E, A)  -> {not_equal, {Key, E, A}}.

@@ -11,10 +11,8 @@
 %% API
 -export([ to_list/1
         , to_integer/1
-        , to_lower/1
         , from_utf8/1
         , to_utf8/1
-        , strip/1
         ]).
 
 %%%_* API ==============================================================
@@ -27,9 +25,6 @@ to_list(X) when is_integer(X) -> integer_to_list(X).
 to_integer(X) when is_integer(X) -> X;
 to_integer(X) when is_list(X)    -> list_to_integer(X);
 to_integer(X) when is_binary(X)  -> to_integer(binary_to_list(X)).
-
-to_lower(X) when is_list(X) -> string:to_lower(X);
-to_lower(X)                 -> X.
 
 %% Transform (possibly utf8 encoded) binary to list, ignore everything else
 from_utf8(X) when is_binary(X) ->
@@ -44,18 +39,7 @@ from_utf8(X)                   -> X.
 to_utf8(X) when is_list(X) -> unicode:characters_to_binary(X, utf8);
 to_utf8(X)                 -> X.
 
-%% Strip spaces and newlines, but not inside quotes ("...") or xml tags (<...>)
-%% Output is always a binary string
-strip(Input) -> to_utf8(strip(from_utf8(Input), [])).
-
 %%%_* Internal =========================================================
-strip([], Acc)        -> lists:reverse(Acc);
-strip(" " ++ T, Acc)  -> strip(T, Acc);
-strip("\n" ++ T, Acc) -> strip(T, Acc);
-strip([H|T], Acc)     ->
-  {NewT, NewAcc} = get_new_values(H, T, Acc),
-  strip(NewT, NewAcc).
-
 get_new_values($", Str, Acc) -> do_get_new_values({$", $"}, Str, Acc);
 get_new_values($<, Str, Acc) -> do_get_new_values({$<, $>}, Str, Acc);
 get_new_values(C,  Str, Acc) -> {Str, [C|Acc]}.
