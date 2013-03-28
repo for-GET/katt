@@ -85,9 +85,9 @@ run_scenario(Blueprint, Params, SubVars) ->
   run_scenario(Blueprint#api_blueprint.operations, Params, SubVars, []).
 
 run_scenario([#operation{request=Req, response=Rsp}|T], Params, SubVars, Acc) ->
-  Request          = request(Req, Params, SubVars),
-  ExpectedResponse = response(Rsp, SubVars),
-  ActualResponse   = make_request(Request),
+  Request          = make_request(Req, Params, SubVars),
+  ExpectedResponse = make_response(Rsp, SubVars),
+  ActualResponse   = request(Request),
   case Result = validate(ExpectedResponse, ActualResponse) of
     pass -> run_scenario(T, Params, SubVars, [{Request, Result}|Acc]);
     _    -> dbg(Request, ExpectedResponse, ActualResponse, Result)
@@ -95,6 +95,8 @@ run_scenario([#operation{request=Req, response=Rsp}|T], Params, SubVars, Acc) ->
 run_scenario([], _, _, Acc) ->
   Acc.
 
+make_request_url(_, Url="http://"++_)  -> Url;
+make_request_url(_, Url="https://"++_) -> Url;
 make_request_url(Params, Path) ->
   {Protocol, DefaultPort} = case proplists:get_value(ssl, Params, false) of
                               true  -> {"https:", 443};
@@ -108,21 +110,17 @@ make_request_url(Params, Path) ->
               , proplists:get_value(path, Params, Path)
               ], "").
 
-request_url(_,      Url="http://"++_)  -> Url;
-request_url(_,      Url="https://"++_) -> Url;
-request_url(Params, Path)              -> make_request_url(Params, Path).
-
-request(#request{headers=Hdrs, url=Url0, body=RawBody0} = Req,
+make_request(#request{headers=Hdrs, url=Url0, body=RawBody0} = Req,
         Params,
         SubVars) ->
   RawBody = substitute(RawBody0, SubVars),
-  Url = request_url(Params, substitute(extract(Url0), SubVars)),
+  Url = make_request_url(Params, substitute(extract(Url0), SubVars)),
   Req#request{ url  = Url
              , headers = Hdrs
              , body = RawBody
              }.
 
-response(#response{headers=Hdrs, body=RawBody0} = Rsp, SubVars) ->
+make_response(#response{headers=Hdrs, body=RawBody0} = Rsp, SubVars) ->
   RawBody = substitute(RawBody0, SubVars),
   Rsp#response{ body = maybe_parse_body(Hdrs, RawBody)
               }.
@@ -156,7 +154,7 @@ to_proplist(Str) when is_binary(Str)     ->
 to_proplist(Value)                       ->
   Value.
 
-make_request(R = #request{}) ->
+request(R = #request{}) ->
   case http_request(R) of
     {ok, {{Code, _}, Hdrs, RawBody}} ->
       #response{ status      = Code
