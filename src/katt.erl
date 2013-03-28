@@ -93,7 +93,7 @@ run_scenario([#operation{request=Req, response=Rsp}|T], Params, SubVars, Acc) ->
   ActualResponse   = make_request(Request),
   case Result = validate(ExpectedResponse, ActualResponse) of
     pass -> ok;
-    _    -> dbg(Request, ExpectedResponse, ActualResponse)
+    _    -> dbg(Request, ExpectedResponse, ActualResponse, Result)
   end,
   run_scenario(T, Params, SubVars, [{Request, Result}|Acc]);
 run_scenario([], _, _, Acc) ->
@@ -187,11 +187,12 @@ http_request(R = #request{}) ->
                 ).
 
 
-dbg(Request, ExpectedResponse, ActualResponse) ->
+dbg(Request, ExpectedResponse, ActualResponse, Result) ->
   ct:pal("Request:~n~p~n~n"
          "Expected response:~n~p~n~n"
          "Actual response:~n~p~n~n",
-         [Request, ExpectedResponse, ActualResponse]).
+         "Result:~n~p~n~n",
+         [Request, ExpectedResponse, ActualResponse, Result]).
 
 substitute(Bin, [])         -> Bin;
 substitute(Bin, [{K, V}|T]) -> substitute(substitute(Bin, K, V), T).
