@@ -10,21 +10,21 @@
 -record(request,          { method = "GET"         :: string()
                           , url = "/"              :: string()
                           , headers = []           :: [http_header()]
-                          , body                   :: binary()
+                          , body = null            :: binary()
                           }).
 
 -record(response,         { status = 200           :: integer()
                           , headers = []           :: [http_header()]
-                          , body                   :: binary()
+                          , body = null            :: binary()
                           }).
 
--record(operation,        { description            :: utf8_string()
+-record(operation,        { description = null     :: utf8_string()
                           , request = #request{}   :: #request{}
                           , response = #response{} :: #response{}
                           }).
 
--record(api_blueprint,    { name                   :: utf8_string()
-                          , description            :: utf8_string()
+-record(api_blueprint,    { name = null            :: utf8_string()
+                          , description = null     :: utf8_string()
                           , operations = []        :: [#operation{}]
                           }).
 

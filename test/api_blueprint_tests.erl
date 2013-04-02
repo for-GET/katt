@@ -365,7 +365,7 @@ parse_request_test_() ->
           #operation{
             request=#request{
               headers=[{"Content-Type", "application/json"}],
-              body=undefined
+              body=null
             }
           }
         ]
@@ -489,7 +489,7 @@ parse_response_test_() ->
               headers=[
                 {"Content-Type", "application/json"}
               ],
-              body=undefined
+              body=null
             }
           }
         ]

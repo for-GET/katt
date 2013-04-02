@@ -9,8 +9,8 @@
 
 -include("blueprint_types.hrl").
 
-undefined_if_empty([])      -> 'undefined';
-undefined_if_empty(String)  -> String.
+null_if_empty([])      -> null;
+null_if_empty(String)  -> String.
 
 unicode(Chars) -> unicode:characters_to_binary(Chars).
 
@@ -45,8 +45,8 @@ parse(Input) when is_binary(Input) ->
     Description = proplists:get_value(description, Node),
     Operations = proplists:get_value(operations, Node),
     #api_blueprint{
-      name=undefined_if_empty(Name),
-      description=undefined_if_empty(Description),
+      name=null_if_empty(Name),
+      description=null_if_empty(Description),
       operations=Operations
     }
    end).
@@ -89,7 +89,7 @@ parse(Input) when is_binary(Input) ->
     Response = proplists:get_value(response, Node),
 
     #operation{
-      description=undefined_if_empty(Description),
+      description=null_if_empty(Description),
       request=Request,
       response=Response
     }
@@ -119,7 +119,7 @@ parse(Input) when is_binary(Input) ->
       method=Method,
       url=Url,
       headers=Headers,
-      body=undefined_if_empty(Body)
+      body=null_if_empty(Body)
     }
    end).
 
@@ -139,7 +139,7 @@ parse(Input) when is_binary(Input) ->
     #response{
       status=Status,
       headers=Headers,
-      body=undefined_if_empty(Body)
+      body=null_if_empty(Body)
     }
    end).
 
