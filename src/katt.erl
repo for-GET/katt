@@ -184,7 +184,7 @@ http_request(R = #request{}) ->
 dbg(Request, ExpectedResponse, ActualResponse, Result) ->
   ct:pal("Request:~n~p~n~n"
          "Expected response:~n~p~n~n"
-         "Actual response:~n~p~n~n",
+         "Actual response:~n~p~n~n"
          "Result:~n~p~n~n",
          [Request, ExpectedResponse, ActualResponse, Result]).
 
