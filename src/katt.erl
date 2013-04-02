@@ -10,7 +10,7 @@
 %%%   "{{>key}}"  Store value of the whole string
 %%%               (key must be unique within testcase)
 %%%   "{{<key}}"  Recall stored value.
-%%%   "{{>key<}" Substitute with value from SubVars list in run/3
+%%%   "{{>key<}}" Substitute with value from SubVars list in run/3
 %%%
 %%% @end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
