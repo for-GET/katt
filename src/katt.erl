@@ -117,7 +117,7 @@ make_request(#request{headers=Hdrs, url=Url0, body=RawBody0} = Req,
   Url = make_request_url(Params, substitute(extract(Url0), SubVars)),
   Req#request{ url  = Url
              , headers = Hdrs
-             , body = RawBody
+             , body = from_utf8(RawBody)
              }.
 
 make_response(#response{headers=Hdrs, body=RawBody0} = Rsp, SubVars) ->
@@ -125,8 +125,8 @@ make_response(#response{headers=Hdrs, body=RawBody0} = Rsp, SubVars) ->
   Rsp#response{ body = maybe_parse_body(Hdrs, RawBody)
               }.
 
-maybe_parse_body(_Hdrs, undefined) ->
-  undefined;
+maybe_parse_body(_Hdrs, null) ->
+  [];
 maybe_parse_body(Hdrs, Body) ->
   case is_json_body(Hdrs, Body) of
     true  -> parse_json(Body);
@@ -169,8 +169,8 @@ request(R = #request{}) ->
 
 http_request(R = #request{}) ->
   Body = case R#request.body of
-    undefined -> <<>>;
-    Bin       -> Bin
+    null -> <<>>;
+    Bin  -> Bin
   end,
   lhttpc:request( R#request.url
                 , R#request.method
