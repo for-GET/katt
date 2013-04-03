@@ -122,12 +122,11 @@ make_request( #katt_request{headers=Hdrs, url=Url0, body=RawBody0} = Req
   Url = make_request_url(Params, substitute(extract(Url0), SubVars)),
   Req#katt_request{ url  = Url
                   , headers = Hdrs
-                  , body = from_utf8(RawBody)
+                  , body = RawBody
                   }.
 
 make_response(#katt_response{headers=Hdrs, body=RawBody0} = Rsp, SubVars) ->
-  RawBody1 = substitute(RawBody0, SubVars),
-  RawBody = from_utf8(RawBody1),
+  RawBody = substitute(RawBody0, SubVars),
   Rsp#katt_response{ body = maybe_parse_body(Hdrs, RawBody)
                    }.
 
