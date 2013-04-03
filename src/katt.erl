@@ -84,10 +84,11 @@ run(From, Scenario, Params, SubVars) ->
 run_scenario(Blueprint, Params, SubVars) ->
   run_scenario(Blueprint#api_blueprint.operations, Params, SubVars, []).
 
-run_scenario([#katt_operation{request=Req, response=Rsp}|T]
+run_scenario( [#katt_operation{request=Req, response=Rsp}|T]
             , Params
             , SubVars
-            , Acc) ->
+            , Acc
+            ) ->
   Request          = make_request(Req, Params, SubVars),
   ExpectedResponse = make_response(Rsp, SubVars),
   ActualResponse   = request(Request),
@@ -113,21 +114,22 @@ make_request_url(Params, Path) ->
               , proplists:get_value(path, Params, Path)
               ], "").
 
-make_request(#katt_request{headers=Hdrs, url=Url0, body=RawBody0} = Req,
-        Params,
-        SubVars) ->
+make_request( #katt_request{headers=Hdrs, url=Url0, body=RawBody0} = Req
+            , Params
+            , SubVars
+            ) ->
   RawBody = substitute(RawBody0, SubVars),
   Url = make_request_url(Params, substitute(extract(Url0), SubVars)),
   Req#katt_request{ url  = Url
-             , headers = Hdrs
-             , body = from_utf8(RawBody)
-             }.
+                  , headers = Hdrs
+                  , body = from_utf8(RawBody)
+                  }.
 
 make_response(#katt_response{headers=Hdrs, body=RawBody0} = Rsp, SubVars) ->
   RawBody1 = substitute(RawBody0, SubVars),
   RawBody = from_utf8(RawBody1),
   Rsp#katt_response{ body = maybe_parse_body(Hdrs, RawBody)
-              }.
+                   }.
 
 maybe_parse_body(_Hdrs, null) ->
   [];
@@ -162,9 +164,9 @@ to_proplist(Value)                       ->
 request(R = #katt_request{}) ->
   case http_request(R) of
     {ok, {{Code, _}, Hdrs, RawBody}} ->
-      #katt_response{ status = Code
-                    , headers     = Hdrs
-                    , body        = maybe_parse_body(Hdrs, RawBody)
+      #katt_response{ status  = Code
+                    , headers = Hdrs
+                    , body    = maybe_parse_body(Hdrs, RawBody)
                     };
     {error, timeout}                 ->
       {error, http_timeout};
@@ -175,7 +177,7 @@ request(R = #katt_request{}) ->
 http_request(R = #katt_request{}) ->
   Body = case R#katt_request.body of
     null -> <<>>;
-    Bin       -> Bin
+    Bin  -> Bin
   end,
   lhttpc:request( R#katt_request.url
                 , R#katt_request.method
@@ -201,14 +203,14 @@ substitute(Bin, K, V) ->
              to_list(V), [{return, binary}, global]).
 
 %%%_* Validation -------------------------------------------------------
-validate(E = #katt_response{}, A = #katt_response{})      ->
+validate(E = #katt_response{}, A = #katt_response{}) ->
   Result = [validate_status(E, A), validate_headers(E, A), validate_body(E, A)],
   case lists:filter(fun(X) -> X =/= pass end, lists:flatten(Result)) of
     []       -> pass;
     Failures -> Failures
   end;
-validate(E, #katt_response{})                             -> {fail, E};
-validate(#katt_response{}, A)                             -> {fail, A}.
+validate(E, #katt_response{})                        -> {fail, E};
+validate(#katt_response{}, A)                        -> {fail, A}.
 
 validate_status(#katt_response{status=E}, #katt_response{status=A}) ->
   compare(status, E, A).
