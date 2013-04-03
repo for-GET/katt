@@ -27,7 +27,7 @@ api <-
 api_name <-
   "---" s+ name:text1 eolf
   `
-    Name = unicode(proplists:get_value(name, Node)),
+    Name = proplists:get_value(name, Node),
     re:replace(Name, "\s+---$", "", [{return, binary}])
   `;
 
@@ -40,7 +40,7 @@ api_description <-
 api_description_line <-
   !("---" s* eolf) text:text0 eol
   `
-    unicode(proplists:get_value(text, Node))
+    proplists:get_value(text, Node)
   `;
 
 operations <-
@@ -86,7 +86,7 @@ operation_description <-
 operation_description_line <-
   !http_method text:text0 eol
   `
-    unicode(proplists:get_value(text, Node))
+    proplists:get_value(text, Node)
   `;
 
 %% Assembled from RFC 2616, 5323, 5789.
@@ -104,9 +104,8 @@ http_method <-
   / "MOVE"
   / "MKCOL"
   / "HEAD"
-  `
-    binary:bin_to_list(Node)
-  `;
+  ~
+  ;
 
 request <-
   signature:signature headers:request_headers body:body?
@@ -161,7 +160,7 @@ response_header <-
 http_status <-
   [1-5] [0-9] [0-9]
   `
-    {Int, _Rest} = string:to_integer(concatenate_chars(Node)),
+    {Int, _Rest} = string:to_integer(unicode:characters_to_list(concatenate_chars(Node))),
     Int
   `;
 
@@ -179,23 +178,25 @@ http_header <-
 http_header_name <-
   [\x21-\x39\x3B-\x7E]+
   `
-    concatenate_chars(Node)
+    unicode:characters_to_list(concatenate_chars(Node))
   `;
 
 
-%% Assuming that the header value can contain unicode chars.
-http_header_value <- text0 ~;
+http_header_value <- text0
+  `
+    unicode:characters_to_list(Node)
+  `;
 
 signature <-
   method:http_method s+ url:text1 eol
   `
-    Method = proplists:get_value(method, Node),
-    Url = proplists:get_value(url, Node),
+    Method = unicode:characters_to_list(proplists:get_value(method, Node)),
+    Url = unicode:characters_to_list(proplists:get_value(url, Node)),
     {Method, Url}
   `;
 
 
-%% We don't support DelimitedBodyFixed / DelimitedBodyVariable.
+%% We do not support DelimitedBodyFixed / DelimitedBodyVariable.
 %% TODO: Add support for them?
 body <- simple_body ~;
 
@@ -208,7 +209,7 @@ simple_body <-
 simple_body_line <-
   !in !out !empty_line text:text1 eolf
   `
-    unicode(proplists:get_value(text, Node))
+    proplists:get_value(text, Node)
   `;
 
 in <- ">" s+ ~;
@@ -259,8 +260,6 @@ s <- [\t\v\f ] ~;
 null_if_empty([])      -> null;
 null_if_empty(String)  -> String.
 
-unicode(Chars) -> unicode:characters_to_binary(Chars).
-
 concatenate_lines([H|_]=Lines) when is_binary(H) ->
   StringList = lists:map(fun unicode:characters_to_list/1, Lines),
   unicode:characters_to_binary(string:join(StringList, "\n"));
@@ -268,8 +267,6 @@ concatenate_lines([]) ->
   [].
 
 concatenate_chars(Chars) ->
-  F = fun(Bin) -> binary:bin_to_list(Bin) end,
-  CharList = lists:map(F, Chars),
-  string:join(CharList, "").
+  << <<Char/utf8>> || <<Char/utf8>> <- Chars >>.
 
 `

@@ -835,10 +835,10 @@ op_method(Method) ->
 
 %% Unindent the blueprint before parsing it.
 parse_unindented(BlueprintString) ->
-  api_blueprint:parse(unindent(BlueprintString)).
+  parse(unindent(BlueprintString)).
 
 parse(BlueprintString) ->
-  api_blueprint:parse(BlueprintString).
+  api_blueprint:parse(utf8(BlueprintString)).
 
 %% Naive conversion to UTF-8.
 utf8(Chars) ->
