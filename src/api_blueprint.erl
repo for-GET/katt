@@ -88,7 +88,7 @@ parse(Input) when is_binary(Input) ->
     Request = proplists:get_value(request, Node),
     Response = proplists:get_value(response, Node),
 
-    #operation{
+    #katt_operation{
       description=null_if_empty(Description),
       request=Request,
       response=Response
@@ -115,7 +115,7 @@ parse(Input) when is_binary(Input) ->
     {Method, Url} = proplists:get_value(signature, Node),
     Headers = proplists:get_value(headers, Node),
     Body = proplists:get_value(body, Node),
-    #request{
+    #katt_request{
       method=Method,
       url=Url,
       headers=Headers,
@@ -136,7 +136,7 @@ parse(Input) when is_binary(Input) ->
     Status = proplists:get_value(status, Node),
     Headers = proplists:get_value(headers, Node),
     Body = proplists:get_value(body, Node),
-    #response{
+    #katt_response{
       status=Status,
       headers=Headers,
       body=null_if_empty(Body)

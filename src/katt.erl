@@ -84,7 +84,10 @@ run(From, Scenario, Params, SubVars) ->
 run_scenario(Blueprint, Params, SubVars) ->
   run_scenario(Blueprint#api_blueprint.operations, Params, SubVars, []).
 
-run_scenario([#operation{request=Req, response=Rsp}|T], Params, SubVars, Acc) ->
+run_scenario([#katt_operation{request=Req, response=Rsp}|T]
+            , Params
+            , SubVars
+            , Acc) ->
   Request          = make_request(Req, Params, SubVars),
   ExpectedResponse = make_response(Rsp, SubVars),
   ActualResponse   = request(Request),
@@ -110,20 +113,20 @@ make_request_url(Params, Path) ->
               , proplists:get_value(path, Params, Path)
               ], "").
 
-make_request(#request{headers=Hdrs, url=Url0, body=RawBody0} = Req,
+make_request(#katt_request{headers=Hdrs, url=Url0, body=RawBody0} = Req,
         Params,
         SubVars) ->
   RawBody = substitute(RawBody0, SubVars),
   Url = make_request_url(Params, substitute(extract(Url0), SubVars)),
-  Req#request{ url  = Url
+  Req#katt_request{ url  = Url
              , headers = Hdrs
              , body = from_utf8(RawBody)
              }.
 
-make_response(#response{headers=Hdrs, body=RawBody0} = Rsp, SubVars) ->
+make_response(#katt_response{headers=Hdrs, body=RawBody0} = Rsp, SubVars) ->
   RawBody1 = substitute(RawBody0, SubVars),
   RawBody = from_utf8(RawBody1),
-  Rsp#response{ body = maybe_parse_body(Hdrs, RawBody)
+  Rsp#katt_response{ body = maybe_parse_body(Hdrs, RawBody)
               }.
 
 maybe_parse_body(_Hdrs, null) ->
@@ -156,27 +159,27 @@ to_proplist(Str) when is_binary(Str)     ->
 to_proplist(Value)                       ->
   Value.
 
-request(R = #request{}) ->
+request(R = #katt_request{}) ->
   case http_request(R) of
     {ok, {{Code, _}, Hdrs, RawBody}} ->
-      #response{ status      = Code
-               , headers     = Hdrs
-               , body        = maybe_parse_body(Hdrs, RawBody)
-               };
+      #katt_response{ status = Code
+                    , headers     = Hdrs
+                    , body        = maybe_parse_body(Hdrs, RawBody)
+                    };
     {error, timeout}                 ->
       {error, http_timeout};
     Error = {error, _}               ->
       Error
   end.
 
-http_request(R = #request{}) ->
-  Body = case R#request.body of
+http_request(R = #katt_request{}) ->
+  Body = case R#katt_request.body of
     null -> <<>>;
-    Bin  -> Bin
+    Bin       -> Bin
   end,
-  lhttpc:request( R#request.url
-                , R#request.method
-                , R#request.headers
+  lhttpc:request( R#katt_request.url
+                , R#katt_request.method
+                , R#katt_request.headers
                 , Body
                 , ?REQUEST_TIMEOUT
                 , []
@@ -198,28 +201,28 @@ substitute(Bin, K, V) ->
              to_list(V), [{return, binary}, global]).
 
 %%%_* Validation -------------------------------------------------------
-validate(E = #response{}, A = #response{})           ->
+validate(E = #katt_response{}, A = #katt_response{})      ->
   Result = [validate_status(E, A), validate_headers(E, A), validate_body(E, A)],
   case lists:filter(fun(X) -> X =/= pass end, lists:flatten(Result)) of
     []       -> pass;
     Failures -> Failures
   end;
-validate(E, #response{})                             -> {fail, E};
-validate(#response{}, A)                             -> {fail, A}.
+validate(E, #katt_response{})                             -> {fail, E};
+validate(#katt_response{}, A)                             -> {fail, A}.
 
-validate_status(#response{status=E}, #response{status=A}) ->
+validate_status(#katt_response{status=E}, #katt_response{status=A}) ->
   compare(status, E, A).
 
 %% Actual headers are allowed to be a superset of expected headers, since
 %% we don't want tests full of boilerplate like tests for headers such as
 %% Content-Length, Server, Date, etc.
-validate_headers(#response{headers=E}, #response{headers=A}) ->
+validate_headers(#katt_response{headers=E}, #katt_response{headers=A}) ->
   ExpectedHeaders = lists:usort(proplists:get_keys(E)),
   Get = fun proplists:get_value/2,
   [ do_validate(K, Get(K, E), Get(K, A)) || K <- ExpectedHeaders ].
 
 %% Bodies must be identical, no subset matching or similar.
-validate_body(#response{body=E}, #response{body=A}) ->
+validate_body(#katt_response{body=E}, #katt_response{body=A}) ->
   do_validate(body, E, A).
 
 do_validate(_, E = [{_,_}|_], A = [{_,_}|_])           ->

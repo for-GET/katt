@@ -35,9 +35,9 @@ parse_file_test()->
   ?assertMatch(
     {ok, #api_blueprint{ name=Name
                        , description=_
-                       , operations=[ #operation{description=Op1Desc}
-                                    , #operation{}
-                                    , #operation{}
+                       , operations=[ #katt_operation{description=Op1Desc}
+                                    , #katt_operation{}
+                                    , #katt_operation{}
                                     ]
                        }},
     katt_blueprint_parse:file(?EXAMPLE_FILE)).

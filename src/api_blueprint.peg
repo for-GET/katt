@@ -70,7 +70,7 @@ operation <-
     Request = proplists:get_value(request, Node),
     Response = proplists:get_value(response, Node),
 
-    #operation{
+    #katt_operation{
       description=null_if_empty(Description),
       request=Request,
       response=Response
@@ -114,7 +114,7 @@ request <-
     {Method, Url} = proplists:get_value(signature, Node),
     Headers = proplists:get_value(headers, Node),
     Body = proplists:get_value(body, Node),
-    #request{
+    #katt_request{
       method=Method,
       url=Url,
       headers=Headers,
@@ -136,7 +136,7 @@ response <-
     Status = proplists:get_value(status, Node),
     Headers = proplists:get_value(headers, Node),
     Body = proplists:get_value(body, Node),
-    #response{
+    #katt_response{
       status=Status,
       headers=Headers,
       body=null_if_empty(Body)
@@ -256,7 +256,7 @@ s <- [\t\v\f ] ~;
 
 -include("blueprint_types.hrl").
 
-null_if_empty([])      -> 'null';
+null_if_empty([])      -> null;
 null_if_empty(String)  -> String.
 
 unicode(Chars) -> unicode:characters_to_binary(Chars).

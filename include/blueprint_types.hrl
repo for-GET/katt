@@ -7,25 +7,25 @@
 -type utf8_string() :: unicode:unicode_binary().
 -type http_header() :: {string(), string()|integer()}.
 
--record(request,          { method = "GET"         :: string()
-                          , url = "/"              :: string()
-                          , headers = []           :: [http_header()]
-                          , body = null            :: binary()
+-record(katt_request,     { method = "GET"              :: string()
+                          , url = "/"                   :: string()
+                          , headers = []                :: [http_header()]
+                          , body = null                 :: binary()
                           }).
 
--record(response,         { status = 200           :: integer()
-                          , headers = []           :: [http_header()]
-                          , body = null            :: binary()
+-record(katt_response,    { status = 200                :: integer()
+                          , headers = []                :: [http_header()]
+                          , body = null                 :: binary()
                           }).
 
--record(operation,        { description = null     :: utf8_string()
-                          , request = #request{}   :: #request{}
-                          , response = #response{} :: #response{}
+-record(katt_operation,   { description = null          :: utf8_string()
+                          , request = #katt_request{}   :: #katt_request{}
+                          , response = #katt_response{} :: #katt_response{}
                           }).
 
--record(api_blueprint,    { name = null            :: utf8_string()
-                          , description = null     :: utf8_string()
-                          , operations = []        :: [#operation{}]
+-record(api_blueprint,    { name = null                 :: utf8_string()
+                          , description = null          :: utf8_string()
+                          , operations = []             :: [#katt_operation{}]
                           }).
 
 %%%_* Emacs ============================================================
