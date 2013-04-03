@@ -121,7 +121,8 @@ make_request(#request{headers=Hdrs, url=Url0, body=RawBody0} = Req,
              }.
 
 make_response(#response{headers=Hdrs, body=RawBody0} = Rsp, SubVars) ->
-  RawBody = substitute(RawBody0, SubVars),
+  RawBody1 = substitute(RawBody0, SubVars),
+  RawBody = from_utf8(RawBody1),
   Rsp#response{ body = maybe_parse_body(Hdrs, RawBody)
               }.
 
@@ -141,7 +142,8 @@ is_json_body(Hdrs, _Body) ->
     _ -> true
   end.
 
-parse_json(Binary) -> to_proplist(mochijson2:decode(Binary)).
+parse_json(Binary) ->
+  to_proplist(mochijson2:decode(Binary)).
 
 to_proplist(L = [{struct, _}|_])         ->
   [to_proplist(S) || S <- L];

@@ -842,7 +842,7 @@ parse(BlueprintString) ->
 
 %% Naive conversion to UTF-8.
 utf8(Chars) ->
-  unicode:characters_to_binary(Chars).
+  unicode:characters_to_binary(Chars, utf8).
 
 %% Remove leading spaces from all lines in Str.
 unindent(Str) ->
