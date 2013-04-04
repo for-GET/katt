@@ -130,7 +130,7 @@ parse_api_description_test_() ->
 
 fail_parse_invalid_api_description_test() ->
   ?assertMatch(
-       {fail, _},
+       {error, _},
        parse("
         --- API ---
 
@@ -314,7 +314,7 @@ parse_operation_description_test_() ->
 
 fail_parse_invalid_operation_description_test() ->
   ?assertMatch(
-     {fail, _},
+     {error, _},
      parse("
       --- API ---
 
@@ -354,7 +354,7 @@ parse_http_method_test_() ->
 
 fail_parse_invalid_http_method_test_() ->
   [ ?_assertMatch(
-      {fail, _},
+      {error, _},
       parse_unindented("
         --- API ---
 
@@ -641,7 +641,7 @@ parse_http_status_test_() ->
 fail_parse_invalid_http_status_test_() ->
   %% Test a small sample of invalid HTTP codes.
   [ ?_assertMatch(
-      {fail, _},
+      {error, _},
       parse_unindented("
         --- API ---
 
@@ -653,7 +653,7 @@ fail_parse_invalid_http_status_test_() ->
 
 fail_parse_non_numeric_http_status_test_() ->
   [ ?_assertMatch(
-      {fail, _},
+      {error, _},
       parse_unindented("
         --- API ---
 
@@ -661,7 +661,7 @@ fail_parse_non_numeric_http_status_test_() ->
         <
       "))
   , ?_assertMatch(
-      {fail, _},
+      {error, _},
       parse_unindented("
         --- API ---
 
@@ -756,7 +756,7 @@ parse_http_header_value_test_() ->
 
 fail_parse_invalid_http_header_name_test_() ->
   [ ?_assertMatch(
-      {fail, _},
+      {error, _},
       parse_unindented("
         --- API ---
 
@@ -799,7 +799,7 @@ parse_body_test_() ->
 %% We don't support the delimited body
 fail_parse_invalid_body_test_() ->
   [ ?_assertMatch(
-      {fail, _},
+      {error, _},
       parse_unindented("
         --- API ---
 
@@ -860,7 +860,10 @@ parse_unindented(BlueprintString) ->
   parse(unindent(BlueprintString)).
 
 parse(BlueprintString) ->
-  katt_blueprint_parse:string(utf8(BlueprintString)).
+  try katt_blueprint_parse:string(utf8(BlueprintString)) of
+    {ok, BP} -> BP
+  catch error:Reason -> {error, Reason}
+  end.
 
 %% Naive conversion to UTF-8.
 utf8(Chars) ->
