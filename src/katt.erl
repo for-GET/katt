@@ -35,7 +35,7 @@
                     ]).
 
 %%%_* Includes ==========================================================
--include_lib("include/blueprint_types.hrl").
+-include("blueprint_types.hrl").
 
 %%%_* Defines ==========================================================
 -define(KEY_PREFIX,        "katt_").
