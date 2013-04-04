@@ -26,18 +26,16 @@ to_integer(X) when is_integer(X) -> X;
 to_integer(X) when is_list(X)    -> list_to_integer(X);
 to_integer(X) when is_binary(X)  -> to_integer(binary_to_list(X)).
 
-%% Transform (possibly utf8 encoded) binary to list, ignore everything else
+%% Transform (possibly utf8 encoded) binary to list, ignore everything else.
 from_utf8(X) when is_binary(X) ->
   case unicode:characters_to_list(X, utf8) of
     R when is_list(R)  -> R;
     {error, _, _}      -> binary_to_list(X);
     {incomplete, _, _} -> binary_to_list(X)
-  end;
-from_utf8(X)                   -> X.
+  end.
 
 %% Transform list to utf8 encoded binary, ignore everything else
-to_utf8(X) when is_list(X) -> unicode:characters_to_binary(X, utf8);
-to_utf8(X)                 -> X.
+to_utf8(X) when is_list(X) -> unicode:characters_to_binary(X, utf8).
 
 %%%_* Emacs ============================================================
 %%% Local Variables:
