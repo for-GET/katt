@@ -227,7 +227,9 @@ parse_operation_test_() ->
       "))
   , ?_assertEqual(
       #api_blueprint{ name=utf8("API")
-                    , operations=[ Op#katt_operation{description=utf8("Root resource")}
+                    , operations=[ Op#katt_operation{
+                                     description=utf8("Root resource")
+                                   }
                                  ]
                     },
       parse_unindented("
@@ -279,7 +281,9 @@ parse_operation_test_() ->
 parse_operation_description_test_() ->
   [ ?_assertEqual(
       #api_blueprint{ name=utf8("API")
-                    , operations=[ #katt_operation{description=utf8("abcd")}
+                    , operations=[ #katt_operation{
+                                     description=utf8("abcd")
+                                   }
                                  ]
                     },
       parse_unindented("
@@ -291,7 +295,9 @@ parse_operation_description_test_() ->
       "))
   , ?_assertEqual(
       #api_blueprint{ name=utf8("API")
-                    , operations=[ #katt_operation{description=utf8("# abcd\nhello")}
+                    , operations=[ #katt_operation{
+                                     description=utf8("# abcd\nhello")
+                                   }
                                  ]
                     },
       parse_unindented("
@@ -617,7 +623,9 @@ parse_http_status_test_() ->
   %% Test a small sample of valid HTTP codes.
   [ ?_assertEqual(
       #api_blueprint{ name=utf8("API")
-                    , operations=[ #katt_operation{ response=#katt_response{ status=N }}
+                    , operations=[ #katt_operation{
+                                     response=#katt_response{status=N}
+                                    }
                                  ]
                     },
       parse_unindented("

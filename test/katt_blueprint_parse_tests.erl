@@ -14,8 +14,8 @@
 
 parse_string_test()->
   ?assertEqual(
-    {ok, #api_blueprint{ name=(<<"¿Title · hello"/utf8>>) }},
-    katt_blueprint_parse:string(<<"--- ¿Title · hello ---\n---\n---\n"/utf8>>)).
+    {ok, #api_blueprint{ name=(<<"¿Title ·"/utf8>>) }},
+    katt_blueprint_parse:string(<<"--- ¿Title · ---\n---\n---\n"/utf8>>)).
 
 
 parse_invalid_string_test_()->
