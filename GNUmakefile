@@ -6,6 +6,7 @@ all: get-deps compile xref
 
 compile:
 	./rebar compile
+	priv/compile-parser
 
 get-deps:
 	./rebar get-deps

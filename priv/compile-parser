@@ -1,0 +1,14 @@
+#!/usr/bin/env escript
+
+%% Compiles a parser module for the API blueprint format from the Neotoma
+%% grammar file.
+
+main(_) ->
+  Neotoma = filename:dirname(escript:script_name()) ++ "/../deps/neotoma/ebin",
+  code:add_pathz(filename:absname(Neotoma)),
+  neotoma:file("priv/api_blueprint.peg", [{output, "."}]),
+  {ok, _} = compile:file("api_blueprint.erl", [ {i, "include"}
+                                              , {outdir, "ebin"}
+                                              ]),
+  ok = file:delete("api_blueprint.erl"),
+  ok.
