@@ -39,16 +39,6 @@ from_utf8(X)                   -> X.
 to_utf8(X) when is_list(X) -> unicode:characters_to_binary(X, utf8);
 to_utf8(X)                 -> X.
 
-%%%_* Internal =========================================================
-get_new_values($", Str, Acc) -> do_get_new_values({$", $"}, Str, Acc);
-get_new_values($<, Str, Acc) -> do_get_new_values({$<, $>}, Str, Acc);
-get_new_values(C,  Str, Acc) -> {Str, [C|Acc]}.
-
-do_get_new_values({C1, C2}, Str, Acc) ->
-  Position      = string:str(Str, [C2]), % Search for the closing char
-  {Quote, Tail} = lists:split(Position, Str),
-  {Tail, lists:reverse([C1|Quote]) ++ Acc}.
-
 %%%_* Emacs ============================================================
 %%% Local Variables:
 %%% allout-layout: t
