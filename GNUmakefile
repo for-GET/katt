@@ -1,13 +1,15 @@
 suite=$(if $(SUITE), suite=$(SUITE), )
 
-.PHONY:	all compile get-deps update-deps delete-deps doc xref test eunit clean
+.PHONY:	all compile bootstrap-parser get-deps update-deps delete-deps doc xref test eunit clean
 
 all: get-deps compile xref
 
-compile:
+compile: bootstrap-parser
 	./rebar compile
-	@ rm ebin/katt_blueprint.beam
-	@ priv/compile-parser
+
+bootstrap-parser: get-deps
+	@ cd deps/neotoma && make
+	@ ./priv/compile-parser
 
 get-deps:
 	./rebar get-deps
@@ -27,8 +29,7 @@ xref:
 test: eunit
 
 eunit:
-	@ erlc -I include -pa ebin -pa test -o ebin test/*.erl
-	@ erl -noshell -pa ebin -eval "eunit:test(katt_blueprint_parse_tests, [])" -s init stop
+	./rebar eunit skip_deps=true
 
 conf_clean:
 	@:
@@ -40,3 +41,4 @@ clean:
 	$(RM) doc/*.css
 	$(RM) doc/edoc-info
 	$(RM) ebin/*.d
+	$(RM) src/katt_blueprint.erl

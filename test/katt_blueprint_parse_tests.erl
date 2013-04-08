@@ -7,8 +7,8 @@
 -include_lib("eunit/include/eunit.hrl").
 -include("blueprint_types.hrl").
 
--define(EXAMPLE_FILE, "test/examples/example1.apib").
--define(INVALID_FILE, "test/examples/example_invalid1.apib").
+-define(EXAMPLE_FILE, "../test/examples/example1.apib").
+-define(INVALID_FILE, "../test/examples/example_invalid1.apib").
 
 parse_api_test_()->
   Expected = #katt_blueprint{ name=(<<"API tæst"/utf8>>)
