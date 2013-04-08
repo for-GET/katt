@@ -6,12 +6,14 @@
 %%% cause a failure.
 %%%
 %%% Tags with special meaning:
+%%% <!-- Special chars below are encoded as HTML entities for make docs -->
+%%% <pre>
 %%%   "{{_}}"     Match anything (i.e. no real validation, only check existence)
-%%%   "{{>key}}"  Store value of the whole string
+%%%   "{{&gt;key}}"  Store value of the whole string
 %%%               (key must be unique within testcase)
-%%%   "{{<key}}"  Recall stored value.
-%%%   "{{>key<}}" Substitute with value from SubVars list in run/3
-%%%
+%%%   "{{&lt;key}}"  Recall stored value.
+%%%   "{{&gt;key&lt;}}" Substitute with value from SubVars list in run/3
+%%% </pre>
 %%% @end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
