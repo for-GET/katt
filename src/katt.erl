@@ -78,13 +78,14 @@ run(Scenario, Params, SubVars) ->
 %% @private
 run(From, Scenario, Params, SubVars) ->
   {ok, Blueprint} = katt_blueprint_parse:file(Scenario),
-  From ! {done, run_scenario(Blueprint, Params, SubVars)}.
+  From ! {done, run_scenario(Scenario, Blueprint, Params, SubVars)}.
 
 %%%_* Internal =========================================================
-run_scenario(Blueprint, Params, SubVars) ->
-  run_scenario(Blueprint#api_blueprint.operations, Params, SubVars, []).
+run_scenario(Scenario, Blueprint, Params, SubVars) ->
+  run_scenario(Scenario, Blueprint#api_blueprint.operations, Params, SubVars, []).
 
-run_scenario( [#katt_operation{ description=Description
+run_scenario( Scenario
+            , [#katt_operation{ description=Description
                               , request=Req
                               , response=Rsp
                               }|T]
@@ -96,10 +97,10 @@ run_scenario( [#katt_operation{ description=Description
   ExpectedResponse = make_response(Rsp, SubVars),
   ActualResponse   = request(Request),
   case Result = validate(ExpectedResponse, ActualResponse) of
-    pass -> run_scenario(T, Params, SubVars, [{Request, Result}|Acc]);
-    _    -> dbg(Description, Request, ExpectedResponse, ActualResponse, Result)
+    pass -> run_scenario(Scenario, T, Params, SubVars, [{Request, Result}|Acc]);
+    _    -> dbg(Scenario, Description, Request, ExpectedResponse, ActualResponse, Result)
   end;
-run_scenario([], _, _, Acc) ->
+run_scenario(_, [], _, _, Acc) ->
   Acc.
 
 make_request_url(_, Url="http://"++_)  -> Url;
@@ -190,13 +191,20 @@ http_request(R = #katt_request{}) ->
                 ).
 
 
-dbg(Description, Request, ExpectedResponse, ActualResponse, Result) ->
-  ct:pal("Description:~n~p~n~n"
+dbg(Scenario, Description, Request, ExpectedResponse, ActualResponse, Result) ->
+  ct:pal("Scenario:~n~p~n~n"
+         "Description:~n~p~n~n"
          "Request:~n~p~n~n"
          "Expected response:~n~p~n~n"
          "Actual response:~n~p~n~n"
          "Result:~n~p~n~n",
-         [Description, Request, ExpectedResponse, ActualResponse, Result]).
+         [ Scenario
+         , Description
+         , Request
+         , ExpectedResponse
+         , ActualResponse
+         , Result
+         ]).
 
 substitute(Bin, [])         -> Bin;
 substitute(Bin, [{K, V}|T]) -> substitute(substitute(Bin, K, V), T).
