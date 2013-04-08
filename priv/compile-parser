@@ -6,9 +6,9 @@
 main(_) ->
   Neotoma = filename:dirname(escript:script_name()) ++ "/../deps/neotoma/ebin",
   code:add_pathz(filename:absname(Neotoma)),
-  neotoma:file("priv/api_blueprint.peg", [{output, "."}]),
-  {ok, _} = compile:file("api_blueprint.erl", [ {i, "include"}
-                                              , {outdir, "ebin"}
-                                              ]),
-  ok = file:delete("api_blueprint.erl"),
+  neotoma:file("priv/katt_blueprint.peg", [{output, "."}]),
+  {ok, _} = compile:file("katt_blueprint.erl", [ {i, "include"}
+                                               , {outdir, "ebin"}
+                                               ]),
+  ok = file:delete("katt_blueprint.erl"),
   ok.

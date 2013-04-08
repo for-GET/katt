@@ -82,7 +82,7 @@ run(From, Scenario, Params, SubVars) ->
 
 %%%_* Internal =========================================================
 run_scenario(Blueprint, Params, SubVars) ->
-  run_scenario(Blueprint#api_blueprint.operations, Params, SubVars, []).
+  run_scenario(Blueprint#katt_blueprint.operations, Params, SubVars, []).
 
 run_scenario( [#katt_operation{request=Req, response=Rsp}|T]
             , Params

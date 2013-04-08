@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% KATT Blueprint format grammar and transformations
 %%%
-%%% This grammar is used by Neotoma to generate the parser (api_blueprint.erl).
+%%% This grammar is used by Neotoma to generate a parser (katt_blueprint.erl).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 api <-
@@ -17,7 +17,7 @@ api <-
     Name = proplists:get_value(name, Node),
     Description = proplists:get_value(description, Node),
     Operations = proplists:get_value(operations, Node),
-    #api_blueprint{
+    #katt_blueprint{
       name=null_if_empty(Name),
       description=null_if_empty(Description),
       operations=Operations

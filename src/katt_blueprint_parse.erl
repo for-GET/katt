@@ -26,20 +26,20 @@
 
 %%%_* Types ============================================================
 
--type katt_blueprint() :: #api_blueprint{}.
+-type katt_blueprint() :: #katt_blueprint{}.
 
 %%%_* API ==============================================================
 
 -spec string(string()) -> {ok, katt_blueprint()}.
 %% @doc Parse a KATT Blueprint string.
 string(Str) ->
-  #api_blueprint{} = BP = api_blueprint:parse(Str),
+  #katt_blueprint{} = BP = katt_blueprint:parse(Str),
   {ok, BP}.
 
 -spec file(file:name()) -> {ok, katt_blueprint()}.
 %% @doc Parse a KATT Blueprint file.
 file(File) ->
-  #api_blueprint{} = BP = api_blueprint:file(File),
+  #katt_blueprint{} = BP = katt_blueprint:file(File),
   {ok, BP}.
 
 %%%_* Emacs ============================================================

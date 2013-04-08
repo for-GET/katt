@@ -7,17 +7,17 @@
 -include_lib("eunit/include/eunit.hrl").
 -include("blueprint_types.hrl").
 
--define(EXAMPLE_FILE, "../test/examples/example1.apib").
--define(INVALID_FILE, "../test/examples/example_invalid1.apib").
+-define(EXAMPLE_FILE, "test/examples/example1.apib").
+-define(INVALID_FILE, "test/examples/example_invalid1.apib").
 
 parse_api_test_()->
-  Expected = #api_blueprint{ name=(<<"API tæst"/utf8>>)
-                           , description=(<<"¿Test ÄPI?"/utf8>>)
-                           , operations=[ op_url("/one")
-                                        , op_url("/two")
-                                        , op_url("/three")
-                                        ]
-                           },
+  Expected = #katt_blueprint{ name=(<<"API tæst"/utf8>>)
+                            , description=(<<"¿Test ÄPI?"/utf8>>)
+                            , operations=[ op_url("/one")
+                                         , op_url("/two")
+                                         , op_url("/three")
+                                         ]
+                            },
   [ ?_assertEqual(
       Expected,
       parse_unindented("--- API tæst ---
@@ -85,7 +85,7 @@ parse_api_test_()->
 
 
 parse_api_name_test_() ->
-  Expected = #api_blueprint{ name=utf8("abcd") },
+  Expected = #katt_blueprint{ name=utf8("abcd") },
   [ ?_assertEqual(Expected, parse_unindented("--- abcd"))
   , ?_assertEqual(Expected, parse_unindented("---   abcd"))
   , ?_assertEqual(Expected, parse_unindented("--- abcd ---"))
@@ -95,7 +95,7 @@ parse_api_name_test_() ->
 
 parse_api_description_test_() ->
   [ ?_assertEqual(
-      #api_blueprint{ name=utf8("API") },
+      #katt_blueprint{ name=utf8("API") },
       parse_unindented("
           --- API ---
 
@@ -104,9 +104,9 @@ parse_api_description_test_() ->
           ")
       )
   , ?_assertEqual(
-      #api_blueprint{ name=utf8("API")
-                    , description=utf8("asdf")
-                    },
+      #katt_blueprint{ name=utf8("API")
+                     , description=utf8("asdf")
+                     },
       parse_unindented("
         --- API ---
 
@@ -115,9 +115,9 @@ parse_api_description_test_() ->
         ---
         "))
   , ?_assertEqual(
-      #api_blueprint{ name=utf8("API")
-                    , description=utf8("abcd\nefgh\nijkl")
-                    },
+      #katt_blueprint{ name=utf8("API")
+                     , description=utf8("abcd\nefgh\nijkl")
+                     },
       parse_unindented("
         --- API ---
 
@@ -141,18 +141,18 @@ fail_parse_invalid_api_description_test() ->
 
 
 parse_operations_test_() ->
-  Expected0 = #api_blueprint{ name=utf8("API")
-                            },
-  Expected1 = #api_blueprint{ name=utf8("API")
-                            , operations=[ op_url("/one")
-                                         ]
-                            },
-  Expected2 = #api_blueprint{ name=utf8("API")
-                            , operations=[ op_url("/one")
-                                         , op_url("/two")
-                                         , op_url("/three")
-                                         ]
-                            },
+  Expected0 = #katt_blueprint{ name=utf8("API")
+                             },
+  Expected1 = #katt_blueprint{ name=utf8("API")
+                             , operations=[ op_url("/one")
+                                          ]
+                             },
+  Expected2 = #katt_blueprint{ name=utf8("API")
+                             , operations=[ op_url("/one")
+                                          , op_url("/two")
+                                          , op_url("/three")
+                                          ]
+                             },
   [ ?_assertEqual(
       Expected0,
       parse_unindented("
@@ -213,9 +213,9 @@ parse_operation_test_() ->
                       },
   Op = #katt_operation{ request=Request, response=Response },
   [ ?_assertEqual(
-      #api_blueprint{ name=utf8("API")
-                    , operations=[Op]
-                    },
+      #katt_blueprint{ name=utf8("API")
+                     , operations=[Op]
+                     },
       parse_unindented("
         --- API ---
 
@@ -227,12 +227,12 @@ parse_operation_test_() ->
         { \"id\": 1 }
       "))
   , ?_assertEqual(
-      #api_blueprint{ name=utf8("API")
-                    , operations=[ Op#katt_operation{
-                                     description=utf8("Root resource")
-                                   }
-                                 ]
-                    },
+      #katt_blueprint{ name=utf8("API")
+                     , operations=[ Op#katt_operation{
+                                      description=utf8("Root resource")
+                                    }
+                                  ]
+                     },
       parse_unindented("
         --- API ---
 
@@ -245,15 +245,15 @@ parse_operation_test_() ->
         { \"id\": 1 }
       "))
   , ?_assertEqual(
-      #api_blueprint{ name=utf8("API")
-                    , operations=[ op_url("url")
-                                 , op_url("/url")
-                                 , op_url("/")
-                                 , op_url("http://host:80/")
-                                 , op_url("{{<var}}")
-                                 , op_url("/url/{{<var}}")
-                                 ]
-                    },
+      #katt_blueprint{ name=utf8("API")
+                     , operations=[ op_url("url")
+                                  , op_url("/url")
+                                  , op_url("/")
+                                  , op_url("http://host:80/")
+                                  , op_url("{{<var}}")
+                                  , op_url("/url/{{<var}}")
+                                  ]
+                     },
       parse_unindented("
         --- API ---
 
@@ -281,12 +281,12 @@ parse_operation_test_() ->
 
 parse_operation_description_test_() ->
   [ ?_assertEqual(
-      #api_blueprint{ name=utf8("API")
-                    , operations=[ #katt_operation{
-                                     description=utf8("abcd")
-                                   }
-                                 ]
-                    },
+      #katt_blueprint{ name=utf8("API")
+                     , operations=[ #katt_operation{
+                                      description=utf8("abcd")
+                                    }
+                                  ]
+                     },
       parse_unindented("
         --- API ---
 
@@ -295,12 +295,12 @@ parse_operation_description_test_() ->
         < 200
       "))
   , ?_assertEqual(
-      #api_blueprint{ name=utf8("API")
-                    , operations=[ #katt_operation{
-                                     description=utf8("# abcd\nhello")
-                                   }
-                                 ]
-                    },
+      #katt_blueprint{ name=utf8("API")
+                     , operations=[ #katt_operation{
+                                      description=utf8("# abcd\nhello")
+                                    }
+                                  ]
+                     },
       parse_unindented("
         --- API ---
 
@@ -326,10 +326,10 @@ fail_parse_invalid_operation_description_test() ->
 
 parse_http_method_test_() ->
   [ ?_assertEqual(
-      #api_blueprint{ name=utf8("API")
-                    , operations=[ op_method(Method)
-                                 ]
-                    },
+      #katt_blueprint{ name=utf8("API")
+                     , operations=[ op_method(Method)
+                                  ]
+                     },
       parse_unindented("
         --- API ---
 
@@ -366,7 +366,7 @@ fail_parse_invalid_http_method_test_() ->
 
 parse_request_test_() ->
   [ ?_assertEqual(
-      #api_blueprint{
+      #katt_blueprint{
         name=utf8("API"),
         operations=[
           #katt_operation{
@@ -385,7 +385,7 @@ parse_request_test_() ->
         < 200
       "))
   , ?_assertEqual(
-      #api_blueprint{
+      #katt_blueprint{
         name=utf8("API"),
         operations=[
           #katt_operation{
@@ -409,7 +409,7 @@ parse_request_test_() ->
 
 parse_request_headers_test_() ->
   [ ?_assertEqual(
-      #api_blueprint{
+      #katt_blueprint{
         name=utf8("API"),
         operations=[#katt_operation{}]
       },
@@ -420,7 +420,7 @@ parse_request_headers_test_() ->
         < 200
       "))
   , ?_assertEqual(
-      #api_blueprint{
+      #katt_blueprint{
         name=utf8("API"),
         operations=[
           #katt_operation{
@@ -438,7 +438,7 @@ parse_request_headers_test_() ->
         < 200
       "))
   , ?_assertEqual(
-      #api_blueprint{
+      #katt_blueprint{
         name=utf8("API"),
         operations=[
           #katt_operation{
@@ -466,7 +466,7 @@ parse_request_headers_test_() ->
 
 parse_response_test_() ->
   [ ?_assertEqual(
-      #api_blueprint{
+      #katt_blueprint{
         name=utf8("API"),
         operations=[
           #katt_operation{
@@ -488,7 +488,7 @@ parse_response_test_() ->
         { \"id\": 1 }
       "))
   , ?_assertEqual(
-      #api_blueprint{
+      #katt_blueprint{
         name=utf8("API"),
         operations=[
           #katt_operation{
@@ -513,7 +513,7 @@ parse_response_test_() ->
 
 parse_response_status_test_() ->
   [ ?_assertEqual(
-      #api_blueprint{
+      #katt_blueprint{
         name=utf8("API"),
         operations=[#katt_operation{}]
       },
@@ -524,7 +524,7 @@ parse_response_status_test_() ->
         < 200
       "))
   , ?_assertEqual(
-      #api_blueprint{
+      #katt_blueprint{
         name=utf8("API"),
         operations=[
           #katt_operation{
@@ -543,7 +543,7 @@ parse_response_status_test_() ->
 
 parse_response_headers_test_() ->
   [ ?_assertEqual(
-      #api_blueprint{
+      #katt_blueprint{
         name=utf8("API"),
         operations=[#katt_operation{}]
       },
@@ -554,7 +554,7 @@ parse_response_headers_test_() ->
         < 200
       "))
   , ?_assertEqual(
-      #api_blueprint{
+      #katt_blueprint{
         name=utf8("API"),
         operations=[
           #katt_operation{
@@ -572,7 +572,7 @@ parse_response_headers_test_() ->
         < Content-Type: application/json
       "))
   , ?_assertEqual(
-      #api_blueprint{
+      #katt_blueprint{
         name=utf8("API"),
         operations=[
           #katt_operation{
@@ -600,7 +600,7 @@ parse_response_headers_test_() ->
 
 parse_response_header_test() ->
   ?assertEqual(
-    #api_blueprint{
+    #katt_blueprint{
       name=utf8("API"),
       operations=[
         #katt_operation{
@@ -623,12 +623,12 @@ parse_response_header_test() ->
 parse_http_status_test_() ->
   %% Test a small sample of valid HTTP codes.
   [ ?_assertEqual(
-      #api_blueprint{ name=utf8("API")
-                    , operations=[ #katt_operation{
-                                     response=#katt_response{status=N}
-                                    }
-                                 ]
-                    },
+      #katt_blueprint{ name=utf8("API")
+                     , operations=[ #katt_operation{
+                                      response=#katt_response{status=N}
+                                     }
+                                  ]
+                     },
       parse_unindented("
         --- API ---
 
@@ -673,7 +673,7 @@ fail_parse_non_numeric_http_status_test_() ->
 
 parse_http_header_test_() ->
   [ ?_assertEqual(
-      #api_blueprint{
+      #katt_blueprint{
         name=utf8("API"),
         operations=[
           #katt_operation{
@@ -700,7 +700,7 @@ parse_http_header_test_() ->
 
 parse_http_header_name_test_() ->
   [ ?_assertEqual(
-      #api_blueprint{
+      #katt_blueprint{
         name=utf8("API"),
         operations=[
           #katt_operation{
@@ -724,7 +724,7 @@ parse_http_header_name_test_() ->
 
 parse_http_header_value_test_() ->
   [ ?_assertEqual(
-      #api_blueprint{
+      #katt_blueprint{
         name=utf8("API"),
         operations=[
           #katt_operation{
@@ -769,7 +769,7 @@ fail_parse_invalid_http_header_name_test_() ->
 
 parse_body_test_() ->
   [ ?_assertEqual(
-      #api_blueprint{
+      #katt_blueprint{
         name=utf8("API"),
         operations=[
           #katt_operation{
@@ -819,13 +819,13 @@ parse_file_test()->
   Op1Desc = <<"List products added into your shopping-cart. (comment block "
                  "again in Markdown)">>,
   ?assertMatch(
-    {ok, #api_blueprint{ name=Name
-                       , description=_
-                       , operations=[ #katt_operation{description=Op1Desc}
-                                    , #katt_operation{}
-                                    , #katt_operation{}
-                                    ]
-                       }},
+    {ok, #katt_blueprint{ name=Name
+                        , description=_
+                        , operations=[ #katt_operation{description=Op1Desc}
+                                     , #katt_operation{}
+                                     , #katt_operation{}
+                                     ]
+                        }},
     katt_blueprint_parse:file(?EXAMPLE_FILE)).
 
 
