@@ -84,7 +84,10 @@ run(From, Scenario, Params, SubVars) ->
 run_scenario(Blueprint, Params, SubVars) ->
   run_scenario(Blueprint#api_blueprint.operations, Params, SubVars, []).
 
-run_scenario( [#katt_operation{request=Req, response=Rsp}|T]
+run_scenario( [#katt_operation{ description=Description
+                              , request=Req
+                              , response=Rsp
+                              }|T]
             , Params
             , SubVars
             , Acc
@@ -94,7 +97,7 @@ run_scenario( [#katt_operation{request=Req, response=Rsp}|T]
   ActualResponse   = request(Request),
   case Result = validate(ExpectedResponse, ActualResponse) of
     pass -> run_scenario(T, Params, SubVars, [{Request, Result}|Acc]);
-    _    -> dbg(Request, ExpectedResponse, ActualResponse, Result)
+    _    -> dbg(Description, Request, ExpectedResponse, ActualResponse, Result)
   end;
 run_scenario([], _, _, Acc) ->
   Acc.
@@ -187,12 +190,13 @@ http_request(R = #katt_request{}) ->
                 ).
 
 
-dbg(Request, ExpectedResponse, ActualResponse, Result) ->
-  ct:pal("Request:~n~p~n~n"
+dbg(Description, Request, ExpectedResponse, ActualResponse, Result) ->
+  ct:pal("Description:~n~p~n~n"
+         "Request:~n~p~n~n"
          "Expected response:~n~p~n~n"
          "Actual response:~n~p~n~n"
          "Result:~n~p~n~n",
-         [Request, ExpectedResponse, ActualResponse, Result]).
+         [Description, Request, ExpectedResponse, ActualResponse, Result]).
 
 substitute(Bin, [])         -> Bin;
 substitute(Bin, [{K, V}|T]) -> substitute(substitute(Bin, K, V), T).
