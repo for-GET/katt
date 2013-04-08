@@ -6,7 +6,8 @@ all: get-deps compile xref
 
 compile:
 	./rebar compile
-	priv/compile-parser
+	@ rm ebin/katt_blueprint.beam
+	@ priv/compile-parser
 
 get-deps:
 	./rebar get-deps
@@ -26,7 +27,8 @@ xref:
 test: eunit
 
 eunit:
-	./rebar eunit skip_deps=true
+	@ erlc -I include -pa ebin -pa test -o ebin test/*.erl
+	@ erl -noshell -pa ebin -eval "eunit:test(katt_blueprint_parse_tests, [])" -s init stop
 
 conf_clean:
 	@:
