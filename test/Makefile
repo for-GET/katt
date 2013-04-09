@@ -2,5 +2,5 @@
 # necessary for Klarna's build process, but remove it in the open source
 # version of KATT.
 
-ERLC_FLAGS+= -I ../../../test/test/include -pz ../../../test/shared/ebin
+ERLC_FLAGS+= -I ../include -pz ../../../test/shared/ebin
 include ../../../support/stderl.mk
