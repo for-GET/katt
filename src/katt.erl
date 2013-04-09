@@ -84,7 +84,12 @@ run(From, Scenario, Params, SubVars) ->
 
 %%%_* Internal =========================================================
 run_scenario(Scenario, Blueprint, Params, SubVars) ->
-  run_scenario(Scenario, Blueprint#katt_blueprint.operations, Params, SubVars, []).
+  run_scenario( Scenario
+              , Blueprint#katt_blueprint.operations
+              , Params
+              , SubVars
+              , []
+              ).
 
 run_scenario( Scenario
             , [#katt_operation{ description=Description
@@ -99,8 +104,19 @@ run_scenario( Scenario
   ExpectedResponse = make_response(Rsp, SubVars),
   ActualResponse   = request(Request),
   case Result = validate(ExpectedResponse, ActualResponse) of
-    pass -> run_scenario(Scenario, T, Params, SubVars, [{Request, Result}|Acc]);
-    _    -> dbg(Scenario, Description, Request, ExpectedResponse, ActualResponse, Result)
+    pass -> run_scenario( Scenario
+                        , T
+                        , Params
+                        , SubVars
+                        , [{Request, Result}|Acc]
+                        );
+    _    -> dbg( Scenario
+               , Description
+               , Request
+               , ExpectedResponse
+               , ActualResponse
+               , Result
+               )
   end;
 run_scenario(_, [], _, _, Acc) ->
   Acc.
