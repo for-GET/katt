@@ -208,7 +208,6 @@ http_request(R = #katt_request{}) ->
                 , []
                 ).
 
-
 dbg(Scenario, Description, Request, ExpectedResponse, ActualResponse, Result) ->
   ct:pal("Scenario:~n~p~n~n"
          "Description:~n~p~n~n"
@@ -247,10 +246,13 @@ validate_status(#katt_response{status=E}, #katt_response{status=A}) ->
 %% Actual headers are allowed to be a superset of expected headers, since
 %% we don't want tests full of boilerplate like tests for headers such as
 %% Content-Length, Server, Date, etc.
-validate_headers(#katt_response{headers=E}, #katt_response{headers=A}) ->
+%% The header name (not the value) is compared case-insensitive
+validate_headers(#katt_response{headers=E0}, #katt_response{headers=A0}) ->
+  E = [{katt_util:to_lower(K), V} || {K, V} <- E0],
+  A = [{katt_util:to_lower(K), V} || {K, V} <- A0],
   ExpectedHeaders = lists:usort(proplists:get_keys(E)),
   Get = fun proplists:get_value/2,
-  [ do_validate(K, Get(K, E), Get(K, A)) || K <- ExpectedHeaders ].
+  [ do_validate(K, Get(K, E), Get(K, A)) || K <- ExpectedHeaders].
 
 %% Bodies must be identical, no subset matching or similar.
 validate_body(#katt_response{body=E}, #katt_response{body=A}) ->
