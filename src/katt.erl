@@ -12,7 +12,6 @@
 %%%   "{{&gt;key}}"  Store value of the whole string
 %%%               (key must be unique within testcase)
 %%%   "{{&lt;key}}"  Recall stored value.
-%%%   "{{&gt;key&lt;}}" Substitute with value from SubVars list in run/3
 %%% </pre>
 %%% @end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -40,14 +39,12 @@
 -include("blueprint_types.hrl").
 
 %%%_* Defines ==========================================================
--define(KEY_PREFIX,        "katt_").
--define(EXTRACT_BEGIN_TAG, "{{<").
--define(EXTRACT_END_TAG,   "}}").
+-define(VAR_PREFIX,        "katt_").
+-define(RECALL_BEGIN_TAG,  "{{<").
+-define(RECALL_END_TAG,    "}}").
 -define(STORE_BEGIN_TAG,   "{{>").
 -define(STORE_END_TAG,     "}}").
 -define(MATCH_ANY,         "{{_}}").
--define(SUB_BEGIN_TAG,     "{{>").
--define(SUB_END_TAG,       "<}}").
 -define(SCENARIO_TIMEOUT,  120000).
 -define(REQUEST_TIMEOUT,   20000).
 
@@ -68,46 +65,44 @@ run(Scenario, Params) -> run(Scenario, Params, []).
 -spec run(string(), list(), list()) ->
              [{string(), pass|{fail, {atom(), any()}}}|{error, any()}].
 %% @doc Run test scenario. Argument is the full path to the scenario file.
-%% Last argument is a key-value list of substitute parameters.
+%% Last argument is a key-value list of parameters.
 %% @end
-run(Scenario, Params, SubVars) ->
-  spawn_link(?MODULE, run, [self(), Scenario, Params, SubVars]),
+run(Scenario, Params, Vars) ->
+  spawn_link(?MODULE, run, [self(), Scenario, Params, Vars]),
   receive {done, Result}    -> Result
   after   ?SCENARIO_TIMEOUT -> {error, timeout}
   end.
 
 %%%_* Internal export --------------------------------------------------
 %% @private
-run(From, Scenario, Params, SubVars) ->
+run(From, Scenario, Params, Vars) ->
   {ok, Blueprint} = katt_blueprint_parse:file(Scenario),
-  From ! {done, run_scenario(Scenario, Blueprint, Params, SubVars)}.
+  From ! {done, run_scenario(Scenario, Blueprint, Params, Vars)}.
 
 %%%_* Internal =========================================================
-run_scenario(Scenario, Blueprint, Params, SubVars) ->
-  run_scenario( Scenario
+run_scenario(Scenario, Blueprint, Params, Vars) ->
+  [put_var(Key, Value) || {Key, Value} <- Vars],
+  run_operations( Scenario
               , Blueprint#katt_blueprint.operations
               , Params
-              , SubVars
               , []
               ).
 
-run_scenario( Scenario
-            , [#katt_operation{ description=Description
-                              , request=Req
-                              , response=Rsp
-                              }|T]
-            , Params
-            , SubVars
-            , Acc
-            ) ->
-  Request          = make_request(Req, Params, SubVars),
-  ExpectedResponse = make_response(Rsp, SubVars),
+run_operations( Scenario
+              , [#katt_operation{ description=Description
+                                , request=Req
+                                , response=Rsp
+                                }|T]
+              , Params
+              , Acc
+              ) ->
+  Request          = make_request(Req, Params),
+  ExpectedResponse = make_response(Rsp),
   ActualResponse   = request(Request),
   case Result = validate(ExpectedResponse, ActualResponse) of
     pass -> run_scenario( Scenario
                         , T
                         , Params
-                        , SubVars
                         , [{Request, Result}|Acc]
                         );
     _    -> dbg( Scenario
@@ -118,7 +113,7 @@ run_scenario( Scenario
                , Result
                )
   end;
-run_scenario(_, [], _, _, Acc) ->
+run_operations(_, [], _, Acc) ->
   Acc.
 
 make_request_url(_, Url="http://"++_)  -> Url;
@@ -136,19 +131,20 @@ make_request_url(Params, Path) ->
               , proplists:get_value(path, Params, Path)
               ], "").
 
-make_request( #katt_request{headers=Hdrs, url=Url0, body=RawBody0} = Req
+make_request( #katt_request{headers=Hdrs0, url=Url0, body=RawBody0} = Req
             , Params
-            , SubVars
             ) ->
-  RawBody = substitute(RawBody0, SubVars),
-  Url = make_request_url(Params, substitute(extract(Url0), SubVars)),
+  Url = make_request_url(Params, substitute(Url0)),
+  Hdrs = [{K, substitute(V)} || {K, V} <- Hdrs0],
+  RawBody = substitute(RawBody0),
   Req#katt_request{ url  = Url
                   , headers = Hdrs
                   , body = RawBody
                   }.
 
-make_response(#katt_response{headers=Hdrs, body=RawBody0} = Rsp, SubVars) ->
-  RawBody = substitute(RawBody0, SubVars),
+make_response(#katt_response{headers=Hdrs0, body=RawBody0} = Rsp) ->
+  Hdrs = [{K, substitute(V)} || {K, V} <- Hdrs0],
+  RawBody = substitute(RawBody0),
   Rsp#katt_response{ body = maybe_parse_body(Hdrs, RawBody)
                    }.
 
@@ -178,7 +174,7 @@ to_proplist({struct, L}) when is_list(L) ->
 to_proplist(List) when is_list(List)     ->
   lists:sort([to_proplist(L) || L <- List]);
 to_proplist(Str) when is_binary(Str)     ->
-  extract(from_utf8(Str));
+  from_utf8(Str);
 to_proplist(Value)                       ->
   Value.
 
@@ -223,12 +219,17 @@ dbg(Scenario, Description, Request, ExpectedResponse, ActualResponse, Result) ->
          , Result
          ]).
 
+substitute(Bin) ->
+  Vars = get(),
+  substitute(Bin, Vars).
+
 substitute(Bin, [])         -> Bin;
 substitute(Bin, [{K, V}|T]) -> substitute(substitute(Bin, K, V), T).
 
-substitute(Bin, K, V) ->
-  re:replace(Bin, ?SUB_BEGIN_TAG ++ to_list(K) ++ ?SUB_END_TAG,
-             to_list(V), [{return, binary}, global]).
+substitute(Bin, K0, V) ->
+  ?VAR_PREFIX ++ K1 = to_list(K0),
+  K = ?RECALL_BEGIN_TAG ++ K1 ++ ?RECALL_END_TAG,
+  re:replace(Bin, K, to_list(V), [{return, binary}, global]).
 
 %%%_* Validation -------------------------------------------------------
 validate(E = #katt_response{}, A = #katt_response{}) ->
@@ -280,28 +281,16 @@ do_validate(_Key, ?MATCH_ANY ++ _, _)                  ->
   pass;
 do_validate(_Key, ?STORE_BEGIN_TAG ++ Rest, A)         ->
   Key = string:sub_string(Rest, 1, string:str(Rest, ?STORE_END_TAG) - 1),
-  put(?KEY_PREFIX ++ Key, A),
+  put_var(Key, A),
   pass;
 do_validate(Key, E, A)                                 ->
-  compare(Key, extract(E), extract(A)).
+  compare(Key, E, A).
+
+put_var(Key, Value) -> put(?VAR_PREFIX ++ Key, Value).
+%% get_var(Key) -> get(?VAR_PREFIX ++ Key).
 
 compare(_Key, E, E) -> pass;
 compare(Key, E, A)  -> {not_equal, {Key, E, A}}.
-
-%% Replace extract tags with actual values
-extract(Str) when is_list(Str) -> do_extract(Str, []);
-extract(Val)                   -> Val.
-
-do_extract(?EXTRACT_BEGIN_TAG ++ T0, Acc) ->
-  {Key, ?EXTRACT_END_TAG ++ T} =
-    lists:split(string:str(T0, ?EXTRACT_END_TAG) - 1, T0),
-  Str = case get(?KEY_PREFIX ++ Key) of
-          undefined -> "";
-          Value     -> Value
-        end,
-  do_extract(T, lists:reverse(Str) ++ Acc);
-do_extract([H|T], Acc)                    -> do_extract(T, [H|Acc]);
-do_extract([], Acc)                       -> lists:reverse(Acc).
 
 %% Transform simple list to proplist with keys named Name1, Name2 etc.
 enumerate(L, Name) ->
