@@ -81,12 +81,15 @@ run(From, Scenario, Params, Vars) ->
 
 %%%_* Internal =========================================================
 run_scenario(Scenario, Blueprint, Params, Vars) ->
-  [put_var(Key, Value) || {Key, Value} <- Vars],
-  run_operations( Scenario
+  ets:new(?MODULE, [set, named_table]),
+  [ets:insert(?MODULE, Var) || Var <- Vars],
+  Result = run_operations( Scenario
               , Blueprint#katt_blueprint.operations
               , Params
               , []
-              ).
+              ),
+  ets:delete(?MODULE),
+  Result.
 
 run_operations( Scenario
               , [#katt_operation{ description=Description
@@ -220,16 +223,15 @@ dbg(Scenario, Description, Request, ExpectedResponse, ActualResponse, Result) ->
          ]).
 
 substitute(Bin) ->
-  Vars = get(),
-  substitute(Bin, Vars).
+  FirstKey = ets:first(?MODULE),
+  substitute(Bin, FirstKey).
 
-substitute(Bin, [])         -> Bin;
-substitute(Bin, [{K, V}|T]) -> substitute(substitute(Bin, K, V), T).
-
-substitute(Bin, K0, V) ->
-  ?VAR_PREFIX ++ K1 = to_list(K0),
-  K = ?RECALL_BEGIN_TAG ++ K1 ++ ?RECALL_END_TAG,
-  re:replace(Bin, K, to_list(V), [{return, binary}, global]).
+substitute(Bin, '$end_of_table') -> Bin;
+substitute(Bin0, K0) ->
+  V = ets:lookup(?MODULE, K0),
+  K = ?RECALL_BEGIN_TAG ++ K0 ++ ?RECALL_END_TAG,
+  Bin = re:replace(Bin0, K, to_list(V), [{return, binary}, global]),
+  substitute(Bin, ets:next(?MODULE, K0)).
 
 %%%_* Validation -------------------------------------------------------
 validate(E = #katt_response{}, A = #katt_response{}) ->
@@ -281,12 +283,12 @@ do_validate(_Key, ?MATCH_ANY ++ _, _)                  ->
   pass;
 do_validate(_Key, ?STORE_BEGIN_TAG ++ Rest, A)         ->
   Key = string:sub_string(Rest, 1, string:str(Rest, ?STORE_END_TAG) - 1),
-  put_var(Key, A),
+  ets:insert(?MODULE, {Key, A}),
   pass;
 do_validate(Key, E, A)                                 ->
   compare(Key, E, A).
 
-put_var(Key, Value) -> put(?VAR_PREFIX ++ Key, Value).
+%% put_var(Key, Value) -> put(?VAR_PREFIX ++ Key, Value).
 %% get_var(Key) -> get(?VAR_PREFIX ++ Key).
 
 compare(_Key, E, E) -> pass;
