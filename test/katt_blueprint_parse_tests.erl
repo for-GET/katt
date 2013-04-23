@@ -85,11 +85,16 @@ parse_api_test_()->
 
 
 parse_api_name_test_() ->
-  Expected = #katt_blueprint{ name=utf8("abcd") },
-  [ ?_assertEqual(Expected, parse_unindented("--- abcd"))
-  , ?_assertEqual(Expected, parse_unindented("---   abcd"))
-  , ?_assertEqual(Expected, parse_unindented("--- abcd ---"))
-  , ?_assertEqual(Expected, parse_unindented("--- abcd   ---"))
+  Expected1 = #katt_blueprint{ name=utf8("abcd") },
+  Expected2 = #katt_blueprint{ name=utf8("abcd  1234") },
+  [ ?_assertEqual(Expected1, parse("--- abcd"))
+  , ?_assertEqual(Expected1, parse("---   abcd"))
+  , ?_assertEqual(Expected1, parse("--- abcd ---"))
+  , ?_assertEqual(Expected1, parse("--- abcd   ---"))
+  , ?_assertEqual(Expected2, parse("--- abcd  1234"))
+  , ?_assertEqual(Expected2, parse("---   abcd  1234"))
+  , ?_assertEqual(Expected2, parse("---   abcd  1234 ---"))
+  , ?_assertEqual(Expected2, parse("---   abcd  1234   ---"))
   ].
 
 
@@ -131,7 +136,7 @@ parse_api_description_test_() ->
 fail_parse_invalid_api_description_test() ->
   ?assertMatch(
        {error, _},
-       parse("
+       parse_unindented("
         --- API ---
 
         ---
@@ -315,7 +320,7 @@ parse_operation_description_test_() ->
 fail_parse_invalid_operation_description_test() ->
   ?assertMatch(
      {error, _},
-     parse("
+     parse_unindented("
       --- API ---
 
       GET
