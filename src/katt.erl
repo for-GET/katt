@@ -235,7 +235,9 @@ substitute(Bin, '$end_of_table') -> Bin;
 substitute(Bin0, K0) ->
   [{K0, V}] = ets:lookup(?TABLE, K0),
   K = ?RECALL_BEGIN_TAG ++ K0 ++ ?RECALL_END_TAG,
-  Bin = re:replace(Bin0, K, to_list(V), [{return, binary}, global]),
+  EscapedK = katt_util:escape_regex(K),
+  EscapedV = katt_util:escape_regex(V),
+  Bin = re:replace(Bin0, EscapedK, to_list(EscapedV), [{return, binary}, global]),
   substitute(Bin, ets:next(?TABLE, K0)).
 
 %%%_* Validation -------------------------------------------------------

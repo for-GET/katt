@@ -14,6 +14,7 @@
         , from_utf8/1
         , to_utf8/1
         , to_lower/1
+        , escape_regex/1
         ]).
 
 %%%_* API ==============================================================
@@ -40,6 +41,13 @@ to_utf8(X) when is_list(X) -> unicode:characters_to_binary(X, utf8).
 
 to_lower(S) when is_list(S) -> string:to_lower(S);
 to_lower(V)                 -> V.
+
+escape_regex(Bin) ->
+  re:replace(
+    Bin,
+    "[\\-\\[\\]\\/\\{\\}\\(\\)\\*\\+\\?\\.\\,\\\\\^\\$\\|\\#\\s\\&]",
+    "\\\\&",
+    [global]).
 
 %%%_* Emacs ============================================================
 %%% Local Variables:
