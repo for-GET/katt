@@ -39,8 +39,7 @@ from_utf8(X) when is_binary(X) ->
 %% Transform list to utf8 encoded binary, ignore everything else
 to_utf8(X) when is_list(X) -> unicode:characters_to_binary(X, utf8).
 
-to_lower(S) when is_list(S) -> string:to_lower(S);
-to_lower(V)                 -> V.
+to_lower(S) when is_list(S) -> string:to_lower(S).
 
 escape_regex(Bin) ->
   re:replace(
