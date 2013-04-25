@@ -69,16 +69,12 @@ run(Scenario, Params) -> run(Scenario, Params, []).
 %% Last argument is a key-value list of parameters.
 %% @end
 run(Scenario, Params, Vars) ->
-  io:format("Creating KATT table! ~p~n", [ Scenario ]),
   ets:new(?TABLE, [named_table, public, ordered_set]),
-  io:format("Inserting vars ~p~n", [ Vars ]),
   ets:insert(?TABLE, Vars),
-  io:format("Spawning link~n", []),
   spawn_link(?MODULE, run, [self(), Scenario, Params, Vars]),
   Return = receive {done, Result}    -> Result
            after   ?SCENARIO_TIMEOUT -> {error, timeout}
            end,
-  io:format("Deleting table ~p~n", [?TABLE]),
   ets:delete(?TABLE),
   Return.
 
@@ -144,7 +140,6 @@ make_request( #katt_request{headers=Hdrs0, url=Url0, body=RawBody0} = Req
             , Params
             ) ->
   Url1 = katt_util:from_utf8(substitute(katt_util:to_utf8(Url0))),
-  io:format("url !!! ~p~n~p~n", [Url0, Url1]),
   Url = make_request_url(Params, Url1),
   Hdrs = [{K, katt_util:from_utf8(substitute(katt_util:to_utf8(V)))} || {K, V} <- Hdrs0],
   RawBody = substitute(RawBody0),
@@ -233,22 +228,14 @@ dbg(Scenario, Description, Request, ExpectedResponse, ActualResponse, Result) ->
 substitute(null) ->
   null;
 substitute(Bin) ->
-  io:format("asdfasdfasdf !!! ~p~n", [ Bin ]),
-  io:format("Ets info~p~n", [ets:info(?TABLE)]),
-  % ets:foldl(fun() ->
-  %           end, ),
   FirstKey = ets:first(?TABLE),
-  io:format("asdfasdfasdf ~p~n", [ FirstKey ]),
   substitute(Bin, FirstKey).
 
 substitute(Bin, '$end_of_table') -> Bin;
 substitute(Bin0, K0) ->
   [{K0, V}] = ets:lookup(?TABLE, K0),
-  io:format("LOOKUP0: ~p~n~p~n", [Bin0, K0]),
   K = ?RECALL_BEGIN_TAG ++ K0 ++ ?RECALL_END_TAG,
-  io:format("LOOKUP1: ~p~n~p~n~p~n", [V, to_list(V), K]),
   Bin = re:replace(Bin0, K, to_list(V), [{return, binary}, global]),
-  io:format("LOOKUP2: ~p~n", [Bin]),
   substitute(Bin, ets:next(?TABLE, K0)).
 
 %%%_* Validation -------------------------------------------------------
