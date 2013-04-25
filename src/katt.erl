@@ -39,6 +39,7 @@
 -include("blueprint_types.hrl").
 
 %%%_* Defines ==========================================================
+-define(TABLE,             ?MODULE).
 -define(VAR_PREFIX,        "katt_").
 -define(RECALL_BEGIN_TAG,  "{{<").
 -define(RECALL_END_TAG,    "}}").
@@ -68,10 +69,18 @@ run(Scenario, Params) -> run(Scenario, Params, []).
 %% Last argument is a key-value list of parameters.
 %% @end
 run(Scenario, Params, Vars) ->
+  io:format("Creating KATT table! ~p~n", [ Scenario ]),
+  ets:new(?TABLE, [named_table, public, ordered_set]),
+  io:format("Inserting vars ~p~n", [ Vars ]),
+  ets:insert(?TABLE, Vars),
+  io:format("Spawning link~n", []),
   spawn_link(?MODULE, run, [self(), Scenario, Params, Vars]),
-  receive {done, Result}    -> Result
-  after   ?SCENARIO_TIMEOUT -> {error, timeout}
-  end.
+  Return = receive {done, Result}    -> Result
+           after   ?SCENARIO_TIMEOUT -> {error, timeout}
+           end,
+  io:format("Deleting table ~p~n", [?TABLE]),
+  ets:delete(?TABLE),
+  Return.
 
 %%%_* Internal export --------------------------------------------------
 %% @private
@@ -80,15 +89,12 @@ run(From, Scenario, Params, Vars) ->
   From ! {done, run_scenario(Scenario, Blueprint, Params, Vars)}.
 
 %%%_* Internal =========================================================
-run_scenario(Scenario, Blueprint, Params, Vars) ->
-  ets:new(?MODULE, [set, named_table]),
-  [ets:insert(?MODULE, Var) || Var <- Vars],
+run_scenario(Scenario, Blueprint, Params, _Vars) ->
   Result = run_operations( Scenario
-              , Blueprint#katt_blueprint.operations
-              , Params
-              , []
-              ),
-  ets:delete(?MODULE),
+                         , Blueprint#katt_blueprint.operations
+                         , Params
+                         , []
+                         ),
   Result.
 
 run_operations( Scenario
@@ -103,11 +109,11 @@ run_operations( Scenario
   ExpectedResponse = make_response(Rsp),
   ActualResponse   = request(Request),
   case Result = validate(ExpectedResponse, ActualResponse) of
-    pass -> run_scenario( Scenario
-                        , T
-                        , Params
-                        , [{Request, Result}|Acc]
-                        );
+    pass -> run_operations( Scenario
+                          , T
+                          , Params
+                          , [{Request, Result}|Acc]
+                          );
     _    -> dbg( Scenario
                , Description
                , Request
@@ -131,7 +137,7 @@ make_request_url(Params, Path) ->
               , proplists:get_value(host, Params, "localhost")
               , ":"
               , integer_to_list(proplists:get_value(port, Params, DefaultPort))
-              , proplists:get_value(path, Params, Path)
+              , unicode:characters_to_list(proplists:get_value(path, Params, Path))
               ], "").
 
 make_request( #katt_request{headers=Hdrs0, url=Url0, body=RawBody0} = Req
@@ -162,7 +168,7 @@ maybe_parse_body(Hdrs, Body) ->
 is_json_body(_Hdrs, <<>>) -> false;
 is_json_body(Hdrs, _Body) ->
   ContentType = proplists:get_value("Content-Type", Hdrs, ""),
-  case string:str(ContentType, "json") of
+  case string:str(unicode:characters_to_list(ContentType), "json") of
     0 -> false;
     _ -> true
   end.
@@ -222,16 +228,26 @@ dbg(Scenario, Description, Request, ExpectedResponse, ActualResponse, Result) ->
          , Result
          ]).
 
+substitute(null) ->
+  null;
 substitute(Bin) ->
-  FirstKey = ets:first(?MODULE),
+  io:format("asdfasdfasdf !!! ~p~n", [ Bin ]),
+  io:format("Ets info~p~n", [ets:info(?TABLE)]),
+  % ets:foldl(fun() ->
+  %           end, ),
+  FirstKey = ets:first(?TABLE),
+  io:format("asdfasdfasdf ~p~n", [ FirstKey ]),
   substitute(Bin, FirstKey).
 
 substitute(Bin, '$end_of_table') -> Bin;
 substitute(Bin0, K0) ->
-  V = ets:lookup(?MODULE, K0),
+  [{K0, V}] = ets:lookup(?TABLE, K0),
+  io:format("LOOKUP0: ~p~n~p~n", [Bin0, K0]),
   K = ?RECALL_BEGIN_TAG ++ K0 ++ ?RECALL_END_TAG,
+  io:format("LOOKUP1: ~p~n~p~n~p~n", [V, to_list(V), K]),
   Bin = re:replace(Bin0, K, to_list(V), [{return, binary}, global]),
-  substitute(Bin, ets:next(?MODULE, K0)).
+  io:format("LOOKUP2: ~p~n", [Bin]),
+  substitute(Bin, ets:next(?TABLE, K0)).
 
 %%%_* Validation -------------------------------------------------------
 validate(E = #katt_response{}, A = #katt_response{}) ->
@@ -283,7 +299,7 @@ do_validate(_Key, ?MATCH_ANY ++ _, _)                  ->
   pass;
 do_validate(_Key, ?STORE_BEGIN_TAG ++ Rest, A)         ->
   Key = string:sub_string(Rest, 1, string:str(Rest, ?STORE_END_TAG) - 1),
-  ets:insert(?MODULE, {Key, A}),
+  ets:insert(?TABLE, {Key, A}),
   pass;
 do_validate(Key, E, A)                                 ->
   compare(Key, E, A).
