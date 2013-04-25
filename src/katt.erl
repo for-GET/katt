@@ -125,8 +125,8 @@ run_operations( Scenario
 run_operations(_, [], _, Acc) ->
   Acc.
 
-make_request_url(_, Url="http://"++_)  -> Url;
-make_request_url(_, Url="https://"++_) -> Url;
+make_request_url(_, Url = "http://" ++ _)  -> Url;
+make_request_url(_, Url = "https://" ++ _) -> Url;
 make_request_url(Params, Path) ->
   {Protocol, DefaultPort} = case proplists:get_value(ssl, Params, false) of
                               true  -> {"https:", 443};
@@ -143,8 +143,10 @@ make_request_url(Params, Path) ->
 make_request( #katt_request{headers=Hdrs0, url=Url0, body=RawBody0} = Req
             , Params
             ) ->
-  Url = make_request_url(Params, substitute(Url0)),
-  Hdrs = [{K, substitute(V)} || {K, V} <- Hdrs0],
+  Url1 = katt_util:from_utf8(substitute(katt_util:to_utf8(Url0))),
+  io:format("url !!! ~p~n~p~n", [Url0, Url1]),
+  Url = make_request_url(Params, Url1),
+  Hdrs = [{K, katt_util:from_utf8(substitute(katt_util:to_utf8(V)))} || {K, V} <- Hdrs0],
   RawBody = substitute(RawBody0),
   Req#katt_request{ url  = Url
                   , headers = Hdrs
