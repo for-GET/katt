@@ -225,14 +225,13 @@ dbg(Scenario, Description, Request, ExpectedResponse, ActualResponse, Result) ->
          , Result
          ]).
 
-substitute(null) ->
-  null;
-substitute(Bin) ->
+substitute(null) -> null;
+substitute(Bin)  ->
   FirstKey = ets:first(?TABLE),
   substitute(Bin, FirstKey).
 
 substitute(Bin, '$end_of_table') -> Bin;
-substitute(Bin0, K0) ->
+substitute(Bin0, K0)             ->
   [{K0, V}] = ets:lookup(?TABLE, K0),
   K = ?RECALL_BEGIN_TAG ++ K0 ++ ?RECALL_END_TAG,
   EscapedK = katt_util:escape_regex(K),
