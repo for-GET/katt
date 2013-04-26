@@ -141,7 +141,11 @@ make_request( #katt_request{headers=Hdrs0, url=Url0, body=RawBody0} = Req
             ) ->
   Url1 = katt_util:from_utf8(substitute(katt_util:to_utf8(Url0))),
   Url = make_request_url(Params, Url1),
-  Hdrs = [{K, katt_util:from_utf8(substitute(katt_util:to_utf8(V)))} || {K, V} <- Hdrs0],
+  Hdrs = [{K, katt_util:from_utf8(
+                substitute(
+                  katt_util:to_utf8(V)
+                 )
+               )} || {K, V} <- Hdrs0],
   RawBody = substitute(RawBody0),
   Req#katt_request{ url  = Url
                   , headers = Hdrs
@@ -236,7 +240,10 @@ substitute(Bin0, K0)             ->
   K = ?RECALL_BEGIN_TAG ++ K0 ++ ?RECALL_END_TAG,
   EscapedK = katt_util:escape_regex(K),
   EscapedV = katt_util:escape_regex(V),
-  Bin = re:replace(Bin0, EscapedK, to_list(EscapedV), [{return, binary}, global]),
+  Bin = re:replace( Bin0
+                  , EscapedK
+                  , to_list(EscapedV)
+                  , [{return, binary}, global]),
   substitute(Bin, ets:next(?TABLE, K0)).
 
 %%%_* Validation -------------------------------------------------------
