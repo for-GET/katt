@@ -123,17 +123,18 @@ run_operations(_, [], _, Acc) ->
 
 make_request_url(_, Url = "http://" ++ _)  -> Url;
 make_request_url(_, Url = "https://" ++ _) -> Url;
-make_request_url(Params, Path) ->
+make_request_url(Params, Path0) ->
   {Protocol, DefaultPort} = case proplists:get_value(ssl, Params, false) of
                               true  -> {"https:", 443};
                               false -> {"http:", 80}
                             end,
+  Path = unicode:characters_to_list(proplists:get_value(path, Params, Path0)),
   string:join([ Protocol
               , "//"
               , proplists:get_value(host, Params, "localhost")
               , ":"
               , integer_to_list(proplists:get_value(port, Params, DefaultPort))
-              , unicode:characters_to_list(proplists:get_value(path, Params, Path))
+              , Path
               ], "").
 
 make_request( #katt_request{headers=Hdrs0, url=Url0, body=RawBody0} = Req
