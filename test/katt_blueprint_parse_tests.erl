@@ -7,9 +7,6 @@
 -include_lib("eunit/include/eunit.hrl").
 -include("blueprint_types.hrl").
 
--define(EXAMPLE_FILE, "../test/examples/example1.apib").
--define(INVALID_FILE, "../test/examples/example_invalid1.apib").
-
 parse_api_test_()->
   Expected = #katt_blueprint{ name=(<<"API tæst"/utf8>>)
                             , description=(<<"¿Test ÄPI?"/utf8>>)
@@ -817,34 +814,6 @@ fail_parse_invalid_body_test_() ->
                  , "<<<>>>"
                  , "<<<\nabcd\n>>>"
                  ]].
-
-
-parse_file_test()->
-  Name = <<"Sample API v2">>,
-  Op1Desc = <<"List products added into your shopping-cart. (comment block "
-                 "again in Markdown)">>,
-  ?assertMatch(
-    {ok, #katt_blueprint{ name=Name
-                        , description=_
-                        , operations=[ #katt_operation{description=Op1Desc}
-                                     , #katt_operation{}
-                                     , #katt_operation{}
-                                     ]
-                        }},
-    katt_blueprint_parse:file(?EXAMPLE_FILE)).
-
-
-parse_invalid_file_test_()->
-  [ ?_assertError(
-      {badmatch, _},
-      {ok, _} = katt_blueprint_parse:file("..."))
-  , ?_assertError(
-      {badmatch, _},
-      {ok, _} = katt_blueprint_parse:file(?INVALID_FILE))
-  , ?_assertError(
-      {badmatch, _},
-      {ok, _} = katt_blueprint_parse:file("/dev/null"))
-  ].
 
 
 %%% Consider adding tests for simple_body, simple_body_line, out, in, text0,
