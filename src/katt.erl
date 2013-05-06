@@ -36,7 +36,7 @@
                     ]).
 
 %%%_* Includes ==========================================================
--include("blueprint_types.hrl").
+-include_lib("katt/include/blueprint_types.hrl").
 
 %%%_* Defines ==========================================================
 -define(TABLE,             ?MODULE).
