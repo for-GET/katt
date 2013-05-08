@@ -2,7 +2,7 @@
 
 all: get-deps compile xref
 
-compile: bootstrap-parser
+compile:
 	./rebar compile
 
 bootstrap-parser: get-deps
