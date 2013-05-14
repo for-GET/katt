@@ -1,3 +1,5 @@
+.NOTPARALLEL:
+
 .PHONY:	all compile bootstrap-parser get-deps update-deps delete-deps doc xref test eunit clean
 
 all: get-deps compile xref
