@@ -5,7 +5,7 @@ all: get-deps compile xref
 compile:
 	./rebar compile
 
-bootstrap-parser: get-deps
+bootstrap-parser:
 	@ cd deps/neotoma && make
 	@ ./priv/compile-parser
 
