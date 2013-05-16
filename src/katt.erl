@@ -116,7 +116,8 @@ run_operations( Scenario
                , ExpectedResponse
                , ActualResponse
                , Result
-               )
+               ),
+            [{Request, Result}|Acc]
   end;
 run_operations(_, [], _, Acc) ->
   Acc.
