@@ -1,4 +1,8 @@
 language: erlang
+script: "make test"
+notifications:
+  recipients:
+    - andrei.neculau@klarna.com
 otp_release:
   - R16B
   - R15B03
