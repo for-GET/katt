@@ -177,7 +177,7 @@ is_json_body(Hdrs, _Body) ->
   end.
 
 parse_json(Binary) ->
-  to_proplist(mochijson2:decode(Binary)).
+  to_proplist(mochijson3:decode(Binary)).
 
 to_proplist(L = [{struct, _}|_])         ->
   [to_proplist(S) || S <- L];
