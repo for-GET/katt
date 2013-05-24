@@ -1,0 +1,97 @@
+--- Example blueprint for some scenario (this is the title) ---
+
+---
+Here, between the "---" lines you can write a general description of the
+operations that shoudl take place in this scenario. Markdown is allowed too.
+
+This is just an example of how a *KATT Blueprint* file can look and work.
+In this example we are describing a contrived checkout service.
+---
+
+
+# Step 1
+
+The merchant creates a new example object on our server, and we respond with
+the location of the created example.
+
+POST /foo/examples
+> Accept: application/json
+> Content-Type: application/json
+{
+    "cart": {
+        "items": [
+            {
+                "name": "Horse",
+                "quantity": 1,
+                "unit_price": 4495000
+            },
+            {
+                "name": "Battery",
+                "quantity": 4,
+                "unit_price": 1000
+            },
+            {
+                "name": "Staple",
+                "quantity": 1,
+                "unit_price": 12000
+            }
+        ]
+    }
+}
+< 201
+< Location: {{>example_uri}}
+
+
+# Step 2
+
+The client (customer) fetches the created resource data.
+
+GET {{<example_uri}}
+> Accept: application/json
+< 200
+< Content-Type: application/json
+{
+    "required_fields": [
+        "email"
+    ],
+    "cart": "{{_}}"
+}
+
+
+# Step 3
+
+The customer submits an e-mail address in the form.
+
+POST {{<example_uri}}
+> Accept: application/json
+> Content-Type: application/json
+{
+    "email": "test-customer@foo.klarna.com"
+}
+< 200
+< Content-Type: application/json
+{
+    "required_fields": [
+        "password"
+    ],
+    "cart": "{{_}}"
+}
+
+
+# Step 4
+
+The customer submits the form again, this time also with his password.
+We inform him that payment is required.
+
+POST {{<example_uri}}
+> Accept: application/json
+> Content-Type: application/json
+{
+    "email": "test-customer@foo.klarna.com",
+    "password": "correct horse battery staple"
+}
+< 402
+< Content-Type: application/json
+{
+    "error": "payment required"
+}
