@@ -769,7 +769,7 @@ fail_parse_invalid_http_header_name_test_() ->
     ) || BadHeaderName <- [":", "", "Œ"]].
 
 
-parse_body_test_() ->
+parse_simple_body_test_() ->
   [ ?_assertEqual(
       #katt_blueprint{
         name=utf8("API"),
@@ -798,6 +798,31 @@ parse_body_test_() ->
                  ]].
 
 
+parse_delimited_body_test() ->
+  ?_assertEqual(
+    #katt_blueprint{
+      name=utf8("API with a delimited body"),
+      operations=[
+        #katt_operation{
+          response=#katt_response{
+            body=utf8("\ndelimited body\n")
+          }
+        }
+      ]
+    },
+    parse_unindented("
+      --- API with a delimited body ---
+
+      GET /
+      < 200
+      <<<
+
+      delimited body
+
+      >>>
+      ")).
+
+
 %% We don't support the delimited body
 fail_parse_invalid_body_test_() ->
   [ ?_assertMatch(
@@ -811,8 +836,6 @@ fail_parse_invalid_body_test_() ->
         ")
     ) || Body <- [ "<<<"
                  , "<<<EOT\nEOT"
-                 , "<<<>>>"
-                 , "<<<\nabcd\n>>>"
                  ]].
 
 

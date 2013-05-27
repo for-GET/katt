@@ -198,7 +198,23 @@ signature <-
 
 %% We do not support DelimitedBodyFixed / DelimitedBodyVariable.
 %% TODO: Add support for them?
-body <- simple_body ~;
+body <-
+  delimited_body_fixed
+  / simple_body ~;
+
+delimited_body_fixed <-
+  "<<<" s* eol
+  lines:delimited_body_fixed_line*
+  ">>>" s* eolf
+  `
+    concatenate_lines(proplists:get_value(lines, Node))
+  `;
+
+delimited_body_fixed_line <-
+  !(">>>" s* eolf) text:text0 eol
+  `
+    proplists:get_value(text, Node)
+  `;
 
 simple_body <-
   !"<<<" lines:simple_body_line+
