@@ -9,5 +9,7 @@
                     , {registered,   []}
                     , {applications, [ kernel
                                      , stdlib
+                                     , ssl
+                                     , lhttpc
                                      ]}
                     ]}.
