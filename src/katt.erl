@@ -1,18 +1,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% @doc Klarna API Testing Tool (v2)
+%%% @doc Klarna API Testing Tool
 %%%
 %%% Use for shooting http requests in a sequential order and verifying the
-%%% response. Any difference between expected and actual responses will
-%%% cause a failure.
-%%%
-%%% Tags with special meaning:
-%%% <!-- Special chars below are encoded as HTML entities for make docs -->
-%%% <pre>
-%%%   "{{_}}"     Match anything (i.e. no real validation, only check existence)
-%%%   "{{&gt;key}}"  Store value of the whole string
-%%%               (key must be unique within testcase)
-%%%   "{{&lt;key}}"  Recall stored value.
-%%% </pre>
+%%% response.
 %%% @end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
