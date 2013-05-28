@@ -1,0 +1,137 @@
+--- Examples against httpbin.org ---
+
+---
+Examples of how some requests to _httpbin.org_ can be specified. Read more about
+the httpbin.org API at http://httpbin.org/.
+
+You can try testing this example from the project root in an erlang shell if you
+pass the parameter host with value "httpbin.org", and some variables used in the
+blueprint like so:
+
+```
+%% Assign values of "{{<my_name}}" and {{<your_name}}:
+TemplateVariables = [{"my_name", "Joe"}, {"your_name", "Mike"}],
+
+%% Tell KATT to send requests to httpbin.org instead of localhost.
+Params = [{host, "httpbin.org"}],
+
+katt:run("doc/example-httpbin.apib", Params, TemplateVariables).
+```
+---
+
+# First request and response
+
+Get a teapot from some full URL.
+
+Note: it is better to only specify the path in your blueprint, if all your
+requests go to the same host and you specify the host as a parameter to
+katt:start/2:
+```
+katt:start("example-httbpin", [{host, "httpbin.org"}]).
+```
+
+Leading or trainling blank lines in the body are stripped, unless you delimit
+the body lines with the markers <<< (start) and >>> (end). The newlines after
+<<< as well as the newline before >>> is not included in the body.
+
+GET /status/418
+> Accept: *
+> User-Agent: KATT
+< 418
+< X-More-Info: http://tools.ietf.org/html/rfc2324
+<<<
+
+    -=[ teapot ]=-
+
+       _...._
+     .'  _ _ `.
+    | ."` ^ `". _,
+    \_;`"---"`|//
+      |       ;/
+      \_     _/
+        `"""`
+
+>>>
+
+# Second request and response
+
+Get unauthorized.
+
+Also note that we don't expect any body.
+
+The current date will be available to use in later requests as `{{<some_date}}.`
+
+GET /status/401
+> Accept: *
+> User-Agent: KATT
+< 401
+< Www-Authenticate: Basic realm="Fake Realm"
+< Date: {{>some_date}}
+
+
+# Third request
+
+Note that the title of this operation is "Third request", but that's just
+markdown for you. You don't need to include a title, or even a description of
+the operations unless you want to. In the fourth request will will skip the
+description altogether.
+
+Here we are getting a cached response.
+
+GET /cache
+> Accept: application/json
+> User-Agent: KATT
+< 200
+< Content-Type: application/json
+{
+    "url": "http://httpbin.org/cache",
+    "headers": "{{_}}",
+    "args": "{{_}}",
+    "origin": "{{>origin}}"
+}
+
+
+GET /cache
+> Accept: application/json
+> User-Agent: KATT
+> If-Modified-Since: {{<some_date}}
+< 304
+
+
+A fifth request to show that whitespace in JSON body is insignificant.
+POST /post
+> Accept: application/json
+> Content-Type: application/json
+> User-Agent: KATT
+{"origin":"{{<origin}}","whoarewe":"{{<your_name}}_and_{{<my_name}}","date":"{{<some_date}}"}
+< 200
+< Content-Type: application/json
+{
+    "args": "{{_}}",
+    "data": "{{>raw_data}}",
+    "files": [],
+    "form": [],
+    "headers": "{{_}}",
+    "origin": "{{<origin}}",
+    "url": "http://httpbin.org/post",
+    "json": {
+        "origin": "{{<origin}}",
+        "date": "{{<some_date}}",
+        "whoarewe": "{{>whoarewe}}"
+    }
+}
+
+GET /get?origin={{<origin}}&whoarewe={{<whoarewe}}
+> Accept: application/json
+> User-Agent: KATT
+< 200
+< Content-Type: application/json
+{
+    "args": {
+        "whoarewe": "{{<your_name}}_and_{{<my_name}}",
+        "origin": "{{<origin}}"
+    },
+    "headers": "{{_}}",
+    "origin": "{{_}}",
+    "url": "http://httpbin.org/get?origin={{<origin}}&whoarewe={{<whoarewe}}",
+}
