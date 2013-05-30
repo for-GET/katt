@@ -25,7 +25,8 @@
 
 %%%_* Exports ==========================================================
 %% API
--export([ to_list/1
+-export([ merge_proplists/2
+        , to_list/1
         , to_integer/1
         , from_utf8/1
         , to_utf8/1
@@ -34,6 +35,14 @@
         ]).
 
 %%%_* API ==============================================================
+
+%% Merge two proplists. If a property exists in both List1 and List2, then the
+%% value from List2 is used.
+merge_proplists(List1, List2) ->
+  orddict:merge( fun(_K, _V1, V2) -> V2 end
+               , orddict:from_list(List1)
+               , orddict:from_list(List2)
+               ).
 
 to_list(X) when is_list(X)    -> X;
 to_list(X) when is_atom(X)    -> atom_to_list(X);

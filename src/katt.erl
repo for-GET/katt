@@ -29,11 +29,10 @@
 %% API
 -export([ run/1
         , run/2
-        , run/3
         ]).
 
 %% Internal exports
--export([ run/4
+-export([ run/3
         ]).
 
 %%%_* Imports ==========================================================
@@ -65,19 +64,15 @@ run(Scenario) -> run(Scenario, []).
 
 -spec run(string(), list()) ->
              [{string(), pass|{fail, {atom(), any()}}}|{error, any()}].
-%% @doc Run test scenario. Argument is the full path to the scenario file.
+%% @doc Run test scenario. First argument is the full path to the scenario file.
+%% Second argument is a key-value list of parameters, such as host, port, etc.
+%% You can also pass custom variable names (atoms) and values (strings).
 %% @end
-run(Scenario, Params) -> run(Scenario, Params, []).
-
--spec run(string(), list(), list()) ->
-             [{string(), pass|{fail, {atom(), any()}}}|{error, any()}].
-%% @doc Run test scenario. Argument is the full path to the scenario file.
-%% Last argument is a key-value list of parameters.
-%% @end
-run(Scenario, Params, Vars) ->
+run(Scenario, Params0) ->
   ets:new(?TABLE, [named_table, public, ordered_set]),
-  ets:insert(?TABLE, Vars),
-  spawn_link(?MODULE, run, [self(), Scenario, Params, Vars]),
+  Params = make_params(Params0),
+  ets:insert(?TABLE, Params),
+  spawn_link(?MODULE, run, [self(), Scenario, Params]),
   Return = receive {done, Result}    -> Result
            after   ?SCENARIO_TIMEOUT -> {error, timeout}
            end,
@@ -86,12 +81,27 @@ run(Scenario, Params, Vars) ->
 
 %%%_* Internal export --------------------------------------------------
 %% @private
-run(From, Scenario, Params, Vars) ->
+run(From, Scenario, Params) ->
   {ok, Blueprint} = katt_blueprint_parse:file(Scenario),
-  From ! {done, run_scenario(Scenario, Blueprint, Params, Vars)}.
+  From ! {done, run_scenario(Scenario, Blueprint, Params)}.
 
 %%%_* Internal =========================================================
-run_scenario(Scenario, Blueprint, Params, _Vars) ->
+
+%% Take default params, and also merge in optional params from Params, to return
+%% a proplist of params.
+make_params(Params) ->
+  Protocol = proplists:get_value(protocol, Params, "http:"),
+  Port = case Protocol of
+           "http:"  -> 80;
+           "https:" -> 443
+         end,
+  DefaultParams = [ {host, "localhost"}
+                  , {protocol, Protocol}
+                  , {port, Port}
+                  ],
+  katt_util:merge_proplists(DefaultParams, Params).
+
+run_scenario(Scenario, Blueprint, Params) ->
   Result = run_operations( Scenario
                          , Blueprint#katt_blueprint.operations
                          , Params
@@ -245,9 +255,9 @@ substitute(Bin)  ->
 substitute(Bin, '$end_of_table') -> Bin;
 substitute(Bin0, K0)             ->
   [{K0, V}] = ets:lookup(?TABLE, K0),
-  K = ?RECALL_BEGIN_TAG ++ K0 ++ ?RECALL_END_TAG,
+  K = ?RECALL_BEGIN_TAG ++ to_list(K0) ++ ?RECALL_END_TAG,
   EscapedK = katt_util:escape_regex(K),
-  EscapedV = katt_util:escape_regex(V),
+  EscapedV = katt_util:escape_regex(to_list(V)),
   Bin = re:replace( Bin0
                   , EscapedK
                   , to_list(EscapedV)
@@ -308,9 +318,6 @@ do_validate(_Key, ?STORE_BEGIN_TAG ++ Rest, A)         ->
   pass;
 do_validate(Key, E, A)                                 ->
   compare(Key, E, A).
-
-%% put_var(Key, Value) -> put(?VAR_PREFIX ++ Key, Value).
-%% get_var(Key) -> get(?VAR_PREFIX ++ Key).
 
 compare(_Key, E, E) -> pass;
 compare(Key, E, A)  -> {not_equal, {Key, E, A}}.
