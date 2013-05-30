@@ -65,7 +65,7 @@ run(Scenario) -> run(Scenario, []).
 -spec run(string(), list()) ->
              [{string(), pass|{fail, {atom(), any()}}}|{error, any()}].
 %% @doc Run test scenario. First argument is the full path to the scenario file.
-%% Second argument is a key-value list of parameters, such as host, port, etc.
+%% Second argument is a key-value list of parameters, such as hostname, port.
 %% You can also pass custom variable names (atoms) and values (strings).
 %% @end
 run(Scenario, Params0) ->
@@ -95,7 +95,7 @@ make_params(Params) ->
            "http:"  -> 80;
            "https:" -> 443
          end,
-  DefaultParams = [ {host, "localhost"}
+  DefaultParams = [ {hostname, "localhost"}
                   , {protocol, Protocol}
                   , {port, Port}
                   ],
@@ -148,7 +148,7 @@ make_request_url(Params, Path0) ->
   Path = unicode:characters_to_list(proplists:get_value(path, Params, Path0)),
   string:join([ Protocol
               , "//"
-              , proplists:get_value(host, Params, "localhost")
+              , proplists:get_value(hostname, Params, "localhost")
               , ":"
               , integer_to_list(proplists:get_value(port, Params, DefaultPort))
               , Path

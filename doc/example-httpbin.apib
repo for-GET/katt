@@ -5,15 +5,15 @@ Examples of how some requests to _httpbin.org_ can be specified. Read more about
 the httpbin.org API at http://httpbin.org/.
 
 You can try testing this example from the project root in an erlang shell if you
-pass the parameter host with value "httpbin.org", and some variables used in the
-blueprint like so:
+pass the parameter hostname with value "httpbin.org", and some variables used in
+the blueprint like so:
 
 ```
 %% Assign values of "{{<my_name}}" and {{<your_name}}:
 TemplateVariables = [{"my_name", "Joe"}, {"your_name", "Mike"}],
 
 %% Tell KATT to send requests to httpbin.org instead of localhost.
-Params = [{host, "httpbin.org"}],
+Params = [{hostname, "httpbin.org"}],
 
 katt:run("doc/example-httpbin.apib", Params, TemplateVariables).
 ```
@@ -24,10 +24,10 @@ katt:run("doc/example-httpbin.apib", Params, TemplateVariables).
 Get a teapot from some full URL.
 
 Note: it is better to only specify the path in your blueprint, if all your
-requests go to the same host and you specify the host as a parameter to
+requests go to the same hostname and you specify the hostname as a parameter to
 katt:start/2:
 ```
-katt:start("example-httbpin", [{host, "httpbin.org"}]).
+katt:start("example-httbpin", [{hostname, "httpbin.org"}]).
 ```
 
 Leading or trainling blank lines in the body are stripped, unless you delimit
@@ -37,6 +37,7 @@ the body lines with the markers <<< (start) and >>> (end). The newlines after
 GET /status/418
 > Accept: *
 > User-Agent: KATT
+> Host: {{<hostname}}:{{<port}}
 < 418
 < X-More-Info: http://tools.ietf.org/html/rfc2324
 <<<
