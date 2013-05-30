@@ -68,10 +68,7 @@ run(Scenario) -> run(Scenario, []).
 %% Second argument is a key-value list of parameters, such as hostname, port.
 %% You can also pass custom variable names (atoms) and values (strings).
 %% @end
-run(Scenario, Params0) ->
-  ets:new(?TABLE, [named_table, public, ordered_set]),
-  Params = make_params(Params0),
-  ets:insert(?TABLE, Params),
+run(Scenario, Params) ->
   spawn_link(?MODULE, run, [self(), Scenario, Params]),
   receive {done, Result}    -> Result
   after   ?SCENARIO_TIMEOUT -> {error, timeout}
@@ -82,7 +79,10 @@ run(Scenario, Params0) ->
 run(From, Scenario, ScenarioParams) ->
   {ok, Blueprint} = katt_blueprint_parse:file(Scenario),
   Params = make_params(ScenarioParams),
+  ets:new(?TABLE, [named_table, private, ordered_set]),
+  ets:insert(?TABLE, Params),
   Result = run_scenario(Scenario, Blueprint, Params),
+  ets:delete(?TABLE),
   From ! {done, Result}.
 
 %%%_* Internal =========================================================
