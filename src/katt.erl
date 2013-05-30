@@ -73,24 +73,24 @@ run(Scenario, Params0) ->
   Params = make_params(Params0),
   ets:insert(?TABLE, Params),
   spawn_link(?MODULE, run, [self(), Scenario, Params]),
-  Return = receive {done, Result}    -> Result
-           after   ?SCENARIO_TIMEOUT -> {error, timeout}
-           end,
-  ets:delete(?TABLE),
-  Return.
+  receive {done, Result}    -> Result
+  after   ?SCENARIO_TIMEOUT -> {error, timeout}
+  end.
 
 %%%_* Internal export --------------------------------------------------
 %% @private
-run(From, Scenario, Params) ->
+run(From, Scenario, ScenarioParams) ->
   {ok, Blueprint} = katt_blueprint_parse:file(Scenario),
-  From ! {done, run_scenario(Scenario, Blueprint, Params)}.
+  Params = make_params(ScenarioParams),
+  Result = run_scenario(Scenario, Blueprint, Params),
+  From ! {done, Result}.
 
 %%%_* Internal =========================================================
 
 %% Take default params, and also merge in optional params from Params, to return
 %% a proplist of params.
-make_params(Params) ->
-  Protocol = proplists:get_value(protocol, Params, "http:"),
+make_params(ScenarioParams) ->
+  Protocol = proplists:get_value(protocol, ScenarioParams, "http:"),
   Port = case Protocol of
            "http:"  -> 80;
            "https:" -> 443
@@ -99,7 +99,7 @@ make_params(Params) ->
                   , {protocol, Protocol}
                   , {port, Port}
                   ],
-  katt_util:merge_proplists(DefaultParams, Params).
+  katt_util:merge_proplists(DefaultParams, ScenarioParams).
 
 run_scenario(Scenario, Blueprint, Params) ->
   Result = run_operations( Scenario
@@ -107,7 +107,7 @@ run_scenario(Scenario, Blueprint, Params) ->
                          , Params
                          , []
                          ),
-  Result.
+  lists:reverse(Result).
 
 run_operations( Scenario
               , [#katt_operation{ description=Description
@@ -120,20 +120,22 @@ run_operations( Scenario
   Request          = make_request(Req, Params),
   ExpectedResponse = make_response(Rsp),
   ActualResponse   = request(Request),
-  case Result = validate(ExpectedResponse, ActualResponse) of
+  ValidationResult = validate(ExpectedResponse, ActualResponse),
+  Result = [{Description, Request, ValidationResult}|Acc],
+  case ValidationResult of
     pass -> run_operations( Scenario
                           , T
                           , Params
-                          , [{Request, Result}|Acc]
+                          , Result
                           );
     _    -> dbg( Scenario
                , Description
                , Request
                , ExpectedResponse
                , ActualResponse
-               , Result
+               , ValidationResult
                ),
-            [{Request, Result}|Acc]
+            Result
   end;
 run_operations(_, [], _, Acc) ->
   Acc.
