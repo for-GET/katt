@@ -44,7 +44,6 @@
 -include_lib("katt/include/blueprint_types.hrl").
 
 %%%_* Defines ==========================================================
--define(TABLE,             ?MODULE).
 -define(VAR_PREFIX,        "katt_").
 -define(RECALL_BEGIN_TAG,  "{{<").
 -define(RECALL_END_TAG,    "}}").
@@ -78,11 +77,9 @@ run(Scenario, Params) ->
 %% @private
 run(From, Scenario, ScenarioParams) ->
   {ok, Blueprint} = katt_blueprint_parse:file(Scenario),
-  Params = make_params(ScenarioParams),
-  ets:new(?TABLE, [named_table, private, ordered_set]),
-  ets:insert(?TABLE, Params),
+  Params0 = make_params(ScenarioParams),
+  Params = ordsets:from_list(Params0),
   Result = run_scenario(Scenario, Blueprint, Params),
-  ets:delete(?TABLE),
   From ! {done, Result}.
 
 %%%_* Internal =========================================================
@@ -112,37 +109,38 @@ run_scenario(Scenario, Blueprint, Params) ->
 run_operations( Scenario
               , [#katt_operation{ description=Description
                                 , request=Req
-                                , response=Rsp
+                                , response=Res
                                 }|T]
               , Params
               , Acc
               ) ->
   Request          = make_request(Req, Params),
-  ExpectedResponse = make_response(Rsp),
+  ExpectedResponse = make_response(Res, Params),
   ActualResponse   = request(Request),
   ValidationResult = validate(ExpectedResponse, ActualResponse),
   Result = [{Description, Request, ValidationResult}|Acc],
   case ValidationResult of
-    pass -> run_operations( Scenario
-                          , T
-                          , Params
-                          , Result
-                          );
-    _    -> dbg( Scenario
-               , Description
-               , Request
-               , ExpectedResponse
-               , ActualResponse
-               , ValidationResult
-               ),
-            Result
+    {pass, AddParams} -> NewParams = ordsets:union(Params, ordsets:from_list(AddParams)),
+                         run_operations( Scenario
+                                       , T
+                                       , NewParams
+                                       , Result
+                                       );
+    _                 -> dbg( Scenario
+                            , Description
+                            , Request
+                            , ExpectedResponse
+                            , ActualResponse
+                            , ValidationResult
+                            ),
+                         Result
   end;
-run_operations(_, [], _, Acc) ->
+run_operations(_Scenario, [], _Params, Acc) ->
   Acc.
 
-make_request_url(_, Url = "http://" ++ _)  -> Url;
-make_request_url(_, Url = "https://" ++ _) -> Url;
-make_request_url(Params, Path0) ->
+make_request_url(Url = "http://" ++ _, _Params)  -> Url;
+make_request_url(Url = "https://" ++ _, _Params) -> Url;
+make_request_url(Path0, Params) ->
   {Protocol, DefaultPort} = case proplists:get_value(ssl, Params, false) of
                               true  -> {"https:", 443};
                               false -> {"http:", 80}
@@ -159,23 +157,22 @@ make_request_url(Params, Path0) ->
 make_request( #katt_request{headers=Hdrs0, url=Url0, body=RawBody0} = Req
             , Params
             ) ->
-  Url1 = katt_util:from_utf8(substitute(katt_util:to_utf8(Url0))),
-  Url = make_request_url(Params, Url1),
+  Url1 = katt_util:from_utf8(recall(katt_util:to_utf8(Url0), Params)),
+  Url = make_request_url(Url1, Params),
   Hdrs = [{K, katt_util:from_utf8(
-                substitute(
-                  katt_util:to_utf8(V)
-                 )
-               )} || {K, V} <- Hdrs0],
-  RawBody = substitute(RawBody0),
+                recall(katt_util:to_utf8(V), Params)
+              )} || {K, V} <- Hdrs0],
+  RawBody = recall(RawBody0, Params),
   Req#katt_request{ url  = Url
                   , headers = Hdrs
                   , body = RawBody
                   }.
 
-make_response(#katt_response{headers=Hdrs0, body=RawBody0} = Rsp) ->
-  Hdrs = [{K, substitute(V)} || {K, V} <- Hdrs0],
-  RawBody = substitute(RawBody0),
-  Rsp#katt_response{ body = maybe_parse_body(Hdrs, RawBody)
+make_response( #katt_response{headers=Hdrs0, body=RawBody0} = Res
+             , Params) ->
+  Hdrs = [{K, recall(V, Params)} || {K, V} <- Hdrs0],
+  RawBody = recall(RawBody0, Params),
+  Res#katt_response{ body = maybe_parse_body(Hdrs, RawBody)
                    }.
 
 maybe_parse_body(_Hdrs, null) ->
@@ -249,14 +246,9 @@ dbg(Scenario, Description, Request, ExpectedResponse, ActualResponse, Result) ->
          , Result
          ]).
 
-substitute(null) -> null;
-substitute(Bin)  ->
-  FirstKey = ets:first(?TABLE),
-  substitute(Bin, FirstKey).
-
-substitute(Bin, '$end_of_table') -> Bin;
-substitute(Bin0, K0)             ->
-  [{K0, V}] = ets:lookup(?TABLE, K0),
+recall(null, _Params)          -> null;
+recall(Bin, [])                -> Bin;
+recall(Bin0, [{K0, V} | Next]) ->
   K = ?RECALL_BEGIN_TAG ++ to_list(K0) ++ ?RECALL_END_TAG,
   EscapedK = katt_util:escape_regex(K),
   EscapedV = katt_util:escape_regex(to_list(V)),
@@ -264,7 +256,7 @@ substitute(Bin0, K0)             ->
                   , EscapedK
                   , to_list(EscapedV)
                   , [{return, binary}, global]),
-  substitute(Bin, ets:next(?TABLE, K0)).
+  recall(Bin, Next).
 
 %%%_* Validation -------------------------------------------------------
 validate(E = #katt_response{}, A = #katt_response{}) ->
@@ -312,25 +304,25 @@ do_validate(_, E = [{_,_}|_], A = [{_,_}|_])           ->
   [ do_validate(K, proplists:get_value(K, E), proplists:get_value(K, A))
     || K <- Keys
   ];
-do_validate(_K, E = [[{_,_}|_]|_], A = [[{_,_}|_]|_])
+do_validate(Key, E = [[{_,_}|_]|_], A = [[{_,_}|_]|_])
   when length(E) =/= length(A)                         ->
-  missing_object;
+  {missing_object, {Key, {E, A}}};
 do_validate(K, E0 = [[{_,_}|_]|_], A0 = [[{_,_}|_]|_]) ->
   [do_validate(K, E, A) || {E, A} <- lists:zip(E0, A0)];
 do_validate(K, E = [[_|_]|_], A = [[_|_]|_])           ->
   do_validate(K, enumerate(E, K), enumerate(A, K));
-do_validate(Key, E, undefined)                         ->
-  {missing_value, {Key, E}};
 do_validate(Key, undefined, A)                         ->
   {unexpected_value, {Key, A}};
-do_validate(Key, Str = ?STORE_BEGIN_TAG ++ _, [])      ->
-  {empty_value, {Key, Str}};
+do_validate(Key, E, undefined)                         ->
+  {missing_value, {Key, E}};
+do_validate(Key, ?STORE_BEGIN_TAG ++ Rest, [])         ->
+  Param = string:sub_string(Rest, 1, string:str(Rest, ?STORE_END_TAG) - 1),
+  {empty_value, {Key, Param}};
 do_validate(_Key, ?MATCH_ANY ++ _, _)                  ->
   pass;
 do_validate(_Key, ?STORE_BEGIN_TAG ++ Rest, A)         ->
-  Key = string:sub_string(Rest, 1, string:str(Rest, ?STORE_END_TAG) - 1),
-  ets:insert(?TABLE, {Key, A}),
-  pass;
+  Param = string:sub_string(Rest, 1, string:str(Rest, ?STORE_END_TAG) - 1),
+  {pass, {Param, A}};
 do_validate(Key, E, A)                                 ->
   compare(Key, E, A).
 
