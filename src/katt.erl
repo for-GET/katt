@@ -268,10 +268,23 @@ substitute(Bin0, K0)             ->
 
 %%%_* Validation -------------------------------------------------------
 validate(E = #katt_response{}, A = #katt_response{}) ->
-  Result = [validate_status(E, A), validate_headers(E, A), validate_body(E, A)],
-  case lists:filter(fun(X) -> X =/= pass end, lists:flatten(Result)) of
-    []       -> pass;
-    Failures -> Failures
+  Result = [ validate_status(E, A)
+           , validate_headers(E, A)
+           , validate_body(E, A)],
+  {AddParams, Failures} =
+    lists:foldl(
+      fun(pass, Acc) -> Acc;
+         ({pass, AddParam}, {AddParams0, Failures0}) ->
+          {[AddParam | AddParams0], Failures0};
+         (Failure, {AddParams0, Failures0}) ->
+          {AddParams0, [Failure|Failures0]}
+      end,
+    {[],[]},
+    lists:flatten(Result)
+    ),
+  case Failures of
+    [] -> {pass, AddParams};
+    _  -> Failures
   end;
 validate(E, #katt_response{})                        -> {fail, E};
 validate(#katt_response{}, A)                        -> {fail, A}.
