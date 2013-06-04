@@ -134,10 +134,11 @@ run_operations(_Scenario, [], _Params, Acc) ->
 make_request_url(Url = "http://" ++ _, _Params)  -> Url;
 make_request_url(Url = "https://" ++ _, _Params) -> Url;
 make_request_url(Path0, Params) ->
-  {Protocol, DefaultPort} = case proplists:get_value(ssl, Params, false) of
-                              true  -> {"https:", 443};
-                              false -> {"http:", 80}
-                            end,
+  Protocol = proplists:get_value(protocol, Params, "http:"),
+  DefaultPort = case Protocol of
+                  "https:" -> 443;
+                  "http:"  -> 80
+                end,
   Path = unicode:characters_to_list(proplists:get_value(path, Params, Path0)),
   string:join([ Protocol
               , "//"
