@@ -36,9 +36,9 @@
         ]).
 
 %%%_* Imports ==========================================================
--import(katt_util,  [ to_list/1
-                    , from_utf8/1
-                    ]).
+-import(katt_util, [ to_list/1
+                   , from_utf8/1
+                   ]).
 
 %%%_* Includes ==========================================================
 -include_lib("katt/include/blueprint_types.hrl").
@@ -114,8 +114,8 @@ run_operations( Scenario
               , Params
               , Acc
               ) ->
-  Request          = make_request(Req, Params),
-  ExpectedResponse = make_response(Res, Params),
+  Request          = make_katt_request(Req, Params),
+  ExpectedResponse = make_katt_response(Res, Params),
   ActualResponse   = request(Request),
   ValidationResult = validate(ExpectedResponse, ActualResponse),
   Result = [{Description, Request, ValidationResult}|Acc],
@@ -154,7 +154,7 @@ make_request_url(Path0, Params) ->
               , Path
               ], "").
 
-make_request( #katt_request{headers=Hdrs0, url=Url0, body=RawBody0} = Req
+make_katt_request( #katt_request{headers=Hdrs0, url=Url0, body=RawBody0} = Req
             , Params
             ) ->
   Url1 = katt_util:from_utf8(recall(katt_util:to_utf8(Url0), Params)),
@@ -168,7 +168,7 @@ make_request( #katt_request{headers=Hdrs0, url=Url0, body=RawBody0} = Req
                   , body = RawBody
                   }.
 
-make_response( #katt_response{headers=Hdrs0, body=RawBody0} = Res
+make_katt_response( #katt_response{headers=Hdrs0, body=RawBody0} = Res
              , Params) ->
   Hdrs = [{K, recall(V, Params)} || {K, V} <- Hdrs0],
   RawBody = recall(RawBody0, Params),
