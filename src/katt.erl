@@ -149,8 +149,8 @@ make_request_url(Path0, Params) ->
               ], "").
 
 make_katt_request( #katt_request{headers=Hdrs0, url=Url0, body=RawBody0} = Req
-            , Params
-            ) ->
+                 , Params
+                 ) ->
   Url1 = katt_util:from_utf8(recall(katt_util:to_utf8(Url0), Params)),
   Url = make_request_url(Url1, Params),
   Hdrs = [{K, katt_util:from_utf8(
@@ -163,7 +163,8 @@ make_katt_request( #katt_request{headers=Hdrs0, url=Url0, body=RawBody0} = Req
                   }.
 
 make_katt_response( #katt_response{headers=Hdrs0, body=RawBody0} = Res
-             , Params) ->
+                  , Params
+                  , Parsers) ->
   Hdrs = [{K, recall(V, Params)} || {K, V} <- Hdrs0],
   RawBody = recall(RawBody0, Params),
   Res#katt_response{ body = maybe_parse_body(Hdrs, RawBody)
