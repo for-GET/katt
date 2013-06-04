@@ -118,22 +118,22 @@ run_operations( Scenario
   ExpectedResponse = make_katt_response(Res, Params),
   ActualResponse   = request(Request),
   ValidationResult = validate(ExpectedResponse, ActualResponse),
-  Result = [{Description, Request, ValidationResult}|Acc],
-  case ValidationResult of
-    {pass, AddParams} -> NewParams = ordsets:union(Params, ordsets:from_list(AddParams)),
-                         run_operations( Scenario
-                                       , T
-                                       , NewParams
-                                       , Result
-                                       );
-    _                 -> dbg( Scenario
-                            , Description
-                            , Request
-                            , ExpectedResponse
-                            , ActualResponse
-                            , ValidationResult
-                            ),
-                         Result
+  {Pass, AddParams} = ValidationResult,
+  case Pass of
+    pass -> NewParams = ordsets:union(Params, ordsets:from_list(AddParams)),
+            run_operations( Scenario
+                          , T
+                          , NewParams
+                          , [{Description, Request, Pass}|Acc]
+                          );
+    _    -> dbg( Scenario
+               , Description
+               , Request
+               , ExpectedResponse
+               , ActualResponse
+               , ValidationResult
+               ),
+            [{Description, Request, ValidationResult}|Acc]
   end;
 run_operations(_Scenario, [], _Params, Acc) ->
   Acc.
