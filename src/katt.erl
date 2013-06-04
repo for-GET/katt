@@ -79,7 +79,7 @@ run(From, Scenario, ScenarioParams) ->
   {ok, Blueprint} = katt_blueprint_parse:file(Scenario),
   Params0 = make_params(ScenarioParams),
   Params = ordsets:from_list(Params0),
-  Result = run_scenario(Scenario, Blueprint, Params),
+  Result = {Scenario, run_scenario(Scenario, Blueprint, Params)},
   From ! {done, Result}.
 
 %%%_* Internal =========================================================
@@ -126,14 +126,7 @@ run_operations( Scenario
                           , NewParams
                           , [{Description, Request, Pass}|Acc]
                           );
-    _    -> dbg( Scenario
-               , Description
-               , Request
-               , ExpectedResponse
-               , ActualResponse
-               , ValidationResult
-               ),
-            [{Description, Request, ValidationResult}|Acc]
+    _    -> [{Description, Request, ValidationResult}|Acc]
   end;
 run_operations(_Scenario, [], _Params, Acc) ->
   Acc.
@@ -231,21 +224,6 @@ http_request(R = #katt_request{}) ->
                 , []
                 ).
 
-dbg(Scenario, Description, Request, ExpectedResponse, ActualResponse, Result) ->
-  ct:pal("Scenario:~n~p~n~n"
-         "Description:~n~p~n~n"
-         "Request:~n~p~n~n"
-         "Expected response:~n~p~n~n"
-         "Actual response:~n~p~n~n"
-         "Result:~n~p~n~n",
-         [ Scenario
-         , Description
-         , Request
-         , ExpectedResponse
-         , ActualResponse
-         , Result
-         ]).
-
 recall(null, _Params)          -> null;
 recall(Bin, [])                -> Bin;
 recall(Bin0, [{K0, V} | Next]) ->
@@ -276,7 +254,7 @@ validate(E = #katt_response{}, A = #katt_response{}) ->
     ),
   case Failures of
     [] -> {pass, AddParams};
-    _  -> Failures
+    _  -> {fail, Failures}
   end;
 validate(E, #katt_response{})                        -> {fail, E};
 validate(#katt_response{}, A)                        -> {fail, A}.

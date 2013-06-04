@@ -44,33 +44,58 @@ katt_test_() ->
       meck:unload(katt_blueprint_parse),
       meck:unload(lhttpc)
     end
-  , [ ?_test(katt_run_positive())
-    , ?_test(katt_run_negative())
+  , [ katt_run_basic()
+    , katt_run_with_params()
+    , katt_run_with_api_mismatch()
     ]
   }.
 
 
 %%% Tests
 
-katt_run_positive() ->
-  ?assertMatch([ {_, _, pass}
-               , {_, _, pass}
-               , {_, _, pass}
-               , {_, _, pass}
-               ], katt:run("/mock/test1.apib", [{hostname, "mock"}])).
+katt_run_basic() ->
+  Scenario = "/mock/test1.apib",
+  ?_assertMatch( { Scenario
+                 , [ {_, _, pass}
+                   , {_, _, pass}
+                   , {_, _, pass}
+                   , {_, _, pass}
+                   ]
+                 }
+               , katt:run(Scenario)
+               ).
 
+katt_run_with_params() ->
+  Scenario = "/mock/test2.apib",
+  ?_assertMatch( { Scenario
+                 , [ {_, _, pass}
+                   ]
+                 }
+               , katt:run( Scenario
+                         , [ {hostname, "test-params"}
+                           , {some_var, "hi"}
+                           , {version, "1"}
+                           ]
+                         )
+               ).
 
-katt_run_negative() ->
-  ok.
-  % ?assertMatch([ {_, _, [{not_equal, _} | _]}
-  %              | _
-  %              ], katt:run("/mock/test2.apib")).
+katt_run_with_api_mismatch() ->
+  Scenario = "/mock/test3.apib",
+  ?_assertMatch( { Scenario
+                 , [ {_, _, {fail, [ {not_equal, {body, _,_}}
+                                   , {not_equal, {status, _, _}}
+                                   ]}}
+                   ]
+                 }
+               , katt:run(Scenario)
+               ).
 
 
 %%% Helpers
 
-% Mock request for Step 1:
-mock_lhttpc_request( "http://mock:80/foo/examples" = _Url
+%% Mock request for Step 1:
+%% (default hostname is localhost, default port is 80, default protocl is http)
+mock_lhttpc_request( "http://localhost:80/foo/examples" = _Url
                    , "POST" = _Method
                    , _Headers
                    , _Body
@@ -78,7 +103,7 @@ mock_lhttpc_request( "http://mock:80/foo/examples" = _Url
                    , _Options
                    ) ->
   {ok, {{201, []}, [{"Location", "http://some-location.com/test"}], <<>>}};
-% Mock request for Step 2:
+%% Mock request for Step 2:
 mock_lhttpc_request( "http://some-location.com/test"
                    , "GET"
                    , [{"Accept", "application/json"}]
@@ -94,7 +119,7 @@ mock_lhttpc_request( "http://some-location.com/test"
 }
 
 "/utf8>>}};
-% Mock request for Step 3:
+%% Mock request for Step 3:
 mock_lhttpc_request( "http://some-location.com/test/step3"
                    , "POST"
                    , _
@@ -109,7 +134,7 @@ mock_lhttpc_request( "http://some-location.com/test/step3"
     \"cart\": {\"item1\": true}
 }
 "/utf8>>}};
-% Mock request for Step 4:
+%% Mock request for Step 4:
 mock_lhttpc_request( "http://some-location.com/test/step4"
                    , "POST"
                    , _
@@ -119,6 +144,33 @@ mock_lhttpc_request( "http://some-location.com/test/step4"
                    ) ->
   {ok, {{402, []}, [{"Content-Type", "application/json"}], <<"{
     \"error\": \"payment required\"
+}
+"/utf8>>}};
+
+%% Mock request for test-params:
+mock_lhttpc_request( "http://test-params:80/test2"
+                   , "POST"
+                   , [ {"Accept", "text/html"}
+                     , {"Content-Type","application/vnd.katt.test-v1+json"}
+                     ]
+                   , _
+                   , _Timeout
+                   , _Options
+                   ) ->
+  {ok, {{404, []}, [{"Content-Type", "text/html"}], <<"Not found">>}};
+
+%% Mock request for api mismatch test:
+mock_lhttpc_request( "http://localhost:80/test3"
+                   , "POST"
+                   , [ {"Accept", "application/json"}
+                     , {"Content-Type","application/json"}
+                     ]
+                   , _
+                   , _Timeout
+                   , _Options
+                   ) ->
+  {ok, {{401, []}, [{"Content-Type", "application/json"}], <<"{
+    \"error\": \"unauthorized\"
 }
 "/utf8>>}}.
 
@@ -215,6 +267,32 @@ POST {{<example_uri}}/step4
 {
     \"error\": \"payment required\"
 }
+"/utf8>>);
+mock_katt_blueprint_parse_file("/mock/test2.apib") ->
+  katt_blueprint_parse:string(
+    <<"--- Test 2 ---
+
+POST /test2
+> Accept: text/html
+> Content-Type: application/vnd.katt.test-v{{<version}}+json
+{
+    \"ok\": {{<some_var}}
+}
+< 404
+Not found
+
+"/utf8>>);
+
+mock_katt_blueprint_parse_file("/mock/test3.apib") ->
+  katt_blueprint_parse:string(
+    <<"--- Test 3 ---
+
+POST /test3
+> Accept: application/json
+> Content-Type: application/json
+{}
+< 200
+{ \"ok\": true }
 "/utf8>>).
 
 %%%_* Emacs ============================================================
