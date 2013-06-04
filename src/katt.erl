@@ -29,10 +29,11 @@
 %% API
 -export([ run/1
         , run/2
+        , run/3
         ]).
 
 %% Internal exports
--export([ run/3
+-export([ run/4
         ]).
 
 %%%_* Imports ==========================================================
@@ -53,33 +54,59 @@
 -define(SCENARIO_TIMEOUT,  120000).
 -define(REQUEST_TIMEOUT,   20000).
 
+-type katt_run_result() :: { nonempty_string()    % scenario name
+                           , [ { string()         % operation description
+                               , #katt_request{}
+                               , pass | { fail
+                                        , atom()  % reason
+                                        , any()   % details
+                                        }
+                               }
+                             ]
+                           } | { error
+                               , atom()           % reason
+                               , any()            % details
+                               }.
+
 %%%_* API ==============================================================
--spec run(string()) ->
-             [{string(), pass|{fail, {atom(), any()}}}|{error, any()}].
+-spec run(nonempty_string()) -> katt_run_result().
+
 %% @doc Run test scenario. Argument is the full path to the scenario file.
 %% The scenario file should be a KATT Blueprint file.
 %% @end
 run(Scenario) -> run(Scenario, []).
 
--spec run(string(), list()) ->
-             [{string(), pass|{fail, {atom(), any()}}}|{error, any()}].
+-spec run(nonempty_string(), list()) -> katt_run_result().
+%% @doc Run test scenario. Argument is the full path to the scenario file.
+%% The scenario file should be a KATT Blueprint file.
+%% @end
+run(Scenario, Params) -> run(Scenario, Params, []).
+
+
+-spec run(nonempty_string(), list(), list()) -> katt_run_result().
 %% @doc Run test scenario. First argument is the full path to the scenario file.
 %% Second argument is a key-value list of parameters, such as hostname, port.
 %% You can also pass custom variable names (atoms) and values (strings).
+%% Third argument is a key-value list of special options such as custom
+%% parser to use instead of the built-in default parser (maybe_parse_body).
 %% @end
-run(Scenario, Params) ->
-  spawn_link(?MODULE, run, [self(), Scenario, Params]),
+run(Scenario, Params, Options) ->
+  ScenarioTimeout = proplists:get_value( scenario_timeout
+                                       , Options
+                                       , ?SCENARIO_TIMEOUT
+                                       ),
+  spawn_link(?MODULE, run, [self(), Scenario, Params, Options]),
   receive {done, Result}    -> Result
-  after   ?SCENARIO_TIMEOUT -> {error, timeout}
+  after   ScenarioTimeout -> {error, timeout, ScenarioTimeout}
   end.
 
 %%%_* Internal export --------------------------------------------------
 %% @private
-run(From, Scenario, ScenarioParams) ->
+run(From, Scenario, ScenarioParams, ScenarioOptions) ->
   {ok, Blueprint} = katt_blueprint_parse:file(Scenario),
-  Params0 = make_params(ScenarioParams),
-  Params = ordsets:from_list(Params0),
-  Result = {Scenario, run_scenario(Scenario, Blueprint, Params)},
+  Params = ordsets:from_list(make_params(ScenarioParams)),
+  Options = make_options(ScenarioOptions),
+  Result = {Scenario, run_scenario(Scenario, Blueprint, Params, Options)},
   From ! {done, Result}.
 
 %%%_* Internal =========================================================
@@ -98,10 +125,19 @@ make_params(ScenarioParams) ->
                   ],
   katt_util:merge_proplists(DefaultParams, ScenarioParams).
 
-run_scenario(Scenario, Blueprint, Params) ->
+make_options(Options) ->
+  katt_util:merge_proplists([ {parser, fun maybe_parse_body/2}
+                            , {scenario_timeout, ?SCENARIO_TIMEOUT}
+                            , {request_timeout, ?REQUEST_TIMEOUT}
+                            ]
+                            , Options
+                            ).
+
+run_scenario(Scenario, Blueprint, Params, Options) ->
   Result = run_operations( Scenario
                          , Blueprint#katt_blueprint.operations
                          , Params
+                         , Options
                          , []
                          ),
   lists:reverse(Result).
@@ -112,11 +148,12 @@ run_operations( Scenario
                                 , response=Res
                                 }|T]
               , Params
+              , Options
               , Acc
               ) ->
-  Request          = make_katt_request(Req, Params),
-  ExpectedResponse = make_katt_response(Res, Params),
-  ActualResponse   = request(Request),
+  Request          = make_katt_request(Req, Params, Options),
+  ExpectedResponse = make_katt_response(Res, Params, Options),
+  ActualResponse   = request(Request, Options),
   ValidationResult = validate(ExpectedResponse, ActualResponse),
   {Pass, AddParams} = ValidationResult,
   case Pass of
@@ -124,11 +161,12 @@ run_operations( Scenario
             run_operations( Scenario
                           , T
                           , NewParams
+                          , Options
                           , [{Description, Request, Pass}|Acc]
                           );
     _    -> [{Description, Request, ValidationResult}|Acc]
   end;
-run_operations(_Scenario, [], _Params, Acc) ->
+run_operations(_Scenario, [], _Params, _Options, Acc) ->
   Acc.
 
 make_request_url(Url = "http://" ++ _, _Params)  -> Url;
@@ -150,6 +188,7 @@ make_request_url(Path0, Params) ->
 
 make_katt_request( #katt_request{headers=Hdrs0, url=Url0, body=RawBody0} = Req
                  , Params
+                 , _Options
                  ) ->
   Url1 = katt_util:from_utf8(recall(katt_util:to_utf8(Url0), Params)),
   Url = make_request_url(Url1, Params),
@@ -164,11 +203,12 @@ make_katt_request( #katt_request{headers=Hdrs0, url=Url0, body=RawBody0} = Req
 
 make_katt_response( #katt_response{headers=Hdrs0, body=RawBody0} = Res
                   , Params
-                  , Parsers) ->
+                  , Options
+                  ) ->
   Hdrs = [{K, recall(V, Params)} || {K, V} <- Hdrs0],
   RawBody = recall(RawBody0, Params),
-  Res#katt_response{ body = maybe_parse_body(Hdrs, RawBody)
-                   }.
+  ParseFun = proplists:get_value(parser, Options),
+  Res#katt_response{body = ParseFun(Hdrs, RawBody)}.
 
 maybe_parse_body(_Hdrs, null) ->
   [];
@@ -200,20 +240,19 @@ to_proplist(Str) when is_binary(Str)     ->
 to_proplist(Value)                       ->
   Value.
 
-request(R = #katt_request{}) ->
-  case http_request(R) of
+request(R = #katt_request{}, Options) ->
+  ParseFun = proplists:get_value(parser, Options),
+  case http_request(R, Options) of
     {ok, {{Code, _}, Hdrs, RawBody}} ->
       #katt_response{ status  = Code
                     , headers = Hdrs
-                    , body    = maybe_parse_body(Hdrs, RawBody)
+                    , body    = ParseFun(Hdrs, RawBody)
                     };
-    {error, timeout}                 ->
-      {error, http_timeout};
     Error = {error, _}               ->
       Error
   end.
 
-http_request(R = #katt_request{}) ->
+http_request(R = #katt_request{}, Options) ->
   Body = case R#katt_request.body of
     null -> <<>>;
     Bin  -> Bin
@@ -222,7 +261,7 @@ http_request(R = #katt_request{}) ->
                 , R#katt_request.method
                 , R#katt_request.headers
                 , Body
-                , ?REQUEST_TIMEOUT
+                , proplists:get_value(request_timeout, Options)
                 , []
                 ).
 
