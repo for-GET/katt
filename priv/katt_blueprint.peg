@@ -273,7 +273,6 @@ s <- [\t\v\f ] ~;
 
 -include_lib("katt/include/blueprint_types.hrl").
 
-null_if_empty(<<>>)    -> null;
 null_if_empty([])      -> null;
 null_if_empty(String)  -> String.
 
