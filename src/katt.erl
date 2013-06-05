@@ -179,7 +179,7 @@ make_request_url(Path0, Params) ->
   Protocol = proplists:get_value(protocol, Params),
   Hostname = proplists:get_value(hostname, Params),
   Port = integer_to_list(proplists:get_value(port, Params)),
-  Path = unicode:characters_to_list(proplists:get_value(path, Params, Path0)),
+  Path = unicode:characters_to_list(Path0),
   string:join([ Protocol
               , "//"
               , Hostname
