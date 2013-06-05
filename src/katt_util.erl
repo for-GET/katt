@@ -27,7 +27,6 @@
 %% API
 -export([ merge_proplists/2
         , to_list/1
-        , to_integer/1
         , from_utf8/1
         , to_utf8/1
         , to_lower/1
@@ -48,10 +47,6 @@ to_list(X) when is_list(X)    -> X;
 to_list(X) when is_atom(X)    -> atom_to_list(X);
 to_list(X) when is_binary(X)  -> binary_to_list(X);
 to_list(X) when is_integer(X) -> integer_to_list(X).
-
-to_integer(X) when is_integer(X) -> X;
-to_integer(X) when is_list(X)    -> list_to_integer(X);
-to_integer(X) when is_binary(X)  -> to_integer(binary_to_list(X)).
 
 %% Transform (possibly utf8 encoded) binary to list, ignore everything else.
 from_utf8(X) when is_binary(X) ->

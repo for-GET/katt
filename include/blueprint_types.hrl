@@ -10,12 +10,12 @@
 -record(katt_request,     { method = "GET"              :: string()
                           , url = "/"                   :: string()
                           , headers = []                :: [http_header()]
-                          , body = null                 :: binary()
+                          , body = null                 :: binary() | null
                           }).
 
 -record(katt_response,    { status = 200                :: integer()
                           , headers = []                :: [http_header()]
-                          , body = null                 :: binary()
+                          , body = null                 :: binary() | null
                           }).
 
 -record(katt_operation,   { description = null          :: utf8_string()

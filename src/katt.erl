@@ -36,81 +36,48 @@
 -export([ run/4
         ]).
 
-%%%_* Imports ==========================================================
--import(katt_util, [ to_list/1
-                   , from_utf8/1
-                   ]).
-
-%%%_* Includes ==========================================================
--include_lib("katt/include/blueprint_types.hrl").
-
-%%%_* Defines ==========================================================
--define(VAR_PREFIX,               "katt_").
--define(RECALL_BEGIN_TAG,         "{{<").
--define(RECALL_END_TAG,           "}}").
--define(STORE_BEGIN_TAG,          "{{>").
--define(STORE_END_TAG,            "}}").
--define(MATCH_ANY,                "{{_}}").
--define(DEFAULT_SCENARIO_TIMEOUT, 120000).
--define(DEFAULT_REQUEST_TIMEOUT,  20000).
--define(DEFAULT_PROTOCOL,         "http:").
--define(DEFAULT_HOSTNAME,         "127.0.0.1").
--define(DEFAULT_PORT_HTTP,        80).
--define(DEFAULT_PORT_HTTPS,       443).
-
--type katt_run_result() :: { nonempty_string()    % scenario name
-                           , [ { string()         % operation description
-                               , #katt_request{}
-                               , pass | { fail
-                                        , atom()  % reason
-                                        , any()   % details
-                                        }
-                               }
-                             ]
-                           } | { error
-                               , atom()           % reason
-                               , any()            % details
-                               }.
+%%%_* Includes =========================================================
+-include("katt.hrl").
 
 %%%_* API ==============================================================
--spec run(nonempty_string()) -> katt_run_result().
+
+%% @doc Run test scenario. Argument is the full path to the scenario file.
+%% The scenario filename should be a KATT Blueprint file.
+%% @end
+-spec run(scenario_filename()) -> run_result().
+run(ScenarioFilename) -> run(ScenarioFilename, []).
 
 %% @doc Run test scenario. Argument is the full path to the scenario file.
 %% The scenario file should be a KATT Blueprint file.
 %% @end
-run(Scenario) -> run(Scenario, []).
-
--spec run(nonempty_string(), list()) -> katt_run_result().
-%% @doc Run test scenario. Argument is the full path to the scenario file.
-%% The scenario file should be a KATT Blueprint file.
-%% @end
-run(Scenario, Params) -> run(Scenario, Params, []).
+-spec run(scenario_filename(), proplist()) -> run_result().
+run(ScenarioFilename, Params) -> run(ScenarioFilename, Params, []).
 
 
--spec run(nonempty_string(), list(), list()) -> katt_run_result().
 %% @doc Run test scenario. First argument is the full path to the scenario file.
 %% Second argument is a key-value list of parameters, such as hostname, port.
 %% You can also pass custom variable names (atoms) and values (strings).
 %% Third argument is a key-value list of special options such as custom
 %% parser to use instead of the built-in default parser (maybe_parse_body).
 %% @end
-run(Scenario, Params, Options) ->
+-spec run(scenario_filename(), proplist(), callbacks()) -> run_result().
+run(Scenario, Params, Callbacks) ->
   ScenarioTimeout = proplists:get_value( scenario_timeout
-                                       , Options
+                                       , Params
                                        , ?DEFAULT_SCENARIO_TIMEOUT
                                        ),
-  spawn_link(?MODULE, run, [self(), Scenario, Params, Options]),
+  spawn_link(?MODULE, run, [self(), Scenario, Params, Callbacks]),
   receive {done, Result}    -> Result
   after   ScenarioTimeout -> {error, timeout, ScenarioTimeout}
   end.
 
 %%%_* Internal export --------------------------------------------------
 %% @private
-run(From, Scenario, ScenarioParams, ScenarioOptions) ->
+run(From, Scenario, ScenarioParams, ScenarioCallbacks) ->
   {ok, Blueprint} = katt_blueprint_parse:file(Scenario),
   Params = ordsets:from_list(make_params(ScenarioParams)),
-  Options = make_options(ScenarioOptions),
-  Result = {Scenario, run_scenario(Scenario, Blueprint, Params, Options)},
+  Callbacks = make_callbacks(ScenarioCallbacks),
+  Result = {Scenario, run_scenario(Scenario, Blueprint, Params, Callbacks)},
   From ! {done, Result}.
 
 %%%_* Internal =========================================================
@@ -119,29 +86,29 @@ run(From, Scenario, ScenarioParams, ScenarioOptions) ->
 %% a proplist of params.
 make_params(ScenarioParams) ->
   Protocol = proplists:get_value(protocol, ScenarioParams, ?DEFAULT_PROTOCOL),
-  Port = case Protocol of
-           "http:"  -> ?DEFAULT_PORT_HTTP;
-           "https:" -> ?DEFAULT_PORT_HTTPS
-         end,
-  DefaultParams = [ {hostname, "localhost"}
+  DefaultPort = case Protocol of
+                  ?PROTOCOL_HTTP  -> ?DEFAULT_PORT_HTTP;
+                  ?PROTOCOL_HTTPS -> ?DEFAULT_PORT_HTTPS
+                end,
+  DefaultParams = [ {hostname, ?DEFAULT_HOSTNAME}
                   , {protocol, Protocol}
-                  , {port, Port}
+                  , {port, DefaultPort}
+                  , {scenario_timeout, ?DEFAULT_SCENARIO_TIMEOUT}
+                  , {request_timeout, ?DEFAULT_REQUEST_TIMEOUT}
                   ],
   katt_util:merge_proplists(DefaultParams, ScenarioParams).
 
-make_options(Options) ->
-  katt_util:merge_proplists([ {parser, fun maybe_parse_body/2}
-                            , {scenario_timeout, ?DEFAULT_SCENARIO_TIMEOUT}
-                            , {request_timeout, ?DEFAULT_REQUEST_TIMEOUT}
-                            ]
-                            , Options
-                            ).
+make_callbacks(Callbacks) ->
+  katt_util:merge_proplists([ {parse, ?DEFAULT_PARSE_FUNCTION}
+                            , {request, ?DEFAULT_REQUEST_FUNCTION}
+                            , {validate, ?DEFAULT_VALIDATE_FUNCTION}
+                            ], Callbacks).
 
-run_scenario(Scenario, Blueprint, Params, Options) ->
+run_scenario(Scenario, Blueprint, Params, Callbacks) ->
   Result = run_operations( Scenario
                          , Blueprint#katt_blueprint.operations
                          , Params
-                         , Options
+                         , Callbacks
                          , []
                          ),
   lists:reverse(Result).
@@ -152,45 +119,31 @@ run_operations( Scenario
                                 , response=Res
                                 }|T]
               , Params
-              , Options
+              , Callbacks
               , Acc
               ) ->
-  Request          = make_katt_request(Req, Params, Options),
-  ExpectedResponse = make_katt_response(Res, Params, Options),
-  ActualResponse   = request(Request, Options),
-  ValidationResult = validate(ExpectedResponse, ActualResponse),
+  Request = make_katt_request(Req, Params),
+  ExpectedResponse = make_katt_response(Res, Params, Callbacks),
+  RequestFun = proplists:get_value(request, Callbacks),
+  ValidateFun = proplists:get_value(validate, Callbacks),
+  ActualResponse = RequestFun(Request, Params, Callbacks),
+  ValidationResult = ValidateFun(ExpectedResponse, ActualResponse, Params),
   {Pass, AddParams} = ValidationResult,
   case Pass of
     pass -> NewParams = ordsets:union(Params, ordsets:from_list(AddParams)),
             run_operations( Scenario
                           , T
                           , NewParams
-                          , Options
+                          , Callbacks
                           , [{Description, Request, Pass}|Acc]
                           );
     _    -> [{Description, Request, ValidationResult}|Acc]
   end;
-run_operations(_Scenario, [], _Params, _Options, Acc) ->
+run_operations(_Scenario, [], _Params, _Callbacks, Acc) ->
   Acc.
-
-make_request_url(Url = "http://" ++ _, _Params)  -> Url;
-make_request_url(Url = "https://" ++ _, _Params) -> Url;
-make_request_url(Path0, Params) ->
-  Protocol = proplists:get_value(protocol, Params),
-  Hostname = proplists:get_value(hostname, Params),
-  Port = integer_to_list(proplists:get_value(port, Params)),
-  Path = unicode:characters_to_list(Path0),
-  string:join([ Protocol
-              , "//"
-              , Hostname
-              , ":"
-              , Port
-              , Path
-              ], "").
 
 make_katt_request( #katt_request{headers=Hdrs0, url=Url0, body=RawBody0} = Req
                  , Params
-                 , _Options
                  ) ->
   Url1 = katt_util:from_utf8(recall(katt_util:to_utf8(Url0), Params)),
   Url = make_request_url(Url1, Params),
@@ -205,156 +158,45 @@ make_katt_request( #katt_request{headers=Hdrs0, url=Url0, body=RawBody0} = Req
 
 make_katt_response( #katt_response{headers=Hdrs0, body=RawBody0} = Res
                   , Params
-                  , Options
+                  , Callbacks
                   ) ->
   Hdrs = [{K, recall(V, Params)} || {K, V} <- Hdrs0],
   RawBody = recall(RawBody0, Params),
-  ParseFun = proplists:get_value(parser, Options),
-  Res#katt_response{body = ParseFun(Hdrs, RawBody)}.
-
-maybe_parse_body(_Hdrs, null) ->
-  [];
-maybe_parse_body(Hdrs, Body) ->
-  case is_json_body(Hdrs, Body) of
-    true  -> parse_json(Body);
-    false -> from_utf8(Body)
-  end.
-
-is_json_body(_Hdrs, <<>>) -> false;
-is_json_body(Hdrs, _Body) ->
-  ContentType = proplists:get_value("Content-Type", Hdrs, ""),
-  case string:str(unicode:characters_to_list(ContentType), "json") of
-    0 -> false;
-    _ -> true
-  end.
-
-parse_json(Binary) ->
-  to_proplist(mochijson3:decode(Binary)).
-
-to_proplist(L = [{struct, _}|_])         ->
-  [to_proplist(S) || S <- L];
-to_proplist({struct, L}) when is_list(L) ->
-  [{from_utf8(K), to_proplist(V)} || {K, V} <- L];
-to_proplist(List) when is_list(List)     ->
-  lists:sort([to_proplist(L) || L <- List]);
-to_proplist(Str) when is_binary(Str)     ->
-  from_utf8(Str);
-to_proplist(Value)                       ->
-  Value.
-
-request(R = #katt_request{}, Options) ->
-  ParseFun = proplists:get_value(parser, Options),
-  case http_request(R, Options) of
-    {ok, {{Code, _}, Hdrs, RawBody}} ->
-      #katt_response{ status  = Code
-                    , headers = Hdrs
-                    , body    = ParseFun(Hdrs, RawBody)
-                    };
-    Error = {error, _}               ->
-      Error
-  end.
-
-http_request(R = #katt_request{}, Options) ->
-  Body = case R#katt_request.body of
-    null -> <<>>;
-    Bin  -> Bin
-  end,
-  lhttpc:request( R#katt_request.url
-                , R#katt_request.method
-                , R#katt_request.headers
-                , Body
-                , proplists:get_value(request_timeout, Options)
-                , []
-                ).
+  ParseFun = proplists:get_value(parse, Callbacks),
+  Res#katt_response{body = ParseFun(Hdrs, RawBody, Params)}.
 
 recall(null, _Params)          -> null;
 recall(Bin, [])                -> Bin;
 recall(Bin0, [{K0, V} | Next]) ->
-  K = ?RECALL_BEGIN_TAG ++ to_list(K0) ++ ?RECALL_END_TAG,
+  K = ?RECALL_BEGIN_TAG ++ katt_util:to_list(K0) ++ ?RECALL_END_TAG,
   EscapedK = katt_util:escape_regex(K),
-  EscapedV = katt_util:escape_regex(to_list(V)),
+  EscapedV = katt_util:escape_regex(katt_util:to_list(V)),
   Bin = re:replace( Bin0
                   , EscapedK
-                  , to_list(EscapedV)
+                  , katt_util:to_list(EscapedV)
                   , [{return, binary}, global]),
   recall(Bin, Next).
 
-%%%_* Validation -------------------------------------------------------
-validate(E = #katt_response{}, A = #katt_response{}) ->
-  Result = [ validate_status(E, A)
-           , validate_headers(E, A)
-           , validate_body(E, A)],
-  {AddParams, Failures} =
-    lists:foldl(
-      fun(pass, Acc) -> Acc;
-         ({pass, AddParam}, {AddParams0, Failures0}) ->
-          {[AddParam | AddParams0], Failures0};
-         (Failure, {AddParams0, Failures0}) ->
-          {AddParams0, [Failure|Failures0]}
-      end,
-    {[],[]},
-    lists:flatten(Result)
-    ),
-  case Failures of
-    [] -> {pass, AddParams};
-    _  -> {fail, Failures}
-  end;
-validate(E, #katt_response{})                        -> {fail, E};
-validate(#katt_response{}, A)                        -> {fail, A}.
+-spec make_request_url( string()
+                      , proplist()
+                      ) -> nonempty_string().
+make_request_url(Url = ?PROTOCOL_HTTP "//" ++ _, _Params)  -> Url;
+make_request_url(Url = ?PROTOCOL_HTTPS "//" ++ _, _Params) -> Url;
+make_request_url(Path, Params) ->
+  Protocol = proplists:get_value(protocol, Params),
+  Hostname = proplists:get_value(hostname, Params),
+  Port = proplists:get_value(port, Params),
+  string:join([ Protocol
+              , "//"
+              , make_host(Protocol, Hostname, Port)
+              , Path
+              ], "").
 
-validate_status(#katt_response{status=E}, #katt_response{status=A}) ->
-  compare(status, E, A).
 
-%% Actual headers are allowed to be a superset of expected headers, since
-%% we don't want tests full of boilerplate like tests for headers such as
-%% Content-Length, Server, Date, etc.
-%% The header name (not the value) is compared case-insensitive
-validate_headers(#katt_response{headers=E0}, #katt_response{headers=A0}) ->
-  E = [{katt_util:to_lower(K), V} || {K, V} <- E0],
-  A = [{katt_util:to_lower(K), V} || {K, V} <- A0],
-  ExpectedHeaders = lists:usort(proplists:get_keys(E)),
-  Get = fun proplists:get_value/2,
-  [ do_validate(K, Get(K, E), Get(K, A)) || K <- ExpectedHeaders].
-
-%% Bodies must be identical, no subset matching or similar.
-validate_body(#katt_response{body=E}, #katt_response{body=A}) ->
-  do_validate(body, E, A).
-
-do_validate(_, E = [{_,_}|_], A = [{_,_}|_])           ->
-  Keys = lists:usort([K || {K, _} <- lists:merge(A, E)]),
-  [ do_validate(K, proplists:get_value(K, E), proplists:get_value(K, A))
-    || K <- Keys
-  ];
-do_validate(Key, E = [[{_,_}|_]|_], A = [[{_,_}|_]|_])
-  when length(E) =/= length(A)                         ->
-  {missing_object, {Key, {E, A}}};
-do_validate(K, E0 = [[{_,_}|_]|_], A0 = [[{_,_}|_]|_]) ->
-  [do_validate(K, E, A) || {E, A} <- lists:zip(E0, A0)];
-do_validate(K, E = [[_|_]|_], A = [[_|_]|_])           ->
-  do_validate(K, enumerate(E, K), enumerate(A, K));
-do_validate(Key, undefined, A)                         ->
-  {unexpected_value, {Key, A}};
-do_validate(Key, E, undefined)                         ->
-  {missing_value, {Key, E}};
-do_validate(Key, ?STORE_BEGIN_TAG ++ Rest, [])         ->
-  Param = string:sub_string(Rest, 1, string:str(Rest, ?STORE_END_TAG) - 1),
-  {empty_value, {Key, Param}};
-do_validate(_Key, ?MATCH_ANY ++ _, _)                  ->
-  pass;
-do_validate(_Key, ?STORE_BEGIN_TAG ++ Rest, A)         ->
-  Param = string:sub_string(Rest, 1, string:str(Rest, ?STORE_END_TAG) - 1),
-  {pass, {Param, A}};
-do_validate(Key, E, A)                                 ->
-  compare(Key, E, A).
-
-compare(_Key, E, E) -> pass;
-compare(Key, E, A)  -> {not_equal, {Key, E, A}}.
-
-%% Transform simple list to proplist with keys named Name1, Name2 etc.
-enumerate(L, Name) ->
-  lists:zip([ to_list(Name) ++ integer_to_list(N)
-              || N <- lists:seq(1, length(L))
-            ], L).
+make_host(?PROTOCOL_HTTP,  Hostname, 80)   -> Hostname;
+make_host(?PROTOCOL_HTTPS, Hostname, 443)  -> Hostname;
+make_host(_Proto,          Hostname, Port) ->
+  Hostname ++ ":" ++ katt_util:to_list(Port).
 
 %%%_* Emacs ============================================================
 %%% Local Variables:

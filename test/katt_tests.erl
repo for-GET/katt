@@ -94,8 +94,8 @@ katt_run_with_api_mismatch() ->
 %%% Helpers
 
 %% Mock request for Step 1:
-%% (default hostname is localhost, default port is 80, default protocl is http)
-mock_lhttpc_request( "http://localhost:80/foo/examples" = _Url
+%% (default hostname is 127.0.0.1, default port is 80, default protocl is http)
+mock_lhttpc_request( "http://127.0.0.1/foo/examples" = _Url
                    , "POST" = _Method
                    , _Headers
                    , _Body
@@ -148,7 +148,7 @@ mock_lhttpc_request( "http://some-location.com/test/step4"
 "/utf8>>}};
 
 %% Mock request for test-params:
-mock_lhttpc_request( "http://test-params:80/test2"
+mock_lhttpc_request( "http://test-params/test2"
                    , "POST"
                    , [ {"Accept", "text/html"}
                      , {"Content-Type","application/vnd.katt.test-v1+json"}
@@ -160,7 +160,7 @@ mock_lhttpc_request( "http://test-params:80/test2"
   {ok, {{404, []}, [{"Content-Type", "text/html"}], <<"Not found">>}};
 
 %% Mock request for api mismatch test:
-mock_lhttpc_request( "http://localhost:80/test3"
+mock_lhttpc_request( "http://127.0.0.1/test3"
                    , "POST"
                    , [ {"Accept", "application/json"}
                      , {"Content-Type","application/json"}

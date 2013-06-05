@@ -22,7 +22,10 @@ docs:
 xref:
 	./rebar xref skip_deps=true
 
-test: eunit
+test: eunit dialyzer
+
+dialyzer:
+	dialyzer -Ideps --src $(shell find src -name *.erl -not -name katt_blueprint.erl)
 
 eunit:
 	./rebar eunit skip_deps=true

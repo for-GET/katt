@@ -19,8 +19,6 @@
 %%%
 %%% This is an interface module which provides access to the main functionality
 %%% of katt_blueprint_parser, i.e. parsing a KATT Blueprint string or file.
-%%%
-%%% @copyright 2013 Klarna AB
 %%% @end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

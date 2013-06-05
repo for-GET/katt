@@ -1,7 +1,7 @@
 # KATT [![Build Status](https://secure.travis-ci.org/klarna/katt.png)](http://travis-ci.org/klarna/katt)
 
-
 KATT (Klarna API Testing Tool) is an HTTP-based API testing tool for Erlang.
+
 
 ## Quick start
 
