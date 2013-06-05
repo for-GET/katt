@@ -60,6 +60,7 @@ katt_run_basic() ->
                    , {_, _, pass}
                    , {_, _, pass}
                    , {_, _, pass}
+                   , {_, _, pass}
                    ]
                  }
                , katt:run(Scenario)
@@ -146,6 +147,15 @@ mock_lhttpc_request( "http://some-location.com/test/step4"
     \"error\": \"payment required\"
 }
 "/utf8>>}};
+%% Mock request for Step 5:
+mock_lhttpc_request( "http://127.0.0.1/nothing"
+                   , "HEAD"
+                   , _
+                   , _
+                   , _Timeout
+                   , _Options
+                   ) ->
+  {ok, {{404, "Not found"}, [{"Content-Type", "text/html"}], <<>>}};
 
 %% Mock request for test-params:
 mock_lhttpc_request( "http://test-params/test2"
@@ -267,6 +277,12 @@ POST {{<example_uri}}/step4
 {
     \"error\": \"payment required\"
 }
+
+HEAD /nothing
+< 404
+< Content-Type: text/html
+<<<
+>>>
 "/utf8>>);
 mock_katt_blueprint_parse_file("/mock/test2.apib") ->
   katt_blueprint_parse:string(
