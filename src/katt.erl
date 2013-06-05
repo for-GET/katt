@@ -45,14 +45,18 @@
 -include_lib("katt/include/blueprint_types.hrl").
 
 %%%_* Defines ==========================================================
--define(VAR_PREFIX,        "katt_").
--define(RECALL_BEGIN_TAG,  "{{<").
--define(RECALL_END_TAG,    "}}").
--define(STORE_BEGIN_TAG,   "{{>").
--define(STORE_END_TAG,     "}}").
--define(MATCH_ANY,         "{{_}}").
--define(SCENARIO_TIMEOUT,  120000).
--define(REQUEST_TIMEOUT,   20000).
+-define(VAR_PREFIX,               "katt_").
+-define(RECALL_BEGIN_TAG,         "{{<").
+-define(RECALL_END_TAG,           "}}").
+-define(STORE_BEGIN_TAG,          "{{>").
+-define(STORE_END_TAG,            "}}").
+-define(MATCH_ANY,                "{{_}}").
+-define(DEFAULT_SCENARIO_TIMEOUT, 120000).
+-define(DEFAULT_REQUEST_TIMEOUT,  20000).
+-define(DEFAULT_PROTOCOL,         "http:").
+-define(DEFAULT_HOSTNAME,         "127.0.0.1").
+-define(DEFAULT_PORT_HTTP,        80).
+-define(DEFAULT_PORT_HTTPS,       443).
 
 -type katt_run_result() :: { nonempty_string()    % scenario name
                            , [ { string()         % operation description
@@ -93,7 +97,7 @@ run(Scenario, Params) -> run(Scenario, Params, []).
 run(Scenario, Params, Options) ->
   ScenarioTimeout = proplists:get_value( scenario_timeout
                                        , Options
-                                       , ?SCENARIO_TIMEOUT
+                                       , ?DEFAULT_SCENARIO_TIMEOUT
                                        ),
   spawn_link(?MODULE, run, [self(), Scenario, Params, Options]),
   receive {done, Result}    -> Result
@@ -114,10 +118,10 @@ run(From, Scenario, ScenarioParams, ScenarioOptions) ->
 %% Take default params, and also merge in optional params from Params, to return
 %% a proplist of params.
 make_params(ScenarioParams) ->
-  Protocol = proplists:get_value(protocol, ScenarioParams, "http:"),
+  Protocol = proplists:get_value(protocol, ScenarioParams, ?DEFAULT_PROTOCOL),
   Port = case Protocol of
-           "http:"  -> 80;
-           "https:" -> 443
+           "http:"  -> ?DEFAULT_PORT_HTTP;
+           "https:" -> ?DEFAULT_PORT_HTTPS
          end,
   DefaultParams = [ {hostname, "localhost"}
                   , {protocol, Protocol}
@@ -127,8 +131,8 @@ make_params(ScenarioParams) ->
 
 make_options(Options) ->
   katt_util:merge_proplists([ {parser, fun maybe_parse_body/2}
-                            , {scenario_timeout, ?SCENARIO_TIMEOUT}
-                            , {request_timeout, ?REQUEST_TIMEOUT}
+                            , {scenario_timeout, ?DEFAULT_SCENARIO_TIMEOUT}
+                            , {request_timeout, ?DEFAULT_REQUEST_TIMEOUT}
                             ]
                             , Options
                             ).
@@ -172,17 +176,15 @@ run_operations(_Scenario, [], _Params, _Options, Acc) ->
 make_request_url(Url = "http://" ++ _, _Params)  -> Url;
 make_request_url(Url = "https://" ++ _, _Params) -> Url;
 make_request_url(Path0, Params) ->
-  Protocol = proplists:get_value(protocol, Params, "http:"),
-  DefaultPort = case Protocol of
-                  "https:" -> 443;
-                  "http:"  -> 80
-                end,
+  Protocol = proplists:get_value(protocol, Params),
+  Hostname = proplists:get_value(hostname, Params),
+  Port = integer_to_list(proplists:get_value(port, Params)),
   Path = unicode:characters_to_list(proplists:get_value(path, Params, Path0)),
   string:join([ Protocol
               , "//"
-              , proplists:get_value(hostname, Params, "localhost")
+              , Hostname
               , ":"
-              , integer_to_list(proplists:get_value(port, Params, DefaultPort))
+              , Port
               , Path
               ], "").
 
