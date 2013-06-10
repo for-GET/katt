@@ -23,39 +23,39 @@ ERLANG_DIALYZER_APPS = erts \
 all: get-deps compile xref
 
 compile:
-	./rebar compile
+	@./rebar compile
 
 get-deps:
-	./rebar get-deps
+	@./rebar get-deps
 
 update-deps:
-	./rebar update-deps
+	@./rebar update-deps
 
 delete-deps:
-	./rebar delete-deps
+	@./rebar delete-deps
 
 docs:
-	./rebar doc skip_deps=true
+	@./rebar doc skip_deps=true
 
 xref:
-	./rebar xref skip_deps=true
+	@./rebar xref skip_deps=true
 
 test: eunit dialyzer
 
 eunit:
-	./rebar eunit skip_deps=true
+	@./rebar eunit skip_deps=true
 
 conf_clean:
 	@:
 
 clean:
-	./rebar clean
-	$(RM) doc/*.html
-	$(RM) doc/*.png
-	$(RM) doc/*.css
-	$(RM) doc/edoc-info
-	$(RM) ebin/*.d
-	$(RM) src/katt_blueprint.erl
+	@./rebar clean
+	@$(RM) doc/*.html
+	@$(RM) doc/*.png
+	@$(RM) doc/*.css
+	@$(RM) doc/edoc-info
+	@$(RM) ebin/*.d
+	@$(RM) src/katt_blueprint.erl
 
 $(DEPS_PLT):
 	@$(DIALYZER) --build_plt --apps $(ERLANG_DIALYZER_APPS) -r deps --output_plt $(DEPS_PLT)
