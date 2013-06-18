@@ -3,9 +3,9 @@
 DEPS_PLT = $(CURDIR)/.deps_plt
 
 ERLANG_DIALYZER_APPS = erts \
-				       kernel \
-                       ssl \
-                       stdlib
+					   kernel \
+					   ssl \
+					   stdlib
 
 DIALYZER=$(shell which dialyzer)
 
@@ -20,7 +20,7 @@ ifeq ($(TRAVIS), true)
 endif
 
 
-.PHONY:	all conf_clean compile get-deps update-deps delete-deps doc xref test eunit clean dialyzer distclean
+.PHONY: all conf_clean compile get-deps update-deps delete-deps doc xref test eunit clean dialyzer distclean
 
 all: get-deps compile xref
 
