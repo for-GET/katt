@@ -57,6 +57,4 @@ fulfilled before making your pull-request:
 
 ## License
 
-Copyright 2013 Klarna AB.
-
-Licensed under the [Apache License, Version 2.0](LICENSE).
+[Apache 2.0](LICENSE)
