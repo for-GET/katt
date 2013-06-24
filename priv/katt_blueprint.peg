@@ -196,8 +196,7 @@ signature <-
   `;
 
 
-%% We do not support DelimitedBodyFixed / DelimitedBodyVariable.
-%% TODO: Add support for them?
+%% We do not support DelimitedBodyVariable.
 body <-
   delimited_body_fixed
   / simple_body ~;
