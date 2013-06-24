@@ -90,8 +90,8 @@ make_params(ScenarioParams) ->
                   ?PROTOCOL_HTTP  -> ?DEFAULT_PORT_HTTP;
                   ?PROTOCOL_HTTPS -> ?DEFAULT_PORT_HTTPS
                 end,
-  DefaultParams = [ {hostname, ?DEFAULT_HOSTNAME}
-                  , {protocol, Protocol}
+  DefaultParams = [ {protocol, Protocol}
+                  , {hostname, ?DEFAULT_HOSTNAME}
                   , {port, DefaultPort}
                   , {scenario_timeout, ?DEFAULT_SCENARIO_TIMEOUT}
                   , {request_timeout, ?DEFAULT_REQUEST_TIMEOUT}
