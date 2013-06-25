@@ -160,7 +160,9 @@ make_katt_response( #katt_response{headers=Hdrs0, body=RawBody0} = Res
                   , Params
                   , Callbacks
                   ) ->
-  Hdrs = [{K, recall(V, Params)} || {K, V} <- Hdrs0],
+  Hdrs = [{K, katt_util:from_utf8(
+                recall(katt_util:to_utf8(V), Params)
+              )} || {K, V} <- Hdrs0],
   RawBody = recall(RawBody0, Params),
   ParseFun = proplists:get_value(parse, Callbacks),
   Res#katt_response{ headers = Hdrs
