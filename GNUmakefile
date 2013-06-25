@@ -20,7 +20,7 @@ ifeq ($(TRAVIS), true)
 endif
 
 
-.PHONY: all conf_clean compile get-deps update-deps delete-deps doc xref test eunit clean dialyzer distclean
+.PHONY: all compile get-deps update-deps delete-deps doc xref test eunit conf_clean clean dialyzer distclean
 
 all: get-deps compile xref
 
