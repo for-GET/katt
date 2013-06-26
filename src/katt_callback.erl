@@ -104,7 +104,7 @@ parse_json(Binary) -> to_proplist(mochijson3:decode(Binary)).
 is_json_body(_Hdrs, <<>>) -> false;
 is_json_body(Hdrs, _Body) ->
   ContentType = proplists:get_value("Content-Type", Hdrs, ""),
-  case string:str(unicode:characters_to_list(ContentType), "json") of
+  case string:str(ContentType, "json") of
     0 -> false;
     _ -> true
   end.
