@@ -5,7 +5,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -type utf8_string() :: unicode:unicode_binary().
--type http_header() :: {string(), string()|integer()}.
+-type http_header() :: {string(), string()}.
 
 -record(katt_request,     { method = "GET"              :: string()
                           , url = "/"                   :: string()

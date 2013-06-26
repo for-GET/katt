@@ -48,11 +48,12 @@
 -type description()         :: string().
 -type reason()              :: atom().
 -type details()             :: any().
--type proplist()            :: [{atom(), any()} | atom()].
+-type param()               :: string() | atom() | binary() | integer().
+-type params()              :: [{param(), param()}].
 -type callbacks()           :: [{atom(), function()}].
 -type response()            :: #katt_response{} | {error, any()}.
 -type body()                :: binary().
--type headers()             :: proplist().
+-type headers()             :: [{string(), string()}].
 
 %%%_* Emacs ============================================================
 %%% Local Variables:

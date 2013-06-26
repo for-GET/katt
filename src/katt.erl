@@ -50,7 +50,7 @@ run(ScenarioFilename) -> run(ScenarioFilename, []).
 %% @doc Run test scenario. Argument is the full path to the scenario file.
 %% The scenario file should be a KATT Blueprint file.
 %% @end
--spec run(scenario_filename(), proplist()) -> run_result().
+-spec run(scenario_filename(), params()) -> run_result().
 run(ScenarioFilename, Params) -> run(ScenarioFilename, Params, []).
 
 
@@ -60,7 +60,7 @@ run(ScenarioFilename, Params) -> run(ScenarioFilename, Params, []).
 %% Third argument is a key-value list of special options such as custom
 %% parser to use instead of the built-in default parser (maybe_parse_body).
 %% @end
--spec run(scenario_filename(), proplist(), callbacks()) -> run_result().
+-spec run(scenario_filename(), params(), callbacks()) -> run_result().
 run(Scenario, Params, Callbacks) ->
   ScenarioTimeout = proplists:get_value( scenario_timeout
                                        , Params
@@ -182,7 +182,7 @@ recall(Bin0, [{K0, V} | Next]) ->
   recall(Bin, Next).
 
 -spec make_request_url( string()
-                      , proplist()
+                      , params()
                       ) -> nonempty_string().
 make_request_url(Url = ?PROTOCOL_HTTP "//" ++ _, _Params)  -> Url;
 make_request_url(Url = ?PROTOCOL_HTTPS "//" ++ _, _Params) -> Url;

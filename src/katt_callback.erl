@@ -38,7 +38,7 @@
 %% @end
 -spec parse( headers()
            , body()
-           , proplist()
+           , params()
            ) -> any().
 parse(_Hdrs, null, _Params) ->
   [];
@@ -51,7 +51,7 @@ parse(Hdrs, Body, _Params) ->
 %% @doc Make a request, e.g. an HTTP request.
 %% @end
 -spec request( #katt_request{}
-             , proplist()
+             , params()
              , callbacks()
              ) -> response().
 request(R = #katt_request{}, Params, Callbacks) ->
@@ -70,7 +70,7 @@ request(R = #katt_request{}, Params, Callbacks) ->
 %% @end
 -spec validate( #katt_response{}
               , #katt_response{}
-              , proplist() | _
+              , params() | _
               ) -> {pass, details()} | {fail, details()}.
 validate( Expected = #katt_response{}
         , Actual = #katt_response{}
