@@ -55,12 +55,15 @@ katt_test_() ->
 
 katt_run_basic() ->
   Scenario = "/mock/test1.apib",
-  ?_assertMatch( { Scenario
-                 , [ {_, _, pass}
-                   , {_, _, pass}
-                   , {_, _, pass}
-                   , {_, _, pass}
-                   , {_, _, pass}
+  ?_assertMatch( { pass
+                 , Scenario
+                 , _
+                 , _
+                 , [ {_, _, _, pass}
+                   , {_, _, _, pass}
+                   , {_, _, _, pass}
+                   , {_, _, _, pass}
+                   , {_, _, _, pass}
                    ]
                  }
                , katt:run(Scenario)
@@ -68,8 +71,11 @@ katt_run_basic() ->
 
 katt_run_with_params() ->
   Scenario = "/mock/test2.apib",
-  ?_assertMatch( { Scenario
-                 , [ {_, _, pass}
+  ?_assertMatch( { pass
+                 , Scenario
+                 , _
+                 , _
+                 , [ {_, _, _, pass}
                    ]
                  }
                , katt:run( Scenario
@@ -82,10 +88,13 @@ katt_run_with_params() ->
 
 katt_run_with_api_mismatch() ->
   Scenario = "/mock/test3.apib",
-  ?_assertMatch( { Scenario
-                 , [ {_, _, {fail, [ {not_equal, {body, _,_}}
-                                   , {not_equal, {status, _, _}}
-                                   ]}}
+  ?_assertMatch( { fail
+                 , Scenario
+                 , _
+                 , _
+                 , [ {_, _, _, {fail, [ {not_equal, {body, _,_}}
+                                      , {not_equal, {status, _, _}}
+                                      ]}}
                    ]
                  }
                , katt:run(Scenario)

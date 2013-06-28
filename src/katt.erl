@@ -77,7 +77,16 @@ run(From, Scenario, ScenarioParams, ScenarioCallbacks) ->
   {ok, Blueprint} = katt_blueprint_parse:file(Scenario),
   Params = ordsets:from_list(make_params(ScenarioParams)),
   Callbacks = make_callbacks(ScenarioCallbacks),
-  Result = {Scenario, run_scenario(Scenario, Blueprint, Params, Callbacks)},
+  {FinalParams, OperationResults} = run_scenario(Scenario, Blueprint, Params, Callbacks),
+  FailureFilter = fun({_Operation, _Request, _Params, ValidationResult}) ->
+                    ValidationResult =/= pass
+                  end,
+  Failures = lists:filter(FailureFilter, OperationResults),
+  Status = case Failures of
+             [] -> pass;
+             _  -> fail
+           end,
+  Result = {Status, Scenario, Params, FinalParams, OperationResults},
   From ! {done, Result}.
 
 %%%_* Internal =========================================================
@@ -111,7 +120,8 @@ run_scenario(Scenario, Blueprint, Params, Callbacks) ->
                          , Callbacks
                          , []
                          ),
-  lists:reverse(Result).
+  {FinalParams, OperationResults} = Result,
+  {FinalParams, lists:reverse(OperationResults)}.
 
 run_operations( Scenario
               , [#katt_operation{ description=Description
@@ -128,19 +138,20 @@ run_operations( Scenario
   ValidateFun = proplists:get_value(validate, Callbacks),
   ActualResponse = RequestFun(Request, Params, Callbacks),
   ValidationResult = ValidateFun(ExpectedResponse, ActualResponse, Params),
-  {Pass, AddParams} = ValidationResult,
-  case Pass of
-    pass -> NewParams = ordsets:union(Params, ordsets:from_list(AddParams)),
-            run_operations( Scenario
-                          , T
-                          , NewParams
-                          , Callbacks
-                          , [{Description, Request, Pass}|Acc]
-                          );
-    _    -> [{Description, Request, ValidationResult}|Acc]
+  case ValidationResult of
+    {pass, AddParams} ->
+      NextParams = ordsets:union(Params, ordsets:from_list(AddParams)),
+      run_operations( Scenario
+                    , T
+                    , NextParams
+                    , Callbacks
+                    , [{Description, Request, Params, pass}|Acc]
+                    );
+    _                 ->
+      {Params, [{Description, Request, Params, ValidationResult}|Acc]}
   end;
-run_operations(_Scenario, [], _Params, _Callbacks, Acc) ->
-  Acc.
+run_operations(_Scenario, [], FinalParams, _Callbacks, Acc) ->
+  {FinalParams, Acc}.
 
 make_katt_request( #katt_request{headers=Hdrs0, url=Url0, body=RawBody0} = Req
                  , Params

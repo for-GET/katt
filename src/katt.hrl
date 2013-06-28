@@ -41,9 +41,9 @@
 
 -type run_result()          :: scenario_result() | run_error().
 -type run_error()           :: {error, reason(), details()}.
--type scenario_result()     :: {scenario_filename(), [operation_result()]}.
+-type scenario_result()     :: {pass|fail, scenario_filename(), params(), params(), [operation_result()]}.
+-type operation_result()    :: {string(), #katt_request{}, params(), validation_result()}.
 -type validation_result()   :: pass | {fail, reason(), details()}.
--type operation_result()    :: {string(), #katt_request{}, validation_result()}.
 -type scenario_filename()   :: nonempty_string().
 -type description()         :: string().
 -type reason()              :: atom().
