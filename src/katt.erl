@@ -57,7 +57,7 @@ run(ScenarioFilename, Params) -> run(ScenarioFilename, Params, []).
 %% @doc Run test scenario. First argument is the full path to the scenario file.
 %% Second argument is a key-value list of parameters, such as hostname, port.
 %% You can also pass custom variable names (atoms) and values (strings).
-%% Third argument is a key-value list of special options such as custom
+%% Third argument is a key-value list of custom callbacks such as a custom
 %% parser to use instead of the built-in default parser (maybe_parse_body).
 %% @end
 -spec run(scenario_filename(), params(), callbacks()) -> run_result().
