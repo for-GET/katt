@@ -77,19 +77,19 @@ run(From, Scenario, ScenarioParams, ScenarioCallbacks) ->
   {ok, Blueprint} = katt_blueprint_parse:file(Scenario),
   Params = ordsets:from_list(make_params(ScenarioParams)),
   Callbacks = make_callbacks(ScenarioCallbacks),
-  {FinalParams, OperationResults} = run_scenario( Scenario
-                                                , Blueprint
-                                                , Params
-                                                , Callbacks),
-  FailureFilter = fun({_Operation, _Request, _Params, ValidationResult}) ->
+  {FinalParams, TransactionResults} = run_scenario( Scenario
+                                                  , Blueprint
+                                                  , Params
+                                                  , Callbacks),
+  FailureFilter = fun({_Transaction, _Request, _Params, ValidationResult}) ->
                     ValidationResult =/= pass
                   end,
-  Failures = lists:filter(FailureFilter, OperationResults),
+  Failures = lists:filter(FailureFilter, TransactionResults),
   Status = case Failures of
              [] -> pass;
              _  -> fail
            end,
-  Result = {Status, Scenario, Params, FinalParams, OperationResults},
+  Result = {Status, Scenario, Params, FinalParams, TransactionResults},
   From ! {done, Result}.
 
 %%%_* Internal =========================================================
@@ -117,24 +117,24 @@ make_callbacks(Callbacks) ->
                             ], Callbacks).
 
 run_scenario(Scenario, Blueprint, Params, Callbacks) ->
-  Result = run_operations( Scenario
-                         , Blueprint#katt_blueprint.operations
-                         , Params
-                         , Callbacks
-                         , []
-                         ),
-  {FinalParams, OperationResults} = Result,
-  {FinalParams, lists:reverse(OperationResults)}.
+  Result = run_transactions( Scenario
+                           , Blueprint#katt_blueprint.transactions
+                           , Params
+                           , Callbacks
+                           , []
+                           ),
+  {FinalParams, TransactionResults} = Result,
+  {FinalParams, lists:reverse(TransactionResults)}.
 
-run_operations( Scenario
-              , [#katt_operation{ description=Description
-                                , request=Req
-                                , response=Res
-                                }|T]
-              , Params
-              , Callbacks
-              , Acc
-              ) ->
+run_transactions( Scenario
+                , [#katt_transaction{ description=Description
+                                    , request=Req
+                                    , response=Res
+                                    }|T]
+                , Params
+                , Callbacks
+                , Acc
+                ) ->
   Request = make_katt_request(Req, Params),
   ExpectedResponse = make_katt_response(Res, Params, Callbacks),
   RequestFun = proplists:get_value(request, Callbacks),
@@ -144,16 +144,16 @@ run_operations( Scenario
   case ValidationResult of
     {pass, AddParams} ->
       NextParams = ordsets:union(Params, ordsets:from_list(AddParams)),
-      run_operations( Scenario
-                    , T
-                    , NextParams
-                    , Callbacks
-                    , [{Description, Request, Params, pass}|Acc]
-                    );
+      run_transactions( Scenario
+                      , T
+                      , NextParams
+                      , Callbacks
+                      , [{Description, Request, Params, pass}|Acc]
+                      );
     _                 ->
       {Params, [{Description, Request, Params, ValidationResult}|Acc]}
   end;
-run_operations(_Scenario, [], FinalParams, _Callbacks, Acc) ->
+run_transactions(_Scenario, [], FinalParams, _Callbacks, Acc) ->
   {FinalParams, Acc}.
 
 make_katt_request( #katt_request{headers=Hdrs0, url=Url0, body=RawBody0} = Req

@@ -18,14 +18,14 @@
                           , body = null                 :: binary() | null
                           }).
 
--record(katt_operation,   { description = null          :: utf8_string()
+-record(katt_transaction, { description = null          :: utf8_string()
                           , request = #katt_request{}   :: #katt_request{}
                           , response = #katt_response{} :: #katt_response{}
                           }).
 
 -record(katt_blueprint,   { name = null                 :: utf8_string()
                           , description = null          :: utf8_string()
-                          , operations = []             :: [#katt_operation{}]
+                          , transactions = []           :: [#katt_transaction{}]
                           }).
 
 %%%_* Emacs ============================================================

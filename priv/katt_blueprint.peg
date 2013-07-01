@@ -10,17 +10,17 @@ api <-
   empty_line*
   description:api_description?
   empty_line*
-  operations:operations
+  transactions:transactions
   empty_line*
   eof
   `
     Name = proplists:get_value(name, Node),
     Description = proplists:get_value(description, Node),
-    Operations = proplists:get_value(operations, Node),
+    Transactions = proplists:get_value(transactions, Node),
     #katt_blueprint{
       name=null_if_empty(Name),
       description=null_if_empty(Description),
-      operations=Operations
+      transactions=Transactions
     }
   `;
 
@@ -43,9 +43,9 @@ api_description_line <-
     proplists:get_value(text, Node)
   `;
 
-operations <-
-  head:operation?
-  tail:operations_tail*
+transactions <-
+  head:transaction?
+  tail:transactions_tail*
   `
     Head = proplists:get_value(head, Node),
     Tail = proplists:get_value(tail, Node),
@@ -55,14 +55,14 @@ operations <-
     end
   `;
 
-operations_tail <-
-  empty_line* operation:operation
+transactions_tail <-
+  empty_line* transaction:transaction
   `
-  proplists:get_value(operation, Node)
+  proplists:get_value(transaction, Node)
   `;
 
-operation <-
-  description:operation_description?
+transaction <-
+  description:transaction_description?
   request:request
   response:response
   `
@@ -70,20 +70,20 @@ operation <-
     Request = proplists:get_value(request, Node),
     Response = proplists:get_value(response, Node),
 
-    #katt_operation{
+    #katt_transaction{
       description=null_if_empty(Description),
       request=Request,
       response=Response
     }
   `;
 
-operation_description <-
-  operation_description_line+
+transaction_description <-
+  transaction_description_line+
   `
     concatenate_lines(Node)
   `;
 
-operation_description_line <-
+transaction_description_line <-
   !http_method text:text0 eol
   `
     proplists:get_value(text, Node)

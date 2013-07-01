@@ -39,18 +39,20 @@
 -define(DEFAULT_REQUEST_FUNCTION,   fun katt_callback:request/3).
 -define(DEFAULT_VALIDATE_FUNCTION,  fun katt_callback:validate/3).
 
--type run_result()          :: scenario_result() | run_error().
--type run_error()           :: {error, reason(), details()}.
--type scenario_result()     :: {pass|fail, scenario_filename(), params(), params(), [operation_result()]}.
--type operation_result()    :: {string(), #katt_request{}, params(), validation_result()}.
--type validation_result()   :: pass | {fail, reason(), details()}.
 -type scenario_filename()   :: nonempty_string().
--type description()         :: string().
+-type params()              :: [{param(), param()}].
+-type param()               :: string() | atom() | binary() | integer().
+-type callbacks()           :: [{atom(), function()}].
+
+-type run_result()          :: run_error() | scenario_result().
+-type run_error()           :: {error, reason(), details()}.
 -type reason()              :: atom().
 -type details()             :: any().
--type param()               :: string() | atom() | binary() | integer().
--type params()              :: [{param(), param()}].
--type callbacks()           :: [{atom(), function()}].
+-type scenario_result()     :: {pass|fail, scenario_filename(), params(), params(), [transaction_result()]}.
+-type transaction_result()  :: {string(), #katt_request{}, params(), validation_result()}.
+-type validation_result()   :: pass | {fail, reason(), details()}.
+
+-type description()         :: string().
 -type response()            :: #katt_response{} | {error, any()}.
 -type body()                :: binary().
 -type headers()             :: [{string(), string()}].
