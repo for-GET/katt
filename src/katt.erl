@@ -77,7 +77,10 @@ run(From, Scenario, ScenarioParams, ScenarioCallbacks) ->
   {ok, Blueprint} = katt_blueprint_parse:file(Scenario),
   Params = ordsets:from_list(make_params(ScenarioParams)),
   Callbacks = make_callbacks(ScenarioCallbacks),
-  {FinalParams, OperationResults} = run_scenario(Scenario, Blueprint, Params, Callbacks),
+  {FinalParams, OperationResults} = run_scenario( Scenario
+                                                , Blueprint
+                                                , Params
+                                                , Callbacks),
   FailureFilter = fun({_Operation, _Request, _Params, ValidationResult}) ->
                     ValidationResult =/= pass
                   end,
