@@ -86,12 +86,12 @@ validate( Expected = #katt_response{}
          (Failure, {AddParams0, Failures0})          ->
           {AddParams0, [Failure|Failures0]}
       end,
-    {[],[]},
-    lists:flatten(Result)
+      {[],[]},
+      lists:flatten(Result)
     ),
   case Failures of
     [] -> {pass, AddParams};
-    _  -> {fail, Failures}
+    _  -> {fail, lists:reverse(Failures)}
   end;
 validate(Expected, #katt_response{}, _Params) -> {fail, Expected};
 validate(#katt_response{}, Actual, _Params)   -> {fail, Actual}.

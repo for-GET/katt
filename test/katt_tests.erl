@@ -92,8 +92,8 @@ katt_run_with_api_mismatch() ->
                  , Scenario
                  , _
                  , _
-                 , [ {_, _, _, {fail, [ {not_equal, {body, _,_}}
-                                      , {not_equal, {status, _, _}}
+                 , [ {_, _, _, {fail, [ {not_equal, {status, _,_}}
+                                      , {not_equal, {body, _, _}}
                                       ]}}
                    ]
                  }
