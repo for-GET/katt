@@ -54,7 +54,7 @@ katt_test_() ->
 %%% Tests
 
 katt_run_basic() ->
-  Scenario = "/mock/test1.apib",
+  Scenario = "/mock/basic.apib",
   ?_assertMatch( { pass
                  , Scenario
                  , _
@@ -70,7 +70,7 @@ katt_run_basic() ->
                ).
 
 katt_run_with_params() ->
-  Scenario = "/mock/test2.apib",
+  Scenario = "/mock/test-params.apib",
   ?_assertMatch( { pass
                  , Scenario
                  , _
@@ -79,7 +79,7 @@ katt_run_with_params() ->
                    ]
                  }
                , katt:run( Scenario
-                         , [ {hostname, "test-params"}
+                         , [ {hostname, "example.com"}
                            , {some_var, "hi"}
                            , {version, "1"}
                            ]
@@ -87,7 +87,7 @@ katt_run_with_params() ->
                ).
 
 katt_run_with_api_mismatch() ->
-  Scenario = "/mock/test3.apib",
+  Scenario = "/mock/api-mismatch.apib",
   ?_assertMatch( { fail
                  , Scenario
                  , _
@@ -104,17 +104,17 @@ katt_run_with_api_mismatch() ->
 %%% Helpers
 
 %% Mock request for Step 1:
-%% (default hostname is 127.0.0.1, default port is 80, default protocl is http)
-mock_lhttpc_request( "http://127.0.0.1/foo/examples" = _Url
+%% (default hostname is 127.0.0.1, default port is 80, default protocol is http)
+mock_lhttpc_request( "http://127.0.0.1/step1" = _Url
                    , "POST" = _Method
                    , _Headers
                    , _Body
                    , _Timeout
                    , _Options
                    ) ->
-  {ok, {{201, []}, [{"Location", "http://some-location.com/test"}], <<>>}};
+  {ok, {{201, []}, [{"Location", "http://127.0.0.1/step2"}], <<>>}};
 %% Mock request for Step 2:
-mock_lhttpc_request( "http://some-location.com/test"
+mock_lhttpc_request( "http://127.0.0.1/step2"
                    , "GET"
                    , [{"Accept", "application/json"}]
                    , <<>>
@@ -130,7 +130,7 @@ mock_lhttpc_request( "http://some-location.com/test"
 
 "/utf8>>}};
 %% Mock request for Step 3:
-mock_lhttpc_request( "http://some-location.com/test/step3"
+mock_lhttpc_request( "http://127.0.0.1/step2/step3"
                    , "POST"
                    , _
                    , _
@@ -145,7 +145,7 @@ mock_lhttpc_request( "http://some-location.com/test/step3"
 }
 "/utf8>>}};
 %% Mock request for Step 4:
-mock_lhttpc_request( "http://some-location.com/test/step4"
+mock_lhttpc_request( "http://127.0.0.1/step2/step4"
                    , "POST"
                    , _
                    , _
@@ -157,7 +157,7 @@ mock_lhttpc_request( "http://some-location.com/test/step4"
 }
 "/utf8>>}};
 %% Mock request for Step 5:
-mock_lhttpc_request( "http://127.0.0.1/nothing"
+mock_lhttpc_request( "http://127.0.0.1/step5"
                    , "HEAD"
                    , _
                    , _
@@ -167,7 +167,7 @@ mock_lhttpc_request( "http://127.0.0.1/nothing"
   {ok, {{404, "Not found"}, [{"Content-Type", "text/html"}], <<>>}};
 
 %% Mock request for test-params:
-mock_lhttpc_request( "http://test-params/test2"
+mock_lhttpc_request( "http://example.com/test-params"
                    , "POST"
                    , [ {"Accept", "text/html"}
                      , {"Content-Type","application/vnd.katt.test-v1+json"}
@@ -179,7 +179,7 @@ mock_lhttpc_request( "http://test-params/test2"
   {ok, {{404, []}, [{"Content-Type", "text/html"}], <<"Not found">>}};
 
 %% Mock request for api mismatch test:
-mock_lhttpc_request( "http://127.0.0.1/test3"
+mock_lhttpc_request( "http://127.0.0.1/api-mismatch"
                    , "POST"
                    , [ {"Accept", "application/json"}
                      , {"Content-Type","application/json"}
@@ -194,7 +194,7 @@ mock_lhttpc_request( "http://127.0.0.1/test3"
 "/utf8>>}}.
 
 
-mock_katt_blueprint_parse_file("/mock/test1.apib") ->
+mock_katt_blueprint_parse_file("/mock/basic.apib") ->
   katt_blueprint_parse:string(
     <<"--- Test 1 ---
 
@@ -205,7 +205,7 @@ Some description
 Step 1
 here it is:
 
-POST /foo/examples
+POST /step1
 > Accept: application/json
 > Content-Type: application/json
 {
@@ -287,17 +287,17 @@ POST {{<example_uri}}/step4
     \"error\": \"payment required\"
 }
 
-HEAD /nothing
+HEAD /step5
 < 404
 < Content-Type: text/html
 <<<
 >>>
 "/utf8>>);
-mock_katt_blueprint_parse_file("/mock/test2.apib") ->
+mock_katt_blueprint_parse_file("/mock/test-params.apib") ->
   katt_blueprint_parse:string(
     <<"--- Test 2 ---
 
-POST /test2
+POST /test-params
 > Accept: text/html
 > Content-Type: application/vnd.katt.test-v{{<version}}+json
 {
@@ -308,11 +308,11 @@ Not found
 
 "/utf8>>);
 
-mock_katt_blueprint_parse_file("/mock/test3.apib") ->
+mock_katt_blueprint_parse_file("/mock/api-mismatch.apib") ->
   katt_blueprint_parse:string(
     <<"--- Test 3 ---
 
-POST /test3
+POST /api-mismatch
 > Accept: application/json
 > Content-Type: application/json
 {}
