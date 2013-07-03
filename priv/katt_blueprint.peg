@@ -1,0 +1,287 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% KATT Blueprint format grammar and transformations
+%%%
+%%% This grammar is used by Neotoma to generate a parser (katt_blueprint.erl).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+api <-
+  empty_line*
+  name:api_name
+  empty_line*
+  description:api_description?
+  empty_line*
+  transactions:transactions
+  empty_line*
+  eof
+  `
+    Name = proplists:get_value(name, Node),
+    Description = proplists:get_value(description, Node),
+    Transactions = proplists:get_value(transactions, Node),
+    #katt_blueprint{
+      name=null_if_empty(Name),
+      description=null_if_empty(Description),
+      transactions=Transactions
+    }
+  `;
+
+api_name <-
+  "---" s+ name:text1 eolf
+  `
+    Name = proplists:get_value(name, Node),
+    re:replace(Name, "\s+---$", "", [{return, binary}])
+  `;
+
+api_description <-
+  "---" s* eol lines:api_description_line* "---" s* eolf
+  `
+    concatenate_lines(proplists:get_value(lines, Node))
+  `;
+
+api_description_line <-
+  !("---" s* eolf) text:text0 eol
+  `
+    proplists:get_value(text, Node)
+  `;
+
+transactions <-
+  head:transaction?
+  tail:transactions_tail*
+  `
+    Head = proplists:get_value(head, Node),
+    Tail = proplists:get_value(tail, Node),
+    case Head of
+      [] -> Tail;
+      _  -> [Head | Tail]
+    end
+  `;
+
+transactions_tail <-
+  empty_line* transaction:transaction
+  `
+  proplists:get_value(transaction, Node)
+  `;
+
+transaction <-
+  description:transaction_description?
+  request:request
+  response:response
+  `
+    Description = proplists:get_value(description, Node),
+    Request = proplists:get_value(request, Node),
+    Response = proplists:get_value(response, Node),
+
+    #katt_transaction{
+      description=null_if_empty(Description),
+      request=Request,
+      response=Response
+    }
+  `;
+
+transaction_description <-
+  transaction_description_line+
+  `
+    concatenate_lines(Node)
+  `;
+
+transaction_description_line <-
+  !http_method text:text0 eol
+  `
+    proplists:get_value(text, Node)
+  `;
+
+%% Assembled from RFC 2616, 5323, 5789.
+http_method <-
+  "GET"
+  / "POST"
+  / "PUT"
+  / "DELETE"
+  / "OPTIONS"
+  / "PATCH"
+  / "PROPPATCH"
+  / "LOCK"
+  / "UNLOCK"
+  / "COPY"
+  / "MOVE"
+  / "MKCOL"
+  / "HEAD"
+  ~
+  ;
+
+request <-
+  signature:signature headers:request_headers body:body?
+  `
+    {Method, Url} = proplists:get_value(signature, Node),
+    Headers = proplists:get_value(headers, Node),
+    Body = proplists:get_value(body, Node),
+    #katt_request{
+      method=Method,
+      url=Url,
+      headers=Headers,
+      body=null_if_empty(Body)
+    }
+  `;
+
+request_headers <- request_header* ~;
+
+request_header <-
+  in header:http_header
+  `
+    proplists:get_value(header, Node)
+  `;
+
+response <-
+  status:response_status headers:response_headers body:body?
+  `
+    Status = proplists:get_value(status, Node),
+    Headers = proplists:get_value(headers, Node),
+    Body = proplists:get_value(body, Node),
+    #katt_response{
+      status=Status,
+      headers=Headers,
+      body=null_if_empty(Body)
+    }
+  `;
+
+response_status <-
+  out status:http_status s* eolf
+  `
+    proplists:get_value(status, Node)
+  `;
+
+response_headers <- response_header* ~;
+
+response_header <-
+  out http_header
+  `
+    [_, Header] = Node,
+    Header
+  `;
+
+http_status <-
+  [1-5] [0-9] [0-9]
+  `
+    {Int, _Rest} = string:to_integer(unicode:characters_to_list(concatenate_chars(Node))),
+    Int
+  `;
+
+http_header <-
+  name:http_header_name ":" s* value:http_header_value eolf
+  `
+    Name = proplists:get_value(name, Node),
+    Value = proplists:get_value(value, Node),
+    {Name, Value}
+  `;
+
+%% See RFC 822, 3.1.2: "The field-name must be composed of printable ASCII
+%% characters (i.e., characters that have values between 33. and 126., decimal,
+%% except colon)."
+http_header_name <-
+  [\x21-\x39\x3B-\x7E]+
+  `
+    unicode:characters_to_list(concatenate_chars(Node))
+  `;
+
+
+http_header_value <- text0
+  `
+    unicode:characters_to_list(Node)
+  `;
+
+signature <-
+  method:http_method s+ url:text1 eol
+  `
+    Method = unicode:characters_to_list(proplists:get_value(method, Node)),
+    Url = unicode:characters_to_list(proplists:get_value(url, Node)),
+    {Method, Url}
+  `;
+
+
+%% We do not support DelimitedBodyVariable.
+body <-
+  delimited_body_fixed
+  / simple_body ~;
+
+delimited_body_fixed <-
+  "<<<" s* eol
+  lines:delimited_body_fixed_line*
+  ">>>" s* eolf
+  `
+    concatenate_lines(proplists:get_value(lines, Node))
+  `;
+
+delimited_body_fixed_line <-
+  !(">>>" s* eolf) text:text0 eol
+  `
+    proplists:get_value(text, Node)
+  `;
+
+simple_body <-
+  !"<<<" lines:simple_body_line+
+  `
+    concatenate_lines(proplists:get_value(lines, Node))
+  `;
+
+simple_body_line <-
+  !in !out !empty_line text:text1 eolf
+  `
+    proplists:get_value(text, Node)
+  `;
+
+in <- ">" s+ ~;
+
+out <- "<" s+ ~;
+
+
+%%% Helper rules
+
+text0 <- [^\n\r]*
+  `
+  concatenate_chars(Node)
+  `;
+
+text1 <- [^\n\r]+
+  `
+  concatenate_chars(Node)
+  `;
+
+empty_line <- s* eol ~;
+
+eolf <- eol / eof ~;
+
+eol <-
+  "\n"
+  / "\r\n"
+  / "\r"
+  ~;
+
+eof <- !. ` <<>> `;
+
+
+%% TODO: add support for the following unicode whitespace characters:
+%% \u00A0\u1680\u180E\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007
+%% \u2008\u2009\u200A\u202F\u205F\u3000\uFEFF
+%% I.e. make support for what "\s" matches in JavaScript regexps,
+%% sans "\r", "\n", "\u2028" and "\u2029".
+%% See ECMA-262, 5.1 ed., 15.10.2.12.
+s <- [\t\v\f ] ~;
+
+
+%%% Records and extra functions
+`
+%%% This file is generated by neotoma.
+
+-include_lib("katt/include/blueprint_types.hrl").
+
+null_if_empty([])      -> null;
+null_if_empty(String)  -> String.
+
+concatenate_lines([H|_]=Lines) when is_binary(H) ->
+  StringList = lists:map(fun unicode:characters_to_list/1, Lines),
+  unicode:characters_to_binary(string:join(StringList, "\n"));
+concatenate_lines([]) ->
+  [].
+
+concatenate_chars(Chars) ->
+  << <<Char/utf8>> || <<Char/utf8>> <- Chars >>.
+
+`
