@@ -41,7 +41,7 @@ ERL_LIBS=deps erl -pa ebin -noshell -eval '
 ```
 ... or run the code passed to -eval from the Erlang shell (assuming that you
 have started the Erlang shell from the repo's root directory with `ERL_LIBS=deps
-erl -pa ebin).
+erl -pa ebin`).
 
 
 ## Contributing
