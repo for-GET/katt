@@ -103,7 +103,7 @@ katt_run_with_api_mismatch() ->
 
 %%% Helpers
 
-%% Mock request for Step 1:
+%% Mock response for Step 1:
 %% (default hostname is 127.0.0.1, default port is 80, default protocol is http)
 mock_lhttpc_request( "http://127.0.0.1/step1" = _Url
                    , "POST" = _Method
@@ -113,7 +113,7 @@ mock_lhttpc_request( "http://127.0.0.1/step1" = _Url
                    , _Options
                    ) ->
   {ok, {{201, []}, [{"Location", "http://127.0.0.1/step2"}], <<>>}};
-%% Mock request for Step 2:
+%% Mock response for Step 2:
 mock_lhttpc_request( "http://127.0.0.1/step2"
                    , "GET"
                    , [{"Accept", "application/json"}]
@@ -129,7 +129,7 @@ mock_lhttpc_request( "http://127.0.0.1/step2"
 }
 
 "/utf8>>}};
-%% Mock request for Step 3:
+%% Mock response for Step 3:
 mock_lhttpc_request( "http://127.0.0.1/step2/step3"
                    , "POST"
                    , _
@@ -144,7 +144,7 @@ mock_lhttpc_request( "http://127.0.0.1/step2/step3"
     \"cart\": {\"item1\": true}
 }
 "/utf8>>}};
-%% Mock request for Step 4:
+%% Mock response for Step 4:
 mock_lhttpc_request( "http://127.0.0.1/step2/step4"
                    , "POST"
                    , _
@@ -156,7 +156,7 @@ mock_lhttpc_request( "http://127.0.0.1/step2/step4"
     \"error\": \"payment required\"
 }
 "/utf8>>}};
-%% Mock request for Step 5:
+%% Mock response for Step 5:
 mock_lhttpc_request( "http://127.0.0.1/step5"
                    , "HEAD"
                    , _
@@ -166,7 +166,7 @@ mock_lhttpc_request( "http://127.0.0.1/step5"
                    ) ->
   {ok, {{404, "Not found"}, [{"Content-Type", "text/html"}], <<>>}};
 
-%% Mock request for test-params:
+%% Mock response for test-params:
 mock_lhttpc_request( "http://example.com/test-params"
                    , "POST"
                    , [ {"Accept", "text/html"}
@@ -178,7 +178,7 @@ mock_lhttpc_request( "http://example.com/test-params"
                    ) ->
   {ok, {{404, []}, [{"Content-Type", "text/html"}], <<"Not found">>}};
 
-%% Mock request for api mismatch test:
+%% Mock response for api mismatch test:
 mock_lhttpc_request( "http://127.0.0.1/api-mismatch"
                    , "POST"
                    , [ {"Accept", "application/json"}
