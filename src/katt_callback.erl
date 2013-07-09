@@ -44,7 +44,8 @@
 parse(_Hdrs, null, _Params, _Callbacks) ->
   [];
 parse(Hdrs, Body, _Params, _Callbacks) ->
-  case is_json_body(Hdrs, Body) of
+  ContentType = proplists:get_value("Content-Type", Hdrs, ""),
+  case is_json_content_type(ContentType) of
     true  -> parse_json(Body);
     false -> katt_util:from_utf8(Body)
   end.
@@ -104,9 +105,7 @@ validate(#katt_response{}, Actual, _Params, _Callbacks)   -> {fail, Actual}.
 
 parse_json(Binary) -> to_proplist(mochijson3:decode(Binary)).
 
-is_json_body(_Hdrs, <<>>) -> false;
-is_json_body(Hdrs, _Body) ->
-  ContentType = proplists:get_value("Content-Type", Hdrs, ""),
+is_json_content_type(ContentType) ->
   case string:str(ContentType, "json") of
     0 -> false;
     _ -> true
