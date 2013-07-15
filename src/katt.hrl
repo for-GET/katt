@@ -35,9 +35,9 @@
 -define(DEFAULT_HOSTNAME,           "127.0.0.1").
 -define(DEFAULT_PORT_HTTP,          80).
 -define(DEFAULT_PORT_HTTPS,         443).
--define(DEFAULT_PARSE_FUNCTION,     fun katt_callback:parse/3).
+-define(DEFAULT_PARSE_FUNCTION,     fun katt_callback:parse/4).
 -define(DEFAULT_REQUEST_FUNCTION,   fun katt_callback:request/3).
--define(DEFAULT_VALIDATE_FUNCTION,  fun katt_callback:validate/3).
+-define(DEFAULT_VALIDATE_FUNCTION,  fun katt_callback:validate/4).
 
 -type scenario_filename()   :: nonempty_string().
 -type params()              :: [{param(), param()}].

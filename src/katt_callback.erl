@@ -24,9 +24,9 @@
 
 %%%_* Exports ==========================================================
 %% API
--export([ parse/3
+-export([ parse/4
         , request/3
-        , validate/3
+        , validate/4
         ]).
 
 %%%_* Includes =========================================================
@@ -39,10 +39,11 @@
 -spec parse( headers()
            , body()
            , params()
+           , callbacks()
            ) -> any().
-parse(_Hdrs, null, _Params) ->
+parse(_Hdrs, null, _Params, _Callbacks) ->
   [];
-parse(Hdrs, Body, _Params) ->
+parse(Hdrs, Body, _Params, _Callbacks) ->
   case is_json_body(Hdrs, Body) of
     true  -> parse_json(Body);
     false -> katt_util:from_utf8(Body)
@@ -60,7 +61,7 @@ request(R = #katt_request{}, Params, Callbacks) ->
     {ok, {{Code, _}, Hdrs, RawBody}} ->
       #katt_response{ status  = Code
                     , headers = Hdrs
-                    , body    = ParseFun(Hdrs, RawBody, Params)
+                    , body    = ParseFun(Hdrs, RawBody, Params, Callbacks)
                     };
     Error = {error, _}               ->
       Error
@@ -70,11 +71,13 @@ request(R = #katt_request{}, Params, Callbacks) ->
 %% @end
 -spec validate( #katt_response{}
               , #katt_response{}
-              , params() | _
+              , params()
+              , callbacks()
               ) -> {pass, details()} | {fail, details()}.
 validate( Expected = #katt_response{}
         , Actual = #katt_response{}
-        , _Params)                                     ->
+        , _Params
+        , _Callbacks)                                     ->
   Result = [ validate_status(Expected, Actual)
            , validate_headers(Expected, Actual)
            , validate_body(Expected, Actual)],
@@ -93,8 +96,8 @@ validate( Expected = #katt_response{}
     [] -> {pass, AddParams};
     _  -> {fail, lists:reverse(Failures)}
   end;
-validate(Expected, #katt_response{}, _Params) -> {fail, Expected};
-validate(#katt_response{}, Actual, _Params)   -> {fail, Actual}.
+validate(Expected, #katt_response{}, _Params, _Callbacks) -> {fail, Expected};
+validate(#katt_response{}, Actual, _Params, _Callbacks)   -> {fail, Actual}.
 
 
 %%%_* Internal =========================================================

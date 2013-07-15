@@ -140,7 +140,7 @@ run_transactions( Scenario
   RequestFun = proplists:get_value(request, Callbacks),
   ValidateFun = proplists:get_value(validate, Callbacks),
   ActualResponse = RequestFun(Request, Params, Callbacks),
-  ValidationResult = ValidateFun(ExpectedResponse, ActualResponse, Params),
+  ValidationResult = ValidateFun(ExpectedResponse, ActualResponse, Params, Callbacks),
   case ValidationResult of
     {pass, AddParams} ->
       NextParams = ordsets:union(Params, ordsets:from_list(AddParams)),
@@ -180,7 +180,7 @@ make_katt_response( #katt_response{headers=Hdrs0, body=RawBody0} = Res
   RawBody = recall(RawBody0, Params),
   ParseFun = proplists:get_value(parse, Callbacks),
   Res#katt_response{ headers = Hdrs
-                   , body = ParseFun(Hdrs, RawBody, Params)
+                   , body = ParseFun(Hdrs, RawBody, Params, Callbacks)
                    }.
 
 recall(null, _Params)          -> null;
