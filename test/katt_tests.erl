@@ -125,7 +125,8 @@ mock_lhttpc_request( "http://127.0.0.1/step2"
     \"required_fields\": [
         \"email\"
     ],
-    \"cart\": \"{{_}}\"
+    \"cart\": \"{{_}}\",
+    \"extra_value\": \"test\"
 }
 
 "/utf8>>}};

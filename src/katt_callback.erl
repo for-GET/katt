@@ -165,8 +165,8 @@ do_validate(K, E0 = [[{_,_}|_]|_], A0 = [[{_,_}|_]|_]) ->
   [do_validate(K, E, A) || {E, A} <- lists:zip(E0, A0)];
 do_validate(K, E = [[_|_]|_], A = [[_|_]|_])           ->
   do_validate(K, enumerate(E, K), enumerate(A, K));
-do_validate(Key, undefined, A)                         ->
-  {unexpected_value, {Key, A}};
+do_validate(_Key, undefined, _A)                       ->
+  pass;
 do_validate(Key, E, undefined)                         ->
   {missing_value, {Key, E}};
 do_validate(Key, ?STORE_BEGIN_TAG ++ Rest, [])         ->
