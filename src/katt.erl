@@ -105,8 +105,8 @@ make_params(ScenarioParams) ->
   DefaultParams = [ {protocol, Protocol}
                   , {hostname, ?DEFAULT_HOSTNAME}
                   , {port, DefaultPort}
-                  , {scenario_timeout, ?DEFAULT_SCENARIO_TIMEOUT}
                   , {request_timeout, ?DEFAULT_REQUEST_TIMEOUT}
+                  , {scenario_timeout, ?DEFAULT_SCENARIO_TIMEOUT}
                   ],
   katt_util:merge_proplists(DefaultParams, ScenarioParams).
 
