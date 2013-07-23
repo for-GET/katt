@@ -44,6 +44,22 @@ have started the Erlang shell from the repo's root directory with `ERL_LIBS=deps
 erl -pa ebin`).
 
 
+## Interface
+
+* `katt:run`
+  * `filename`
+  * `params` (optional)
+    * `protocol`
+    * `hostname`
+    * `port`
+    * `request_timeout`
+    * `scenario_timeout`
+  * `callbacks` (optional)
+    * `parse`
+    * `request`
+    * `validate`
+
+
 ## Contributing
 
 A pull-request is most welcome. Please make sure that the following criteria are
