@@ -153,12 +153,12 @@ validate_headers(#katt_response{headers=E0}, #katt_response{headers=A0}) ->
 %% Bodies are also allowed to be a superset of expected body, if the parseFun
 %% returns a structure.
 validate_body(#katt_response{body=E}, #katt_response{body=A}) ->
-  compare_struct(body, E, A, "{{_}}").
+  compare_struct(body, E, A, ?MATCH_ANY).
 
 %% Compare non-empty JSON structured types; defer to simple comparison otherwise
 compare_struct(_, E0 = [{_,_}|_], A = [{_,_}|_], _Unexpected)           ->
-  Unexpected = proplists:get_value("{{_}}", E0, "{{_}}"),
-  E = proplists:delete("{{_}}", E0),
+  Unexpected = proplists:get_value(?MATCH_ANY, E0, ?MATCH_ANY),
+  E = proplists:delete(?MATCH_ANY, E0),
   Keys = lists:usort([K || {K, _} <- lists:merge(A, E)]),
   [ compare_struct(K, proplists:get_value(K, E), proplists:get_value(K, A), Unexpected)
     || K <- Keys
