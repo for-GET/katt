@@ -156,18 +156,21 @@ validate_body(#katt_response{body=E}, #katt_response{body=A}) ->
   compare_struct(body, E, A, ?MATCH_ANY).
 
 %% Compare non-empty JSON structured types; defer to simple comparison otherwise
-compare_struct(_, E0 = [{_,_}|_], A = [{_,_}|_], _Unexpected)           ->
+compare_struct(ParentKey, E0, A = [{_,_}|_], _Unexpected) when is_list(E0) ->
   Unexpected = proplists:get_value(?MATCH_ANY, E0, ?MATCH_ANY),
   E = proplists:delete(?MATCH_ANY, E0),
   Keys = lists:usort([K || {K, _} <- lists:merge(A, E)]),
-  [ compare_struct(K, proplists:get_value(K, E), proplists:get_value(K, A), Unexpected)
+  [ compare_struct( ParentKey ++ "/" ++ K
+                  , proplists:get_value(K, E)
+                  , proplists:get_value(K, A)
+                  , Unexpected)
     || K <- Keys
   ];
-compare_struct(K, E0 = [[{_,_}|_]|_], A0 = [[{_,_}|_]|_], Unexpected) ->
+compare_struct(K, E0, A0 = [[{_,_}|_]|_], Unexpected) when is_list(E0)     ->
   [ compare_struct(K, E, A, Unexpected)
     || {E, A} <- lists:zip(E0, A0)
   ];
-compare_struct(K, E = [[_|_]|_], A = [[_|_]|_], _Unexpected)           ->
+compare_struct(K, E, A = [[_|_]|_], _Unexpected) when is_list(E)           ->
   compare_struct(K, enumerate(E, K), enumerate(A, K), ?UNEXPECTED);
 compare_struct(K, E, A, Unexpected) ->
   compare(K, E, A, Unexpected).
@@ -176,6 +179,8 @@ compare_struct(K, E, A, Unexpected) ->
 compare(_Key, undefined, _A, undefined)  ->
   pass;
 compare(_Key, undefined, _A, ?MATCH_ANY) ->
+  pass;
+compare(_Key, [], _A, ?MATCH_ANY)        ->
   pass;
 compare(Key, undefined, A, ?UNEXPECTED)  ->
   {unexpected, {Key, undefined, A}};
