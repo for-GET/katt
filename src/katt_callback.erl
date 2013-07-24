@@ -168,7 +168,7 @@ compare_struct(K, E0, A0 = [[{_,_}|_]|_], Unexpected) when is_list(E0)     ->
     || {E, A} <- lists:zip(E0, A0)
   ];
 compare_struct(K, E, A = [[_|_]|_], _Unexpected) when is_list(E)           ->
-  compare_struct(K, enumerate(E, K), enumerate(A, K), ?UNEXPECTED);
+  compare_struct(K, enumerate(E), enumerate(A), ?UNEXPECTED);
 compare_struct(K, E, A, Unexpected) ->
   compare(K, E, A, Unexpected).
 
@@ -199,9 +199,9 @@ compare(_Key, E, E)                        ->
 compare(Key, E, A)                         ->
   {not_equal, {Key, E, A}}.
 
-%% Transform simple list to proplist with keys named <Name>1, <Name>2 etc.
-enumerate(L, Name) ->
-  lists:zip([ katt_util:to_list(Name) ++ integer_to_list(N)
+%% Transform simple list to proplist with keys named 0, 1 etc.
+enumerate(L) ->
+  lists:zip([ integer_to_list(N)
               || N <- lists:seq(0, length(L) - 1)
             ], L).
 
