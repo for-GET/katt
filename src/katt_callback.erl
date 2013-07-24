@@ -156,9 +156,10 @@ validate_body(#katt_response{body=E}, #katt_response{body=A}) ->
   compare_struct(body, E, A, "{{_}}").
 
 %% Compare non-empty JSON structured types; defer to simple comparison otherwise
-compare_struct(_, E = [{_,_}|_], A = [{_,_}|_], _Unexpected)           ->
+compare_struct(_, E0 = [{_,_}|_], A = [{_,_}|_], _Unexpected)           ->
+  Unexpected = proplists:get_value("{{_}}", E0, "{{_}}"),
+  E = proplists:delete("{{_}}", E0),
   Keys = lists:usort([K || {K, _} <- lists:merge(A, E)]),
-  Unexpected = proplists:get_value("{{_}}", E, "{{_}}"),
   [ compare_struct(K, proplists:get_value(K, E), proplists:get_value(K, A), Unexpected)
     || K <- Keys
   ];
@@ -167,16 +168,17 @@ compare_struct(K, E0 = [[{_,_}|_]|_], A0 = [[{_,_}|_]|_], Unexpected) ->
     || {E, A} <- lists:zip(E0, A0)
   ];
 compare_struct(K, E = [[_|_]|_], A = [[_|_]|_], _Unexpected)           ->
-  Unexpected = "{{disallow}}",
-  compare_struct(K, enumerate(E, K), enumerate(A, K), Unexpected);
+  compare_struct(K, enumerate(E, K), enumerate(A, K), ?UNEXPECTED);
 compare_struct(K, E, A, Unexpected) ->
   compare(K, E, A, Unexpected).
 
 %% Compare when unexpected values show up
-compare(_Key, undefined, _A, ?MATCH_ANY) ->
-  pass;
 compare(_Key, undefined, _A, undefined)  ->
   pass;
+compare(_Key, undefined, _A, ?MATCH_ANY) ->
+  pass;
+compare(Key, undefined, A, ?UNEXPECTED)  ->
+  {unexpected, {Key, undefined, A}};
 compare(Key, undefined, A, Unexpected)   ->
   compare(Key, Unexpected, A);
 compare(Key, E, A, _Unexpected)          ->
@@ -184,10 +186,8 @@ compare(Key, E, A, _Unexpected)          ->
 
 
 %% Compare JSON primitive types or empty structured types
-compare(Key, undefined, A)                 ->
-  {unexpected_value, {Key, A}};
 compare(Key, E, undefined)                 ->
-  {undefined, {Key, E}};
+  {undefined, {Key, E, undefined}};
 compare(_Key, ?MATCH_ANY ++ _, _)          ->
   pass;
 compare(_Key, ?STORE_BEGIN_TAG ++ Rest, A) ->
