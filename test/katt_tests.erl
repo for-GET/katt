@@ -47,6 +47,7 @@ katt_test_() ->
   , [ katt_run_basic()
     , katt_run_with_params()
     , katt_run_with_api_mismatch()
+    , katt_run_with_unexpected_disallow()
     ]
   }.
 
@@ -92,8 +93,21 @@ katt_run_with_api_mismatch() ->
                  , Scenario
                  , _
                  , _
-                 , [ {_, _, _, {fail, [ {not_equal, {status, _,_}}
-                                      , {not_equal, {body, _, _}}
+                 , [ {_, _, _, {fail, [ {not_equal, {status, _, _}}
+                                      , {undefined, {"ok", _, _}}
+                                      ]}}
+                   ]
+                 }
+               , katt:run(Scenario)
+               ).
+
+katt_run_with_unexpected_disallow() ->
+  Scenario = "/mock/unexpected-disallow.apib",
+  ?_assertMatch( { fail
+                 , Scenario
+                 , _
+                 , _
+                 , [ {_, _, _, {fail, [ {unexpected, {"extra_value", _, _}}
                                       ]}}
                    ]
                  }
@@ -191,6 +205,20 @@ mock_lhttpc_request( "http://127.0.0.1/api-mismatch"
                    ) ->
   {ok, {{401, []}, [{"Content-Type", "application/json"}], <<"{
     \"error\": \"unauthorized\"
+}
+"/utf8>>}};
+
+%% Mock response for unexpected disallow test:
+mock_lhttpc_request( "http://127.0.0.1/unexpected-disallow"
+                   , "GET"
+                   , []
+                   , _
+                   , _Timeout
+                   , _Options
+                   ) ->
+  {ok, {{200, []}, [{"Content-Type", "application/json"}], <<"{
+    \"ok\": true,
+    \"extra_value\": \"test\"
 }
 "/utf8>>}}.
 
@@ -302,7 +330,7 @@ POST /test-params
 > Accept: text/html
 > Content-Type: application/vnd.katt.test-v{{<version}}+json
 {
-    \"ok\": {{<some_var}}
+    \"ok\": \"{{<some_var}}\"
 }
 < 404
 Not found
@@ -318,7 +346,18 @@ POST /api-mismatch
 > Content-Type: application/json
 {}
 < 200
+< Content-Type: application/json
 { \"ok\": true }
+"/utf8>>);
+
+mock_katt_blueprint_parse_file("/mock/unexpected-disallow.apib") ->
+  katt_blueprint_parse:string(
+    <<"--- Test 4 ---
+
+GET /unexpected-disallow
+< 200
+< Content-Type: application/json
+{ \"ok\": true, \"{{_}}\": \"{{unexpected}}\" }
 "/utf8>>).
 
 %%%_* Emacs ============================================================
