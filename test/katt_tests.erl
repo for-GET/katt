@@ -93,8 +93,8 @@ katt_run_with_api_mismatch() ->
                  , Scenario
                  , _
                  , _
-                 , [ {_, _, _, {fail, [ {not_equal, {status, _, _}}
-                                      , {undefined, {"ok", _, _}}
+                 , [ {_, _, _, {fail, [ {not_equal, {"/status", _, _}}
+                                      , {undefined, {"/body/ok", _, _}}
                                       ]}}
                    ]
                  }
@@ -107,7 +107,7 @@ katt_run_with_unexpected_disallow() ->
                  , Scenario
                  , _
                  , _
-                 , [ {_, _, _, {fail, [ {unexpected, {"extra_value", _, _}}
+                 , [ {_, _, _, {fail, [ {unexpected, {"/body/extra_value", _, _}}
                                       ]}}
                    ]
                  }

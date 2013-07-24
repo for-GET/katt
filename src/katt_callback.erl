@@ -136,7 +136,7 @@ http_request(R = #katt_request{}, Params) ->
                 ).
 
 validate_status(#katt_response{status=E}, #katt_response{status=A}) ->
-  compare(status, E, A).
+  compare("/status", E, A).
 
 %% Actual headers are allowed to be a superset of expected headers, since
 %% we don't want tests full of boilerplate like tests for headers such as
@@ -145,15 +145,12 @@ validate_status(#katt_response{status=E}, #katt_response{status=A}) ->
 validate_headers(#katt_response{headers=E0}, #katt_response{headers=A0}) ->
   E = [{katt_util:to_lower(K), V} || {K, V} <- E0],
   A = [{katt_util:to_lower(K), V} || {K, V} <- A0],
-  ExpectedHeaders = lists:usort(proplists:get_keys(E)),
-  [ compare(K, proplists:get_value(K, E), proplists:get_value(K, A))
-    || K <- ExpectedHeaders
-  ].
+  compare_struct("/headers", E, A, ?MATCH_ANY).
 
 %% Bodies are also allowed to be a superset of expected body, if the parseFun
 %% returns a structure.
 validate_body(#katt_response{body=E}, #katt_response{body=A}) ->
-  compare_struct(body, E, A, ?MATCH_ANY).
+  compare_struct("/body", E, A, ?MATCH_ANY).
 
 %% Compare non-empty JSON structured types; defer to simple comparison otherwise
 compare_struct(ParentKey, E0, A = [{_,_}|_], _Unexpected) when is_list(E0) ->
