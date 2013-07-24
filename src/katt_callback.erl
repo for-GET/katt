@@ -146,47 +146,62 @@ validate_headers(#katt_response{headers=E0}, #katt_response{headers=A0}) ->
   E = [{katt_util:to_lower(K), V} || {K, V} <- E0],
   A = [{katt_util:to_lower(K), V} || {K, V} <- A0],
   ExpectedHeaders = lists:usort(proplists:get_keys(E)),
-  Get = fun proplists:get_value/2,
-  [ do_validate(K, Get(K, E), Get(K, A)) || K <- ExpectedHeaders].
+  [ compare(K, proplists:get_value(K, E), proplists:get_value(K, A))
+    || K <- ExpectedHeaders
+  ].
 
-%% Bodies must be identical, no subset matching or similar.
+%% Bodies are also allowed to be a superset of expected body, if the parseFun
+%% returns a structure.
 validate_body(#katt_response{body=E}, #katt_response{body=A}) ->
-  do_validate(body, E, A).
+  compare_struct(body, E, A, "{{_}}").
 
-do_validate(_, E = [{_,_}|_], A = [{_,_}|_])           ->
+%% Compare non-empty JSON structured types; defer to simple comparison otherwise
+compare_struct(_, E = [{_,_}|_], A = [{_,_}|_], _Unexpected)           ->
   Keys = lists:usort([K || {K, _} <- lists:merge(A, E)]),
-  [ do_validate(K, proplists:get_value(K, E), proplists:get_value(K, A))
+  Unexpected = proplists:get_value("{{_}}", E, "{{_}}"),
+  [ compare_struct(K, proplists:get_value(K, E), proplists:get_value(K, A), Unexpected)
     || K <- Keys
   ];
-do_validate(Key, E = [[{_,_}|_]|_], A = [[{_,_}|_]|_])
-  when length(E) =/= length(A)                         ->
-  {missing_object, {Key, {E, A}}};
-do_validate(K, E0 = [[{_,_}|_]|_], A0 = [[{_,_}|_]|_]) ->
-  [do_validate(K, E, A) || {E, A} <- lists:zip(E0, A0)];
-do_validate(K, E = [[_|_]|_], A = [[_|_]|_])           ->
-  do_validate(K, enumerate(E, K), enumerate(A, K));
-do_validate(_Key, undefined, _A)                       ->
+compare_struct(K, E0 = [[{_,_}|_]|_], A0 = [[{_,_}|_]|_], Unexpected) ->
+  [ compare_struct(K, E, A, Unexpected)
+    || {E, A} <- lists:zip(E0, A0)
+  ];
+compare_struct(K, E = [[_|_]|_], A = [[_|_]|_], _Unexpected)           ->
+  Unexpected = "{{disallow}}",
+  compare_struct(K, enumerate(E, K), enumerate(A, K), Unexpected);
+compare_struct(K, E, A, Unexpected) ->
+  compare(K, E, A, Unexpected).
+
+%% Compare when unexpected values show up
+compare(_Key, undefined, _A, ?MATCH_ANY) ->
   pass;
-do_validate(Key, E, undefined)                         ->
-  {missing_value, {Key, E}};
-do_validate(Key, ?STORE_BEGIN_TAG ++ Rest, [])         ->
-  Param = string:sub_string(Rest, 1, string:str(Rest, ?STORE_END_TAG) - 1),
-  {empty_value, {Key, Param}};
-do_validate(_Key, ?MATCH_ANY ++ _, _)                  ->
+compare(_Key, undefined, _A, undefined)  ->
   pass;
-do_validate(_Key, ?STORE_BEGIN_TAG ++ Rest, A)         ->
-  Param = string:sub_string(Rest, 1, string:str(Rest, ?STORE_END_TAG) - 1),
-  {pass, {Param, A}};
-do_validate(Key, E, A)                                 ->
+compare(Key, undefined, A, Unexpected)   ->
+  compare(Key, Unexpected, A);
+compare(Key, E, A, _Unexpected)          ->
   compare(Key, E, A).
 
-compare(_Key, E, E) -> pass;
-compare(Key, E, A)  -> {not_equal, {Key, E, A}}.
 
-%% Transform simple list to proplist with keys named Name1, Name2 etc.
+%% Compare JSON primitive types or empty structured types
+compare(Key, undefined, A)                 ->
+  {unexpected_value, {Key, A}};
+compare(Key, E, undefined)                 ->
+  {undefined, {Key, E}};
+compare(_Key, ?MATCH_ANY ++ _, _)          ->
+  pass;
+compare(_Key, ?STORE_BEGIN_TAG ++ Rest, A) ->
+  Param = string:sub_string(Rest, 1, string:str(Rest, ?STORE_END_TAG) - 1),
+  {pass, {Param, A}};
+compare(_Key, E, E)                        ->
+  pass;
+compare(Key, E, A)                         ->
+  {not_equal, {Key, E, A}}.
+
+%% Transform simple list to proplist with keys named <Name>1, <Name>2 etc.
 enumerate(L, Name) ->
   lists:zip([ katt_util:to_list(Name) ++ integer_to_list(N)
-              || N <- lists:seq(1, length(L))
+              || N <- lists:seq(0, length(L) - 1)
             ], L).
 
 %%%_* Emacs ============================================================
