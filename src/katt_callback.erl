@@ -184,7 +184,6 @@ compare(Key, undefined, A, Unexpected)   ->
 compare(Key, E, A, _Unexpected)          ->
   compare(Key, E, A).
 
-
 %% Compare JSON primitive types or empty structured types
 compare(Key, E, undefined)                 ->
   {undefined, {Key, E, undefined}};
