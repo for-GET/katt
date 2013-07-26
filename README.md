@@ -46,7 +46,7 @@ erl -pa ebin`).
 
 ## Interface
 
-* `katt:run`
+* `katt:run` to be called with
   * `filename`
   * `params` (optional)
     * `protocol`
@@ -55,9 +55,9 @@ erl -pa ebin`).
     * `request_timeout`
     * `scenario_timeout`
   * `callbacks` (optional)
-    * `parse`
-    * `request`
-    * `validate`
+    * `parse` to be called with `headers`, `body`, `params`, `callbacks`
+    * `request` to be called with `request`, `params`, `callbacks`
+    * `validate` to be called with `expected`, `actual`, `params`, `callbacks`
 
 
 ## Contributing
