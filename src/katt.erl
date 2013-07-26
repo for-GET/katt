@@ -187,11 +187,9 @@ recall(null, _Params)          -> null;
 recall(Bin, [])                -> Bin;
 recall(Bin0, [{K0, V} | Next]) ->
   K = ?RECALL_BEGIN_TAG ++ katt_util:to_list(K0) ++ ?RECALL_END_TAG,
-  EscapedK = katt_util:escape_regex(K),
-  EscapedV = katt_util:escape_regex(katt_util:to_list(V)),
   Bin = re:replace( Bin0
-                  , EscapedK
-                  , katt_util:to_list(EscapedV)
+                  , katt_util:escape_regex(K)
+                  , katt_util:escape_regex(V)
                   , [{return, binary}, global]),
   recall(Bin, Next).
 
