@@ -83,6 +83,11 @@ katt_run_with_params() ->
                          , [ {hostname, "example.com"}
                            , {some_var, "hi"}
                            , {version, "1"}
+                           , {test_boolean, true}
+                           , {test_integer, 1}
+                           , {test_number, 1.1}
+                           , {test_string, "string"}
+                           , {test_null, null}
                            ]
                          )
                ).
@@ -330,7 +335,12 @@ POST /test-params
 > Accept: text/html
 > Content-Type: application/vnd.katt.test-v{{<version}}+json
 {
-    \"ok\": \"{{<some_var}}\"
+    \"ok\": \"{{<some_var}}\",
+    \"boolean\": \"{{<test_boolean}}\",
+    \"integer\": \"{{<test_integer}}\",
+    \"number\": \"{{<test_number}}\",
+    \"string\": \"{{<test_string}}\",
+    \"null\": \"{{<test_null}}\"
 }
 < 404
 Not found
