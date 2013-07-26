@@ -9,11 +9,18 @@ Use for shooting HTTP requests in a sequential order and verifying the response.
 Any relevant difference between expected and actual responses will cause a
 failure.
 
-Tags with special meaning:
+The builtin validator supports basic text validation and more advanced validation of HTTP headers and JSON structures.
+
+The validator makes use of a few tags with special meaning:
 <dl>
   <dt>"{{_}}"</dt>
   <dd>
-    Match anything (i.e. no real validation, only check existence)</dd>
+    Match anything (i.e. no real validation, only check existence).
+  </dd>
+  <dt>"{{unexpected}}"</dt>
+  <dd>
+    Match nothing (i.e. no real validation, only check lack of existence)
+  </dd>
   <dt>
     "{{&gt;key}}"</dt>
   <dd>
@@ -24,6 +31,14 @@ Tags with special meaning:
     Recall stored value.
   </dd>
 </dl>
+
+The "{{_}}" tag can also be used as a JSON object's property in order to
+validate any other additional properties.
+
+By default, the builtin validator will allow additional fields in an object
+structure. To counteract that default, one can add `"{{_}}": "{{unexpected}}"`
+inside the object, effectively making a rule no other properties beyond the
+ones defined are expected.
 
 
 ## Examples
