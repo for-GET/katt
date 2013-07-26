@@ -85,7 +85,6 @@ katt_run_with_params() ->
                            , {version, "1"}
                            , {test_boolean, true}
                            , {test_integer, 1}
-                           , {test_number, 1.1}
                            , {test_string, "string"}
                            , {test_null, null}
                            ]
@@ -196,7 +195,7 @@ mock_lhttpc_request( "http://example.com/test-params"
                    , _Timeout
                    , _Options
                    ) ->
-  {ok, {{404, []}, [{"Content-Type", "text/html"}], <<"Not found">>}};
+  {ok, {{404, []}, [{"Content-Type", "text/html"}], <<"Not foundtrue1stringnull">>}};
 
 %% Mock response for api mismatch test:
 mock_lhttpc_request( "http://127.0.0.1/api-mismatch"
@@ -338,12 +337,11 @@ POST /test-params
     \"ok\": \"{{<some_var}}\",
     \"boolean\": \"{{<test_boolean}}\",
     \"integer\": \"{{<test_integer}}\",
-    \"number\": \"{{<test_number}}\",
     \"string\": \"{{<test_string}}\",
     \"null\": \"{{<test_null}}\"
 }
 < 404
-Not found
+Not found{{<test_boolean}}{{<test_integer}}{{<test_string}}{{<test_null}}
 
 "/utf8>>);
 
