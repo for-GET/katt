@@ -61,14 +61,15 @@ to_utf8(X) when is_list(X) -> unicode:characters_to_binary(X, utf8).
 
 to_lower(S) when is_list(S) -> string:to_lower(S).
 
+escape_regex(Other) when not is_list(Other) andalso not is_binary(Other) ->
+  to_list(Other);
 escape_regex(Bin0) ->
   Bin = to_list(Bin0),
-  Result0 = re:replace(
+  to_list(re:replace(
     Bin,
     "[\\-\\[\\]\\/\\{\\}\\(\\)\\*\\+\\?\\.\\,\\\\\^\\$\\|\\#\\s\\&]",
     "\\\\&",
-    [global]),
-  to_list(Result0).
+    [global])).
 
 %%%_* Emacs ============================================================
 %%% Local Variables:
