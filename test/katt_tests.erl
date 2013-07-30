@@ -83,10 +83,12 @@ katt_run_with_params() ->
                          , [ {hostname, "example.com"}
                            , {some_var, "hi"}
                            , {version, "1"}
+                           , {syntax, json}
+                           , {test_null, null}
                            , {test_boolean, true}
                            , {test_integer, 1}
                            , {test_string, "string"}
-                           , {test_null, null}
+                           , {test_binary, <<"binary"/utf8>>}
                            ]
                          )
                ).
@@ -188,14 +190,20 @@ mock_lhttpc_request( "http://127.0.0.1/step5"
 %% Mock response for test-params:
 mock_lhttpc_request( "http://example.com/test-params"
                    , "POST"
-                   , [ {"Accept", "text/html"}
-                     , {"Content-Type","application/vnd.katt.test-v1+json"}
-                     ]
+                   , _
                    , _
                    , _Timeout
                    , _Options
                    ) ->
-  {ok, {{404, []}, [{"Content-Type", "text/html"}], <<"Not foundtrue1stringnull">>}};
+  {ok, {{200, []}, [{"Content-Type", "application/vnd.katt.test-v1+json"}], <<"{
+    \"ok\": \"hi\",
+    \"null\": null,
+    \"boolean\": true,
+    \"integer\": 1,
+    \"string\": \"string\",
+    \"binary\": \"binary\"
+}
+"/utf8>>}};
 
 %% Mock response for api mismatch test:
 mock_lhttpc_request( "http://127.0.0.1/api-mismatch"
@@ -215,7 +223,7 @@ mock_lhttpc_request( "http://127.0.0.1/api-mismatch"
 %% Mock response for unexpected disallow test:
 mock_lhttpc_request( "http://127.0.0.1/unexpected-disallow"
                    , "GET"
-                   , []
+                   , _
                    , _
                    , _Timeout
                    , _Options
@@ -331,17 +339,16 @@ mock_katt_blueprint_parse_file("/mock/test-params.apib") ->
     <<"--- Test 2 ---
 
 POST /test-params
-> Accept: text/html
-> Content-Type: application/vnd.katt.test-v{{<version}}+json
+< 200
+< Content-Type: application/vnd.katt.test-v{{<version}}+{{<syntax}}
 {
     \"ok\": \"{{<some_var}}\",
     \"boolean\": \"{{<test_boolean}}\",
+    \"null\": \"{{<test_null}}\",
     \"integer\": \"{{<test_integer}}\",
     \"string\": \"{{<test_string}}\",
-    \"null\": \"{{<test_null}}\"
+    \"binary\": \"{{<test_binary}}\"
 }
-< 404
-Not found{{<test_boolean}}{{<test_integer}}{{<test_string}}{{<test_null}}
 
 "/utf8>>);
 
