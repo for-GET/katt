@@ -44,10 +44,10 @@ merge_proplists(List1, List2) ->
                , orddict:from_list(List2)
                ).
 
-to_list(X) when is_list(X)    -> X;
 to_list(X) when is_atom(X)    -> atom_to_list(X);
-to_list(X) when is_binary(X)  -> binary_to_list(X);
-to_list(X) when is_integer(X) -> integer_to_list(X).
+to_list(X) when is_integer(X) -> integer_to_list(X);
+to_list(X) when is_list(X)    -> X;
+to_list(X) when is_binary(X)  -> binary_to_list(X).
 
 %% Transform (possibly utf8 encoded) binary to list, ignore everything else.
 from_utf8(X) when is_binary(X) ->
@@ -60,7 +60,7 @@ from_utf8(X) when is_binary(X) ->
 %% Transform list to utf8 encoded binary, ignore everything else
 to_utf8(X) when is_list(X) -> unicode:characters_to_binary(X, utf8).
 
-to_lower(S) when is_list(S) -> string:to_lower(S).
+to_lower(X) when is_list(X) -> string:to_lower(X).
 
 escape_regex(Other) when not is_list(Other) andalso not is_binary(Other) ->
   to_list(Other);

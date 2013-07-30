@@ -151,7 +151,8 @@ validate(#katt_response{}, Actual, _Params, _Callbacks)   -> {fail, Actual}.
 
 %%%_* Internal =========================================================
 
-parse_json(Binary) -> to_proplist(mochijson3:decode(Binary)).
+parse_json(Bin) ->
+  to_proplist(mochijson3:decode(Bin)).
 
 is_json_content_type(ContentType) ->
   case string:str(ContentType, "json") of
