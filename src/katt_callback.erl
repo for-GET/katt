@@ -24,7 +24,8 @@
 
 %%%_* Exports ==========================================================
 %% API
--export([ parse/4
+-export([ recall/4
+        , parse/4
         , request/3
         , validate/4
         ]).
@@ -33,6 +34,23 @@
 -include("katt.hrl").
 
 %%%_* API ==============================================================
+
+%% @doc Recall all params inside the body of e.g. an HTTP request.
+%% @end
+-spec recall( headers()
+            , body()
+            , params()
+            , callbacks()
+            ) -> body().
+recall(_Hdrs, null, _Params, _Callbacks) ->
+  null;
+recall(Hdrs, Bin, Params, Callbacks) ->
+  ContentType = proplists:get_value("Content-Type", Hdrs, ""),
+  Syntax = case is_json_content_type(ContentType) of
+             true  -> json;
+             false -> text
+           end,
+  recall(Syntax, Hdrs, Bin, Params, Callbacks).
 
 %% @doc Parse the body of e.g. an HTTP response.
 %% @end
@@ -102,6 +120,30 @@ validate(#katt_response{}, Actual, _Params, _Callbacks)   -> {fail, Actual}.
 
 
 %%%_* Internal =========================================================
+
+recall(_Syntax, _Hdrs, Bin, [], _Callbacks) ->
+  Bin;
+recall(text, Hdrs, Bin0, [{K0, V} | Next], Callbacks) ->
+  K = ?RECALL_BEGIN_TAG ++ katt_util:to_list(K0) ++ ?RECALL_END_TAG,
+  REK = katt_util:escape_regex(K),
+  REV = katt_util:escape_regex(V),
+  Bin = re:replace( Bin0
+                  , REK
+                  , REV
+                  , [{return, binary}, global]),
+  recall(text, Hdrs, Bin, Next, Callbacks);
+recall(json, Hdrs, Bin0, [{K0, V} | Next], Callbacks) ->
+  K = ?RECALL_BEGIN_TAG ++ katt_util:to_list(K0) ++ ?RECALL_END_TAG,
+  REK = "\"" ++ katt_util:escape_regex(K) ++ "\"",
+  REV = case is_list(V) of
+          true -> "\"" ++ katt_util:escape_regex(V) ++ "\"";
+          false -> katt_util:escape_regex(V)
+        end,
+  Bin = re:replace( Bin0
+                  , REK
+                  , REV
+                  , [{return, binary}, global]),
+  recall(json, Hdrs, Bin, Next, Callbacks).
 
 parse_json(Binary) -> to_proplist(mochijson3:decode(Binary)).
 

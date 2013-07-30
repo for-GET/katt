@@ -111,7 +111,8 @@ make_params(ScenarioParams) ->
   katt_util:merge_proplists(DefaultParams, ScenarioParams).
 
 make_callbacks(Callbacks) ->
-  katt_util:merge_proplists([ {parse, ?DEFAULT_PARSE_FUNCTION}
+  katt_util:merge_proplists([ {recall, ?DEFAULT_RECALL_FUNCTION}
+                            , {parse, ?DEFAULT_PARSE_FUNCTION}
                             , {request, ?DEFAULT_REQUEST_FUNCTION}
                             , {validate, ?DEFAULT_VALIDATE_FUNCTION}
                             ], Callbacks).
@@ -135,7 +136,7 @@ run_transactions( Scenario
                 , Callbacks
                 , Acc
                 ) ->
-  Request = make_katt_request(Req, Params),
+  Request = make_katt_request(Req, Params, Callbacks),
   ExpectedResponse = make_katt_response(Res, Params, Callbacks),
   RequestFun = proplists:get_value(request, Callbacks),
   ValidateFun = proplists:get_value(validate, Callbacks),
@@ -158,13 +159,15 @@ run_transactions(_Scenario, [], FinalParams, _Callbacks, Acc) ->
 
 make_katt_request( #katt_request{headers=Hdrs0, url=Url0, body=RawBody0} = Req
                  , Params
+                 , Callbacks
                  ) ->
-  Url1 = katt_util:from_utf8(recall(katt_util:to_utf8(Url0), Params)),
+  RecallFun = proplists:get_value(recall, Callbacks),
+  Url1 = katt_util:from_utf8(RecallFun(katt_util:to_utf8(Url0), Params)),
   Url = make_request_url(Url1, Params),
   Hdrs = [{K, katt_util:from_utf8(
-                recall(katt_util:to_utf8(V), Params)
+                RecallFun(katt_util:to_utf8(V), Params)
               )} || {K, V} <- Hdrs0],
-  RawBody = recall(RawBody0, Params),
+  RawBody = RecallFun(RawBody0, Params),
   Req#katt_request{ url  = Url
                   , headers = Hdrs
                   , body = RawBody
@@ -174,24 +177,15 @@ make_katt_response( #katt_response{headers=Hdrs0, body=RawBody0} = Res
                   , Params
                   , Callbacks
                   ) ->
+  RecallFun = proplists:get_value(recall, Callbacks),
   Hdrs = [{K, katt_util:from_utf8(
-                recall(katt_util:to_utf8(V), Params)
+                RecallFun(katt_util:to_utf8(V), Params)
               )} || {K, V} <- Hdrs0],
-  RawBody = recall(RawBody0, Params),
+  RawBody = RecallFun(RawBody0, Params),
   ParseFun = proplists:get_value(parse, Callbacks),
   Res#katt_response{ headers = Hdrs
                    , body = ParseFun(Hdrs, RawBody, Params, Callbacks)
                    }.
-
-recall(null, _Params)          -> null;
-recall(Bin, [])                -> Bin;
-recall(Bin0, [{K0, V} | Next]) ->
-  K = ?RECALL_BEGIN_TAG ++ katt_util:to_list(K0) ++ ?RECALL_END_TAG,
-  Bin = re:replace( Bin0
-                  , katt_util:escape_regex(K)
-                  , katt_util:escape_regex(V)
-                  , [{return, binary}, global]),
-  recall(Bin, Next).
 
 -spec make_request_url( string()
                       , params()
