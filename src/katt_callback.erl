@@ -56,13 +56,11 @@ recall(text, Bin0, [{K0, V} | Next], Callbacks) ->
                   , REV
                   , [{return, binary}, global]),
   recall(text, Bin, Next, Callbacks);
-recall(json, Bin0, [{K0, V} | Next], Callbacks) ->
+recall(json, Bin0, [{K0, V0} | Next], Callbacks) ->
   K = ?RECALL_BEGIN_TAG ++ katt_util:to_list(K0) ++ ?RECALL_END_TAG,
   REK = "\"" ++ katt_util:escape_regex(K) ++ "\"",
-  REV = case is_list(V) of
-          true -> "\"" ++ katt_util:escape_regex(V) ++ "\"";
-          false -> katt_util:escape_regex(V)
-        end,
+  V = katt_util:maybe_json_string(V0),
+  REV = katt_util:escape_regex(V),
   Bin = re:replace( Bin0
                   , REK
                   , REV

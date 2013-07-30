@@ -31,6 +31,7 @@
         , to_utf8/1
         , to_lower/1
         , escape_regex/1
+        , maybe_json_string/1
         ]).
 
 %%%_* API ==============================================================
@@ -70,6 +71,14 @@ escape_regex(Bin0) ->
     "[\\-\\[\\]\\/\\{\\}\\(\\)\\*\\+\\?\\.\\,\\\\\^\\$\\|\\#\\s\\&]",
     "\\\\&",
     [global])).
+
+maybe_json_string(X) when is_binary(X) ->
+  to_utf8(maybe_json_string(to_list(X)));
+maybe_json_string(X) when is_list(X) ->
+  "\"" ++ X ++ "\"";
+maybe_json_string(X) ->
+  X.
+
 
 %%%_* Emacs ============================================================
 %%% Local Variables:
