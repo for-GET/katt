@@ -100,7 +100,7 @@ katt_run_with_api_mismatch() ->
                  , _
                  , _
                  , [ {_, _, _, {fail, [ {not_equal, {"/status", _, _}}
-                                      , {undefined, {"/body/ok", _, _}}
+                                      , {not_equal, {"/body/ok", _, _}}
                                       ]}}
                    ]
                  }

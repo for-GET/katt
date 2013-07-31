@@ -222,8 +222,6 @@ compare_struct(K, E, A, Unexpected) ->
   compare(K, E, A, Unexpected).
 
 %% Compare when unexpected values show up
-compare(_Key, undefined, _A, undefined)  ->
-  pass;
 compare(_Key, undefined, _A, ?MATCH_ANY) ->
   pass;
 compare(_Key, [], _A, ?MATCH_ANY)        ->
@@ -236,9 +234,7 @@ compare(Key, E, A, _Unexpected)          ->
   compare(Key, E, A).
 
 %% Compare JSON primitive types or empty structured types
-compare(Key, E, undefined)                 ->
-  {undefined, {Key, E, undefined}};
-compare(_Key, ?MATCH_ANY ++ _, _)          ->
+compare(_Key, ?MATCH_ANY, _)               ->
   pass;
 compare(_Key, ?STORE_BEGIN_TAG ++ Rest, A) ->
   Param = string:sub_string(Rest, 1, string:str(Rest, ?STORE_END_TAG) - 1),
