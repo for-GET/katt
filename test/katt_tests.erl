@@ -245,8 +245,10 @@ mock_katt_blueprint_parse_file("/mock/basic.apib") ->
 Some description
 ---
 
-Step 1
-here it is:
+# Step 1
+
+The merchant creates a new example object on our server, and we respond with
+the location of the created example.
 
 POST /step1
 > Accept: application/json
@@ -276,7 +278,7 @@ POST /step1
 < Location: {{>example_uri}}
 
 
-Step 2
+# Step 2
 
 The client (customer) fetches the created resource data.
 
@@ -292,7 +294,7 @@ GET {{<example_uri}}
 }
 
 
-Step 3
+# Step 3
 
 The customer submits an e-mail address in the form.
 
@@ -312,7 +314,7 @@ POST {{<example_uri}}/step3
 }
 
 
-Step 4
+# Step 4
 
 The customer submits the form again, this time also with his password.
 We inform him that payment is required.
@@ -329,6 +331,9 @@ POST {{<example_uri}}/step4
 {
     \"error\": \"payment required\"
 }
+
+
+# Step 5
 
 HEAD /step5
 < 404
@@ -352,7 +357,6 @@ POST /test-params
     \"string\": \"{{<test_string}}\",
     \"binary\": \"{{<test_binary}}\"
 }
-
 "/utf8>>);
 
 mock_katt_blueprint_parse_file("/mock/api-mismatch.apib") ->
