@@ -25,7 +25,6 @@
 %%%_* Exports ==========================================================
 %% API
 -export([ recall/4
-        , recall_body/4
         , parse/4
         , request/3
         , validate/4
@@ -36,17 +35,17 @@
 
 %%%_* API ==============================================================
 
-%% @doc Recall all params inside text/json
+%% @doc Recall all params inside url/status/headers/body/text/json content.
 %% @end
--spec recall( atom()
-            , body()
+-spec recall( recall_scope()
+            , any()
             , params()
             , callbacks()
-            ) -> body().
-recall(_Syntax, null, _Params, _Callbacks) ->
+            ) -> any().
+recall(_Scope, null, _Params, _Callbacks) ->
   null;
-recall(_Syntax, Bin, [], _Callbacks) ->
-  Bin;
+recall(_Scope, Input, [], _Callbacks) ->
+  Input;
 recall(text, Bin0, [{K0, V} | Next], Callbacks) ->
   K = ?RECALL_BEGIN_TAG ++ katt_util:to_list(K0) ++ ?RECALL_END_TAG,
   REK = katt_util:escape_regex(K),
@@ -65,22 +64,20 @@ recall(json, Bin0, [{K0, V0} | Next], Callbacks) ->
                   , REK
                   , REV
                   , [{return, binary}, global]),
-  recall(json, Bin, Next, Callbacks).
-
-%% @doc Recall all params inside the body of e.g. an HTTP request.
-%% @end
--spec recall_body( headers()
-                 , body()
-                 , params()
-                 , callbacks()
-                 ) -> body().
-recall_body(Hdrs, Bin, Params, Callbacks) ->
+  recall(json, Bin, Next, Callbacks);
+recall(url, Bin, Params, Callbacks) ->
+  recall(text, Bin, Params, Callbacks);
+recall(headers, Hdrs0, Params, Callbacks) ->
+  [{K, katt_util:from_utf8(
+         recall(text, katt_util:to_utf8(V), Params, Callbacks)
+       )} || {K, V} <- Hdrs0];
+recall(body, [Hdrs, Bin], Params, Callbacks) ->
   ContentType = proplists:get_value("Content-Type", Hdrs, ""),
   Syntax = case is_json_content_type(ContentType) of
              true  -> json;
              false -> text
            end,
-  recall(Syntax, Bin, Params, Callbacks).
+  [Hdrs, recall(Syntax, Bin, Params, Callbacks)].
 
 %% @doc Parse the body of e.g. an HTTP response.
 %% @end

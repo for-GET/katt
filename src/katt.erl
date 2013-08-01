@@ -112,7 +112,6 @@ make_params(ScenarioParams) ->
 
 make_callbacks(Callbacks) ->
   katt_util:merge_proplists([ {recall, ?DEFAULT_RECALL_FUN}
-                            , {recall_body, ?DEFAULT_RECALL_BODY_FUN}
                             , {parse, ?DEFAULT_PARSE_FUN}
                             , {request, ?DEFAULT_REQUEST_FUN}
                             , {validate, ?DEFAULT_VALIDATE_FUN}
@@ -168,20 +167,17 @@ make_katt_request( #katt_request{headers=Hdrs0, url=Url0, body=RawBody0} = Req
                  ) ->
   RecallFun = proplists:get_value(recall, Callbacks),
   Url1 = katt_util:from_utf8(
-           RecallFun( text
+           RecallFun( url
                     , katt_util:to_utf8(Url0)
                     , Params
                     , Callbacks
                     )),
   Url = make_request_url(Url1, Params),
-  Hdrs = [{K, katt_util:from_utf8(
-                RecallFun(text, katt_util:to_utf8(V), Params, Callbacks)
-              )} || {K, V} <- Hdrs0],
-  RecallBodyFun = proplists:get_value(recall_body, Callbacks),
-  RawBody = RecallBodyFun(Hdrs, RawBody0, Params, Callbacks),
-  Req#katt_request{ url  = Url
+  Hdrs = RecallFun(headers, Hdrs0, Params, Callbacks),
+  [Hdrs, RawBody] = RecallFun(body, [Hdrs, RawBody0], Params, Callbacks),
+  Req#katt_request{ url     = Url
                   , headers = Hdrs
-                  , body = RawBody
+                  , body    = RawBody
                   }.
 
 make_katt_response( #katt_response{headers=Hdrs0, body=RawBody0} = Res
@@ -189,14 +185,12 @@ make_katt_response( #katt_response{headers=Hdrs0, body=RawBody0} = Res
                   , Callbacks
                   ) ->
   RecallFun = proplists:get_value(recall, Callbacks),
-  Hdrs = [{K, katt_util:from_utf8(
-                RecallFun(text, katt_util:to_utf8(V), Params, Callbacks)
-              )} || {K, V} <- Hdrs0],
-  RecallBodyFun = proplists:get_value(recall_body, Callbacks),
-  RawBody = RecallBodyFun(Hdrs, RawBody0, Params, Callbacks),
   ParseFun = proplists:get_value(parse, Callbacks),
+  Hdrs = RecallFun(headers, Hdrs0, Params, Callbacks),
+  [Hdrs, RawBody] = RecallFun(body, [Hdrs, RawBody0], Params, Callbacks),
+  Body = ParseFun(Hdrs, RawBody, Params, Callbacks),
   Res#katt_response{ headers = Hdrs
-                   , body = ParseFun(Hdrs, RawBody, Params, Callbacks)
+                   , body    = Body
                    }.
 
 -spec make_request_url( string()

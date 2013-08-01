@@ -71,7 +71,6 @@ erl -pa ebin`).
     * `scenario_timeout`
   * `callbacks` (optional)
     * `recall` to be called with `syntax`, `text`, `params`, `callbacks`
-    * `recall_body` to be called with `headers`, `body`, `params`, `callbacks`
     * `parse` to be called with `headers`, `body`, `params`, `callbacks`
     * `parse` to be called with `headers`, `body`, `params`, `callbacks`
     * `request` to be called with `request`, `params`, `callbacks`
