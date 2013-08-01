@@ -87,6 +87,7 @@ katt_run_with_params() ->
                            , {test_null, null}
                            , {test_boolean, true}
                            , {test_integer, 1}
+                           , {test_float, 1.1}
                            , {test_string, "string"}
                            , {test_binary, <<"binary"/utf8>>}
                            ]
@@ -200,6 +201,7 @@ mock_lhttpc_request( "http://example.com/test-params"
     \"null\": null,
     \"boolean\": true,
     \"integer\": 1,
+    \"float\": 1.1,
     \"string\": \"string\",
     \"binary\": \"binary\"
 }
@@ -346,6 +348,7 @@ POST /test-params
     \"boolean\": \"{{<test_boolean}}\",
     \"null\": \"{{<test_null}}\",
     \"integer\": \"{{<test_integer}}\",
+    \"float\": \"{{<test_float}}\",
     \"string\": \"{{<test_string}}\",
     \"binary\": \"{{<test_binary}}\"
 }

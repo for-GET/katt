@@ -44,7 +44,7 @@
 
 -type scenario_filename()   :: nonempty_string().
 -type params()              :: [{param(), param()}].
--type param()               :: atom() | integer() | string() | binary().
+-type param()               :: atom() | integer() | float() | string() | binary().
 -type callbacks()           :: [{atom(), function()}].
 
 -type run_result()          :: run_error() | scenario_result().
