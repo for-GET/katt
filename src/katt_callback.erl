@@ -199,6 +199,8 @@ validate_body(#katt_response{body=E}, #katt_response{body=A}) ->
   compare_struct("/body", E, A, ?MATCH_ANY).
 
 %% Compare non-empty JSON structured types; defer to simple comparison otherwise
+compare_struct(_ParentKey, ?MATCH_ANY, _A, _Unexpected) ->
+  pass;
 compare_struct(ParentKey, E0, A = [{_,_}|_], _Unexpected) when is_list(E0) ->
   Unexpected = proplists:get_value(?MATCH_ANY, E0, ?MATCH_ANY),
   E = proplists:delete(?MATCH_ANY, E0),
