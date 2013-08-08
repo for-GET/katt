@@ -81,7 +81,11 @@ run(From, Scenario, ScenarioParams, ScenarioCallbacks) ->
                                                   , Blueprint
                                                   , Params
                                                   , Callbacks),
-  FailureFilter = fun({_Transaction, _Request, _Params, ValidationResult}) ->
+  FailureFilter = fun({ _Transaction
+                      , _Params
+                      , _Request
+                      , _Response
+                      , ValidationResult }) ->
                     ValidationResult =/= pass
                   end,
   Failures = lists:filter(FailureFilter, TransactionResults),
@@ -153,10 +157,12 @@ run_transactions( Scenario
                       , T
                       , NextParams
                       , Callbacks
-                      , [{Description, Request, Params, pass}|Acc]
+                      , [{Description, Params, Request, ActualResponse, pass}
+                         | Acc]
                       );
     _                 ->
-      {Params, [{Description, Request, Params, ValidationResult}|Acc]}
+      {Params, [{Description, Params, Request, ActualResponse, ValidationResult}
+                | Acc]}
   end;
 run_transactions(_Scenario, [], FinalParams, _Callbacks, Acc) ->
   {FinalParams, Acc}.

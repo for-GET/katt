@@ -43,15 +43,29 @@
 
 -type scenario_filename()   :: nonempty_string().
 -type params()              :: [{param(), param()}].
--type param()               :: atom() | integer() | float() | string() | binary().
+-type param()               :: atom()
+                             | integer()
+                             | float()
+                             | string()
+                             | binary().
 -type callbacks()           :: [{atom(), function()}].
 
 -type run_result()          :: run_error() | scenario_result().
 -type run_error()           :: {error, reason(), details()}.
 -type reason()              :: atom().
 -type details()             :: any().
--type scenario_result()     :: {pass|fail, scenario_filename(), params(), params(), [transaction_result()]}.
--type transaction_result()  :: {string(), #katt_request{}, params(), validation_result()}.
+-type scenario_result()     :: { pass|fail
+                               , scenario_filename()
+                               , params()
+                               , params()
+                               , [transaction_result()]
+                               }.
+-type transaction_result()  :: { string()
+                               , params()
+                               , #katt_request{}
+                               , #katt_response{}
+                               , validation_result()
+                               }.
 -type validation_result()   :: pass | {fail, reason(), details()}.
 
 -type description()         :: string().
