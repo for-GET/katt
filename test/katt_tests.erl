@@ -114,7 +114,9 @@ katt_run_with_unexpected_disallow() ->
                  , Scenario
                  , _
                  , _
-                 , [ {_, _, _, {fail, [ {unexpected, {"/body/extra_value", _, _}}
+                 , [ {_, _, _, {fail, [ {unexpected
+                                        , {"/body/extra_value", _, _}
+                                        }
                                       ]}}
                    ]
                  }
