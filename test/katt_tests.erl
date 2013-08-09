@@ -115,7 +115,10 @@ katt_run_with_unexpected_disallow() ->
                  , _
                  , _
                  , [ {_, _, _, _, {fail, [ { unexpected
-                                           , {"/body/extra_value", _, _}
+                                           , {"/body/extra_object/key", _, _}
+                                           },
+                                           { unexpected
+                                           , {"/body/extra_array/0", _, _}
                                            }
                                          ]}}
                    ]
@@ -149,7 +152,10 @@ mock_lhttpc_request( "http://127.0.0.1/step2"
         \"email\"
     ],
     \"cart\": \"{{_}}\",
-    \"extra_value\": \"test\"
+    \"extra_object\": {
+      \"key\": \"test\"
+    },
+    \"extra_array\": [\"test\"]
 }
 
 "/utf8>>}};
@@ -234,7 +240,10 @@ mock_lhttpc_request( "http://127.0.0.1/unexpected-disallow"
                    ) ->
   {ok, {{200, []}, [{"Content-Type", "application/json"}], <<"{
     \"ok\": true,
-    \"extra_value\": \"test\"
+    \"extra_object\": {
+        \"key\": \"test\"
+    },
+    \"extra_array\": [\"test\"]
 }
 "/utf8>>}}.
 
@@ -381,7 +390,13 @@ mock_katt_blueprint_parse_file("/mock/unexpected-disallow.apib") ->
 GET /unexpected-disallow
 < 200
 < Content-Type: application/json
-{ \"ok\": true, \"{{_}}\": \"{{unexpected}}\" }
+{
+    \"ok\": true,
+    \"extra_object\": {
+        \"{{_}}\": \"{{unexpected}}\"
+    },
+    \"extra_array\": [\"{{unexpected}}\"]
+}
 "/utf8>>).
 
 %%%_* Emacs ============================================================
