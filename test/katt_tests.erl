@@ -205,7 +205,10 @@ mock_lhttpc_request( "http://example.com/test-params"
                    , _Options
                    ) ->
   {ok, {{200, []}, [{"Content-Type", "application/vnd.katt.test-v1+json"}], <<"{
-    \"ok\": \"hi\",
+    \"protocol\": \"http:\",
+    \"hostname\": \"example.com\",
+    \"port\": 80,
+    \"some_var\": \"hi\",
     \"null\": null,
     \"boolean\": true,
     \"integer\": 1,
@@ -360,7 +363,10 @@ POST /test-params
 < 200
 < Content-Type: application/vnd.katt.test-v{{<version}}+{{<syntax}}
 {
-    \"ok\": \"{{<some_var}}\",
+    \"protocol\": \"{{<protocol}}\",
+    \"hostname\": \"{{<hostname}}\",
+    \"port\": \"{{<port}}\",
+    \"some_var\": \"{{<some_var}}\",
     \"boolean\": \"{{<test_boolean}}\",
     \"null\": \"{{<test_null}}\",
     \"integer\": \"{{<test_integer}}\",
