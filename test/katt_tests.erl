@@ -60,11 +60,11 @@ katt_run_basic() ->
                  , Scenario
                  , _
                  , _
-                 , [ {_, _, _, pass}
-                   , {_, _, _, pass}
-                   , {_, _, _, pass}
-                   , {_, _, _, pass}
-                   , {_, _, _, pass}
+                 , [ {_, _, _, _, pass}
+                   , {_, _, _, _, pass}
+                   , {_, _, _, _, pass}
+                   , {_, _, _, _, pass}
+                   , {_, _, _, _, pass}
                    ]
                  }
                , katt:run(Scenario)
@@ -76,7 +76,7 @@ katt_run_with_params() ->
                  , Scenario
                  , _
                  , _
-                 , [ {_, _, _, pass}
+                 , [ {_, _, _, _, pass}
                    ]
                  }
                , katt:run( Scenario
@@ -100,9 +100,9 @@ katt_run_with_api_mismatch() ->
                  , Scenario
                  , _
                  , _
-                 , [ {_, _, _, {fail, [ {not_equal, {"/status", _, _}}
-                                      , {not_equal, {"/body/ok", _, _}}
-                                      ]}}
+                 , [ {_, _, _, _, {fail, [ {not_equal, {"/status", _, _}}
+                                         , {not_equal, {"/body/ok", _, _}}
+                                         ]}}
                    ]
                  }
                , katt:run(Scenario)
@@ -114,10 +114,10 @@ katt_run_with_unexpected_disallow() ->
                  , Scenario
                  , _
                  , _
-                 , [ {_, _, _, {fail, [ {unexpected
-                                        , {"/body/extra_value", _, _}
-                                        }
-                                      ]}}
+                 , [ {_, _, _, _, {fail, [ { unexpected
+                                           , {"/body/extra_value", _, _}
+                                           }
+                                         ]}}
                    ]
                  }
                , katt:run(Scenario)
