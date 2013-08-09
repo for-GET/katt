@@ -60,10 +60,11 @@ recall(json, Bin0, [{K0, V0} | Next], Callbacks) ->
   REK = "\"" ++ katt_util:escape_regex(K) ++ "\"",
   V = katt_util:maybe_json_string(V0),
   REV = katt_util:escape_regex(V),
-  Bin = re:replace( Bin0
-                  , REK
-                  , REV
-                  , [{return, binary}, global]),
+  Bin1 = re:replace( Bin0
+                   , REK
+                   , REV
+                   , [{return, binary}, global]),
+  Bin = recall(text, Bin1, [{K0, V0}], Callbacks),
   recall(json, Bin, Next, Callbacks);
 recall(url, Bin, Params, Callbacks) ->
   recall(text, Bin, Params, Callbacks);
