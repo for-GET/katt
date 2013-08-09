@@ -199,30 +199,34 @@ validate_body(#katt_response{body=E}, #katt_response{body=A}) ->
   compare_struct("/body", E, A, ?MATCH_ANY).
 
 %% Compare non-empty JSON structured types; defer to simple comparison otherwise
-compare_struct(_ParentKey, ?MATCH_ANY, _A, _Unexpected) ->
+compare_struct(_ParentKey, ?MATCH_ANY, _A, _Unexpected)                     ->
   pass;
-compare_struct(ParentKey, E0, A = [{_,_}|_], _Unexpected) when is_list(E0) ->
+compare_struct(ParentKey, E0, A = [{_,_}|_], _Unexpected) when is_list(E0)  ->
   Unexpected = proplists:get_value(?MATCH_ANY, E0, ?MATCH_ANY),
   E = proplists:delete(?MATCH_ANY, E0),
-  Keys = lists:usort([K || {K, _} <- lists:merge(A, E)]),
+  Keys = lists:usort([K || {K, _} <- lists:merge(E, A)]),
   [ compare_struct( ParentKey ++ "/" ++ K
                   , proplists:get_value(K, E)
                   , proplists:get_value(K, A)
                   , Unexpected)
     || K <- Keys
   ];
-compare_struct(K, E0, A0 = [[{_,_}|_]|_], Unexpected) when is_list(E0)     ->
-  [ compare_struct(K, E, A, Unexpected)
-    || {E, A} <- lists:zip(E0, A0)
-  ];
-compare_struct(K, E0, A = [[_|_]|_], _Unexpected) when is_list(E0)         ->
+compare_struct(ParentKey, E0, A0 = [[_|_]|_], _Unexpected) when is_list(E0) ->
   Unexpected = case lists:member(?UNEXPECTED, E0) of
                  true -> ?UNEXPECTED;
                  false -> ?MATCH_ANY
                end,
   E1 = lists:delete(?MATCH_ANY, E0),
-  E = lists:delete(?UNEXPECTED, E1),
-  compare_struct(K, enumerate(E), enumerate(A), Unexpected);
+  E2 = lists:delete(?UNEXPECTED, E1),
+  E = enumerate(E2),
+  A = enumerate(A0),
+  Keys = lists:usort([K || {K, _} <- lists:merge(E, A)]),
+  [ compare_struct( ParentKey ++ "/" ++ K
+                  , proplists:get_value(K, E)
+                  , proplists:get_value(K, A)
+                  , Unexpected)
+    || K <- Keys
+  ];
 compare_struct(K, E, A, Unexpected) ->
   compare(K, E, A, Unexpected).
 
