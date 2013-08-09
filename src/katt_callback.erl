@@ -124,29 +124,39 @@ validate( Expected = #katt_response{}
         , Actual = #katt_response{}
         , _Params
         , _Callbacks)                                     ->
-  Result = [ validate_status(Expected, Actual)
-           , validate_headers(Expected, Actual)
-           , validate_body(Expected, Actual)],
-  {AddParams, Failures} =
-    lists:foldl(
-      fun(pass, Acc) -> Acc;
-         ({pass, AddParam}, {AddParams0, Failures0}) ->
-          {[AddParam | AddParams0], Failures0};
-         (Failure, {AddParams0, Failures0})          ->
-          {AddParams0, [Failure|Failures0]}
-      end,
-      {[],[]},
-      lists:flatten(Result)
-    ),
+ {AddParams0, Failures0} = get_params_and_failures(
+                             validate_status(Expected, Actual)),
+ {AddParams1, Failures1} = get_params_and_failures(
+                             validate_headers(Expected, Actual)),
+ {AddParams2, Failures2} = get_params_and_failures(
+                             validate_body(Expected, Actual)),
+ AddParams = lists:flatten([ AddParams0
+                           , AddParams1
+                           , AddParams2]),
+ Failures = lists:flatten([ Failures0
+                          , Failures1
+                          , Failures2]),
   case Failures of
     [] -> {pass, AddParams};
-    _  -> {fail, lists:reverse(Failures)}
+    _  -> {fail, Failures}
   end;
 validate(Expected, #katt_response{}, _Params, _Callbacks) -> {fail, Expected};
 validate(#katt_response{}, Actual, _Params, _Callbacks)   -> {fail, Actual}.
 
 
 %%%_* Internal =========================================================
+
+get_params_and_failures(Result) ->
+  lists:foldl(
+    fun(pass, Acc) -> Acc;
+       ({pass, AddParam}, {AddParams0, Failures0}) ->
+        {[AddParam | AddParams0], Failures0};
+       (Failure, {AddParams0, Failures0})          ->
+        {AddParams0, [Failure | Failures0]}
+    end,
+    {[],[]},
+    lists:flatten([Result])
+   ).
 
 parse_json(Bin) ->
   to_proplist(mochijson3:decode(Bin)).
