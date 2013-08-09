@@ -215,8 +215,14 @@ compare_struct(K, E0, A0 = [[{_,_}|_]|_], Unexpected) when is_list(E0)     ->
   [ compare_struct(K, E, A, Unexpected)
     || {E, A} <- lists:zip(E0, A0)
   ];
-compare_struct(K, E, A = [[_|_]|_], _Unexpected) when is_list(E)           ->
-  compare_struct(K, enumerate(E), enumerate(A), ?UNEXPECTED);
+compare_struct(K, E0, A = [[_|_]|_], _Unexpected) when is_list(E0)         ->
+  Unexpected = case lists:member(?UNEXPECTED, E0) of
+                 true -> ?UNEXPECTED;
+                 false -> ?MATCH_ANY
+               end,
+  E1 = lists:delete(?MATCH_ANY, E0),
+  E = lists:delete(?UNEXPECTED, E1),
+  compare_struct(K, enumerate(E), enumerate(A), Unexpected);
 compare_struct(K, E, A, Unexpected) ->
   compare(K, E, A, Unexpected).
 
