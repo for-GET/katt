@@ -239,7 +239,7 @@ compare(Key, E, A, _Unexpected)          ->
   compare(Key, E, A).
 
 %% Compare JSON primitive types or empty structured types
-compare(_Key, ?MATCH_ANY, _)               ->
+compare(_Key, ?MATCH_ANY, _A)              ->
   pass;
 compare(_Key, ?STORE_BEGIN_TAG ++ Rest, A) ->
   Param = string:sub_string(Rest, 1, string:str(Rest, ?STORE_END_TAG) - 1),
