@@ -1,0 +1,7 @@
+@copyright 2012 Klarna AB
+@title Klarna API Testing Tool
+@doc Klarna API testing Tool
+
+Use for shooting json requests against any kind of http interface
+
+@end

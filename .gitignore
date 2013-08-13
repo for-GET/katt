@@ -1,0 +1,13 @@
+*.app
+*.beam
+*.d
+*.plt
+*.html
+*edoc-info
+*erlang.png
+*stylesheet.css
+.#*
+.eunit
+deps/
+src/katt_blueprint.erl
+.deps_plt
