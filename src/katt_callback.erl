@@ -222,6 +222,11 @@ compare_struct(ParentKey, E0, A = [{_,_}|_], _Unexpected) when is_list(E0)  ->
                   , Unexpected)
     || K <- Keys
   ];
+compare_struct(_ParentKey, E0, [], _Unexpected) when is_list(E0) ->
+  case lists:member(?UNEXPECTED, E0) of
+    true when length(E0) =/= 1 -> fail;
+    _ -> pass
+  end;
 compare_struct(ParentKey, E0, A0 = [[_|_]|_], _Unexpected) when is_list(E0) ->
   Unexpected = case lists:member(?UNEXPECTED, E0) of
                  true -> ?UNEXPECTED;

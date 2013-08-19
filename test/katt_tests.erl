@@ -247,7 +247,8 @@ mock_lhttpc_request( "http://127.0.0.1/unexpected-disallow"
     \"extra_object\": {
         \"key\": \"test\"
     },
-    \"extra_array\": [\"test\"]
+    \"extra_array\": [\"test\"],
+    \"extra_array_2\": []
 }
 "/utf8>>}}.
 
@@ -403,7 +404,8 @@ GET /unexpected-disallow
     \"extra_object\": {
         \"{{_}}\": \"{{unexpected}}\"
     },
-    \"extra_array\": [\"{{unexpected}}\"]
+    \"extra_array\": [\"{{unexpected}}\"],
+    \"extra_array_2\": [\"{{unexpected}}\"]
 }
 "/utf8>>).
 
