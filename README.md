@@ -72,7 +72,6 @@ erl -pa ebin`).
   * `callbacks` (optional)
     * `recall` to be called with `syntax`, `text`, `params`, `callbacks`
     * `parse` to be called with `headers`, `body`, `params`, `callbacks`
-    * `parse` to be called with `headers`, `body`, `params`, `callbacks`
     * `request` to be called with `request`, `params`, `callbacks`
     * `validate` to be called with `expected`, `actual`, `params`, `callbacks`
 
