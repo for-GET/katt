@@ -1,8 +1,5 @@
 language: erlang
 script: "make && make test"
-notifications:
-  recipients:
-    - andrei.neculau@klarna.com
 otp_release:
   - R16B
   - R15B03
@@ -12,3 +9,7 @@ otp_release:
   - R14B04
   - R14B03
   - R14B02
+notifications:
+  recipients:
+    - linus.harling@klarna.com
+    - stefan.strigler@klarna.com
