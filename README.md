@@ -12,33 +12,27 @@ failure.
 The builtin validator supports basic text validation and more advanced validation of HTTP headers and JSON structures.
 
 The validator makes use of a few tags with special meaning:
-<dl>
-  <dt>"{{_}}"</dt>
-  <dd>
-    Match anything (i.e. no real validation, only check existence).
-  </dd>
-  <dt>"{{unexpected}}"</dt>
-  <dd>
-    Match nothing (i.e. no real validation, only check lack of existence)
-  </dd>
-  <dt>
-    "{{&gt;key}}"</dt>
-  <dd>
-    Store value of the whole string (key must be unique within testcase)
-  </dd>
-  <dt>"{{&lt;key}}"</dt>
-  <dd>
-    Recall stored value.
-  </dd>
-</dl>
 
-The "{{_}}" tag can also be used as a JSON object's property in order to
+`"{{_}}"`  
+Match anything (i.e. no real validation, only check existence).
+
+`"{{unexpected}}"`  
+Match nothing (i.e. no real validation, only check lack of existence)
+
+`"{{>key}}"`  
+Store value of the whole string (key must be unique within testcase)
+
+`"{{<key}}"`  
+Recall stored value.
+
+The `"{{_}}"` tag can also be used as a JSON object's property in order to
 validate any other additional properties.
 
-By default, the builtin validator will allow additional fields in an object
-structure. To counteract that default, one can add `"{{_}}": "{{unexpected}}"`
-inside the object, effectively making a rule no other properties beyond the
-ones defined are expected.
+By default, the builtin validator will allow additional properties in an object
+structure, or additional items in an array structure. To counteract that
+default, one can do `{..., "{{_}}": "{{unexpected}}"}` or
+`[..., "{{unexpected}}"]`, effectively making a rule that no properties/items
+are expected beyond the ones defined.
 
 
 ## Examples
