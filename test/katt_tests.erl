@@ -48,6 +48,8 @@ katt_test_() ->
     , katt_run_with_params()
     , katt_run_with_api_mismatch()
     , katt_run_with_unexpected_disallow()
+    , katt_run_with_expected_but_undefined()
+    , katt_run_with_unexpected_and_undefined()
     ]
   }.
 
@@ -121,6 +123,33 @@ katt_run_with_unexpected_disallow() ->
                                            , {"/body/extra_array/0", _, _}
                                            }
                                          ]}}
+                   ]
+                 }
+               , katt:run(Scenario)
+               ).
+
+katt_run_with_expected_but_undefined() ->
+  Scenario = "/mock/expected-but-undefined.apib",
+  ?_assertMatch( { fail
+                 , Scenario
+                 , _
+                 , _
+                 , [ {_, _, _, _, {fail, [ { not_equal
+                                           , {"/body/expected", _, _}
+                                           }
+                                         ]}}
+                   ]
+                 }
+               , katt:run(Scenario)
+               ).
+
+katt_run_with_unexpected_and_undefined() ->
+  Scenario = "/mock/unexpected-and-undefined.apib",
+  ?_assertMatch( { pass
+                 , Scenario
+                 , _
+                 , _
+                 , [ {_, _, _, _, pass}
                    ]
                  }
                , katt:run(Scenario)
@@ -249,6 +278,30 @@ mock_lhttpc_request( "http://127.0.0.1/unexpected-disallow"
     },
     \"extra_array\": [\"test\"],
     \"extra_array_2\": []
+}
+"/utf8>>}};
+
+%% Mock response for expected but undefined test:
+mock_lhttpc_request( "http://127.0.0.1/expected-but-undefined"
+                   , "GET"
+                   , _
+                   , _
+                   , _Timeout
+                   , _Options
+                   ) ->
+  {ok, {{200, []}, [{"Content-Type", "application/json"}], <<"{
+}
+"/utf8>>}};
+
+%% Mock response for unexpected and undefined test:
+mock_lhttpc_request( "http://127.0.0.1/unexpected-and-undefined"
+                   , "GET"
+                   , _
+                   , _
+                   , _Timeout
+                   , _Options
+                   ) ->
+  {ok, {{200, []}, [{"Content-Type", "application/json"}], <<"{
 }
 "/utf8>>}}.
 
@@ -406,6 +459,30 @@ GET /unexpected-disallow
     },
     \"extra_array\": [\"{{unexpected}}\"],
     \"extra_array_2\": [\"{{unexpected}}\"]
+}
+"/utf8>>);
+
+mock_katt_blueprint_parse_file("/mock/expected-but-undefined.apib") ->
+  katt_blueprint_parse:string(
+    <<"--- Test 5 ---
+
+GET /expected-but-undefined
+< 200
+< Content-Type: application/json
+{
+    \"expected\": \"{{>defined_value}}\"
+}
+"/utf8>>);
+
+mock_katt_blueprint_parse_file("/mock/unexpected-and-undefined.apib") ->
+  katt_blueprint_parse:string(
+    <<"--- Test 6 ---
+
+GET /unexpected-and-undefined
+< 200
+< Content-Type: application/json
+{
+    \"expected\": \"{{unexpected}}\"
 }
 "/utf8>>).
 
