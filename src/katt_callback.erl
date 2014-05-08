@@ -159,6 +159,8 @@ get_params_and_failures(Result) ->
     lists:flatten([Result])
    ).
 
+parse_json(Bin) when is_binary(Bin), size(Bin) =:= 0 ->
+  [];
 parse_json(Bin) ->
   to_proplist(mochijson3:decode(Bin)).
 
