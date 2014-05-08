@@ -1,5 +1,7 @@
 .NOTPARALLEL:
 
+REBAR ?= $(shell which rebar 2> /dev/null || which ./rebar)
+
 DEPS_PLT := $(CURDIR)/.deps_plt
 
 ERLANG_DIALYZER_APPS := erts \
@@ -25,33 +27,33 @@ endif
 all: get-deps compile xref
 
 compile:
-	@./rebar compile
+	@$(REBAR) compile
 
 get-deps:
-	@./rebar get-deps
+	@$(REBAR) get-deps
 
 update-deps:
-	@./rebar update-deps
+	@$(REBAR) update-deps
 
 delete-deps:
-	@./rebar delete-deps
+	@$(REBAR) delete-deps
 
 docs:
-	@./rebar doc skip_deps=true
+	@$(REBAR) doc skip_deps=true
 
 xref:
-	@./rebar xref skip_deps=true
+	@$(REBAR) xref skip_deps=true
 
 test: eunit dialyzer
 
 eunit:
-	@./rebar eunit skip_deps=true
+	@$(REBAR) eunit skip_deps=true
 
 conf_clean:
 	@:
 
 clean:
-	@./rebar clean
+	@$(REBAR) clean
 	@$(RM) doc/*.html
 	@$(RM) doc/*.png
 	@$(RM) doc/*.css
