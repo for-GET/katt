@@ -73,12 +73,16 @@ escape_regex(Bin0) ->
     "\\\\&",
     [global])).
 
-maybe_json_string(X) when is_binary(X) ->
-  to_utf8(maybe_json_string(to_list(X)));
-maybe_json_string(X) when is_list(X) ->
-  "\"" ++ X ++ "\"";
+maybe_json_string(Str) when is_binary(Str) orelse is_list(Str) ->
+  to_utf8(insert_escape_quotes(Str));
 maybe_json_string(X) ->
   X.
+
+insert_escape_quotes(Str) when is_binary(Str) ->
+  insert_escape_quotes(to_list(Str));
+insert_escape_quotes(Str) when is_list(Str) ->
+  "\"" ++ Str ++ "\"".
+
 
 %%%_* Internal =========================================================
 
