@@ -1,0 +1,83 @@
+#!/usr/bin/env escript
+
+main([]) ->
+    main(["--help"]);
+main(["-h"]) ->
+    main(["--help"]);
+main(["--help"]) ->
+    io:fwrite("Usage: ~s file.katt param=string param:=non_string ~n", [escript:script_name()]);
+main([File|Params0]) ->
+    Params = parse_params(Params0),
+    Dir = filename:dirname(escript:script_name()),
+    true = code:add_pathz(Dir ++ "/ebin"),
+    true = code:add_pathz(Dir ++ "/deps/lhttpc/ebin"),
+    true = code:add_pathz(Dir ++ "/deps/mochijson3/ebin"),
+    ok = ssl:start(),
+    ok = lhttpc:start(),
+    Result = katt:run(File, Params),
+    io:fwrite("~p~n", [Result]).
+
+%%%
+%%% HELPERS
+%%%
+
+parse_params(Params) ->
+    parse_params(Params, []).
+
+parse_params([], Acc) ->
+    lists:reverse(Acc);
+parse_params([Param|Params], Acc) ->
+    {Key, Value} = parse_param(Param),
+    parse_params(Params, [{Key, Value}|Acc]).
+
+parse_param(Param) ->
+    parse_param(Param, []).
+
+parse_param(":=" ++ _Value, []) ->
+    throw({error, invalid_key});
+parse_param("=" ++ _Value, []) ->
+    throw({error, invalid_key});
+parse_param(":=" ++ Value, Key) ->
+    {list_to_atom(lists:reverse(Key)), convert(Value)};
+parse_param("=" ++ Value, Key) ->
+    {list_to_atom(lists:reverse(Key)), Value};
+parse_param([Char|Rest], Key) ->
+    parse_param(Rest, [Char|Key]).
+
+convert(Value) ->
+    try_to_convert_to(null, Value).
+
+try_to_convert_to(null, Value0) ->
+    Value = string:to_lower(Value0),
+    case Value of
+        "null" ->
+            null;
+        _ ->
+            try_to_convert_to(integer, Value)
+    end;
+try_to_convert_to(integer, Value) ->
+    case string:to_integer(Value) of
+        {error, _} ->
+            try_to_convert_to(float, Value);
+        IntValue ->
+            IntValue
+    end;
+try_to_convert_to(float, Value) ->
+    case string:to_float(Value) of
+        {error, _} ->
+            try_to_convert_to(boolean, Value);
+        IntValue ->
+            IntValue
+    end;
+try_to_convert_to(boolean, Value0) ->
+    Value = string:to_lower(Value0),
+    case Value of
+        "true" ->
+            true;
+        "false" ->
+            false;
+        _ ->
+            try_to_convert_to(smth_else, Value0)
+    end;
+try_to_convert_to(_Type, _Value) ->
+    throw({error, unknown_param_type}).

@@ -53,6 +53,15 @@ have started the Erlang shell from the repo's root directory with `ERL_LIBS=deps
 erl -pa ebin`).
 
 
+## CLI
+
+You can also fire up `katt` from the CLI, with
+```bash
+katt ./doc/example-httpbin.apib hostname=httpbin.org my_name=Joe your_name=Mike
+```
+
+If you want non-string params, use `:=` as a separator e.g. `my_int:=123`.
+
 ## Interface
 
 * `katt:run` to be called with
