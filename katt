@@ -45,31 +45,33 @@ parse_param([Char|Rest], Key) ->
     parse_param(Rest, [Char|Key]).
 
 convert(Value) ->
-    try_to_convert_to(null, Value).
+    try_to_convert_to([null, integer, float, boolean], Value).
 
-try_to_convert_to(null, Value0) ->
+try_to_convert_to([], _Value) ->
+    throw({error, unknown_param_type});
+try_to_convert_to([null|Rest], Value0) ->
     Value = string:to_lower(Value0),
     case Value of
         "null" ->
             null;
         _ ->
-            try_to_convert_to(integer, Value)
+            try_to_convert_to(Rest, Value)
     end;
-try_to_convert_to(integer, Value) ->
+try_to_convert_to([integer|Rest], Value) ->
     case string:to_integer(Value) of
         {error, _} ->
-            try_to_convert_to(float, Value);
+            try_to_convert_to(Rest, Value);
         IntValue ->
             IntValue
     end;
-try_to_convert_to(float, Value) ->
+try_to_convert_to([float|Rest], Value) ->
     case string:to_float(Value) of
         {error, _} ->
-            try_to_convert_to(boolean, Value);
+            try_to_convert_to(Rest, Value);
         IntValue ->
             IntValue
     end;
-try_to_convert_to(boolean, Value0) ->
+try_to_convert_to([boolean|Rest], Value0) ->
     Value = string:to_lower(Value0),
     case Value of
         "true" ->
@@ -77,7 +79,5 @@ try_to_convert_to(boolean, Value0) ->
         "false" ->
             false;
         _ ->
-            try_to_convert_to(smth_else, Value0)
-    end;
-try_to_convert_to(_Type, _Value) ->
-    throw({error, unknown_param_type}).
+            try_to_convert_to(Rest, Value0)
+    end.
