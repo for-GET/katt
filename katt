@@ -8,7 +8,7 @@ main(["--help"]) ->
     io:fwrite("Usage: ~s [--json] file.katt param=string param:=non_string ~n", [escript:script_name()]);
 main(["--json", ScenarioFilename|Params]) ->
     KattResult = katt_run(ScenarioFilename, Params),
-    JsonResult = katt_util:run_result_to_json(KattResult),
+    JsonResult = katt_util:run_result_to_mochijson3(KattResult),
     Result = iolist_to_binary(mochijson3:encode(JsonResult)),
     io:fwrite("~s~n", [Result]);
 main([ScenarioFilename|Params]) ->
