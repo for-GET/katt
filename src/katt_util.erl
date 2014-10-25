@@ -32,6 +32,7 @@
         , to_lower/1
         , escape_regex/1
         , maybe_json_string/1
+        , run_result_to_mochijson3/1
         ]).
 
 %%%_* API ==============================================================
@@ -83,6 +84,26 @@ insert_escape_quotes(Str) when is_binary(Str) ->
 insert_escape_quotes(Str) when is_list(Str) ->
   "\"" ++ Str ++ "\"".
 
+run_result_to_mochijson3({error, Reason, Details}) ->
+  {struct, [ {error, true}
+           , {reason, Reason}
+           , {details, list_to_binary(io_lib:format("~p", [Details]))}
+           ]};
+run_result_to_mochijson3({ PassOrFail
+                   , ScenarioFilename
+                   , Params
+                   , FinalParams
+                   , TransactionResults0
+                   }) ->
+  TransactionResults = lists:map( fun transaction_result_to_mochijson3/1
+                                , TransactionResults0
+                                ),
+  {struct, [ {status, PassOrFail}
+           , {scenario, list_to_binary(ScenarioFilename)}
+           , {params, {struct, proplist_to_mochijson3(Params)}}
+           , {final_params, {struct, proplist_to_mochijson3(FinalParams)}}
+           , {transaction_results, TransactionResults}
+           ]}.
 
 %%%_* Internal =========================================================
 
@@ -105,6 +126,49 @@ my_float_to_list(X, Decimals) when is_float(X) ->
       Decimals1 = Decimals + 1,
       my_float_to_list(X, Decimals1)
   end.
+
+proplist_to_mochijson3(Proplist) ->
+  [{K, maybe_list_to_binary(V)} || {K, V} <- Proplist].
+
+maybe_list_to_binary(Str) when is_list(Str) ->
+  list_to_binary(Str);
+maybe_list_to_binary(NonStr) ->
+  NonStr.
+
+transaction_result_to_mochijson3({Description, Params, Request, Response, Result}) ->
+  {katt_request, Method, Url, ReqHeaders, ReqBody} = Request,
+  {katt_response, Status, ResHeaders, ResBody, _ResParsedBody} = Response,
+  Errors = case Result of
+             pass ->
+               [];
+             {fail, Failures0} ->
+               lists:map( fun transaction_failure_to_mochijson3/1
+                        , Failures0
+                        )
+           end,
+  {struct, [ {description, Description}
+           , {params, {struct, proplist_to_mochijson3(Params)}}
+           , {request, {struct, [ {method, list_to_binary(Method)}
+                                , {url, list_to_binary(Url)}
+                                , {headers, {struct, proplist_to_mochijson3(ReqHeaders)}}
+                                , {body, ReqBody}
+                                ]}}
+           , {response, {struct, [ {status, Status}
+                                 , {headers, {struct, proplist_to_mochijson3(ResHeaders)}}
+                                 , {body, ResBody}
+                                 ]}}
+           , {errors, Errors}
+           ]}.
+
+transaction_failure_to_mochijson3({Reason, {Key0, Expected0, Actual0}}) ->
+  Key = list_to_binary(Key0),
+  Expected = list_to_binary(io_lib:format("~p", [Expected0])),
+  Actual = list_to_binary(io_lib:format("~p", [Actual0])),
+  {struct, [ {reason, Reason}
+           , {key, Key}
+           , {expected, Expected}
+           , {actual, Actual}
+           ]}.
 
 %%%_* Emacs ============================================================
 %%% Local Variables:
