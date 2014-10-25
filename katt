@@ -5,8 +5,21 @@ main([]) ->
 main(["-h"]) ->
     main(["--help"]);
 main(["--help"]) ->
-    io:fwrite("Usage: ~s file.katt param=string param:=non_string ~n", [escript:script_name()]);
-main([File|Params0]) ->
+    io:fwrite("Usage: ~s [--json] file.katt param=string param:=non_string ~n", [escript:script_name()]);
+main(["--json", ScenarioFilename|Params]) ->
+    KattResult = katt_run(ScenarioFilename, Params),
+    JsonResult = katt_util:run_result_to_json(KattResult),
+    Result = iolist_to_binary(mochijson3:encode(JsonResult)),
+    io:fwrite("~s~n", [Result]);
+main([ScenarioFilename|Params]) ->
+    Result = katt_run(ScenarioFilename, Params),
+    io:fwrite("~p~n", [Result]).
+
+%%%
+%%% HELPERS
+%%%
+
+katt_run(ScenarioFilename, Params0) ->
     Params = parse_params(Params0),
     Dir = filename:dirname(escript:script_name()),
     true = code:add_pathz(Dir ++ "/ebin"),
@@ -14,12 +27,7 @@ main([File|Params0]) ->
     true = code:add_pathz(Dir ++ "/deps/mochijson3/ebin"),
     ok = ssl:start(),
     ok = lhttpc:start(),
-    Result = katt:run(File, Params),
-    io:fwrite("~p~n", [Result]).
-
-%%%
-%%% HELPERS
-%%%
+    katt:run(ScenarioFilename, Params).
 
 parse_params(Params) ->
     parse_params(Params, []).
