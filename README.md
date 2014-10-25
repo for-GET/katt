@@ -62,6 +62,11 @@ katt ./doc/example-httpbin.apib hostname=httpbin.org my_name=Joe your_name=Mike
 
 If you want non-string params, use `:=` as a separator e.g. `my_int:=123`.
 
+You can also output the result in JSON format, with
+```bash
+katt --json ./doc/example-httpbin.apib hostname=httpbin.org my_name=Joe your_name=Mike
+```
+
 ## Interface
 
 * `katt:run` to be called with
