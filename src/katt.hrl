@@ -66,7 +66,7 @@
                                , #katt_response{}
                                , validation_result()
                                }.
--type validation_result()   :: pass | {fail, reason(), details()}.
+-type validation_result()   :: pass | {fail, [{reason(), details()}]}.
 
 -type description()         :: string().
 -type response()            :: #katt_response{} | {error, any()}.
