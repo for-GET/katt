@@ -167,7 +167,7 @@ run_transactions( Scenario
 run_transactions(_Scenario, [], FinalParams, _Callbacks, Acc) ->
   {FinalParams, Acc}.
 
-make_katt_request( #katt_request{headers=Hdrs0, url=Url0, body=RawBody0} = Req
+make_katt_request( #katt_request{headers=Hdrs0, url=Url0, body=Body0} = Req
                  , Params
                  , Callbacks
                  ) ->
@@ -180,23 +180,24 @@ make_katt_request( #katt_request{headers=Hdrs0, url=Url0, body=RawBody0} = Req
                     )),
   Url = make_request_url(Url1, Params),
   Hdrs = RecallFun(headers, Hdrs0, Params, Callbacks),
-  [Hdrs, RawBody] = RecallFun(body, [Hdrs, RawBody0], Params, Callbacks),
+  [Hdrs, Body] = RecallFun(body, [Hdrs, Body0], Params, Callbacks),
   Req#katt_request{ url     = Url
                   , headers = Hdrs
-                  , body    = RawBody
+                  , body    = Body
                   }.
 
-make_katt_response( #katt_response{headers=Hdrs0, body=RawBody0} = Res
+make_katt_response( #katt_response{headers=Hdrs0, body=Body0} = Res
                   , Params
                   , Callbacks
                   ) ->
   RecallFun = proplists:get_value(recall, Callbacks),
   ParseFun = proplists:get_value(parse, Callbacks),
   Hdrs = RecallFun(headers, Hdrs0, Params, Callbacks),
-  [Hdrs, RawBody] = RecallFun(body, [Hdrs, RawBody0], Params, Callbacks),
-  Body = ParseFun(Hdrs, RawBody, Params, Callbacks),
-  Res#katt_response{ headers = Hdrs
-                   , body    = Body
+  [Hdrs, Body] = RecallFun(body, [Hdrs, Body0], Params, Callbacks),
+  ParsedBody = ParseFun(Hdrs, Body, Params, Callbacks),
+  Res#katt_response{ headers     = Hdrs
+                   , body        = Body
+                   , parsed_body = ParsedBody
                    }.
 
 -spec make_request_url( string()

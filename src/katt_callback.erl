@@ -105,10 +105,11 @@ parse(Hdrs, Body, _Params, _Callbacks) ->
 request(R = #katt_request{}, Params, Callbacks) ->
   ParseFun = proplists:get_value(parse, Callbacks),
   case http_request(R, Params) of
-    {ok, {{Code, _}, Hdrs, RawBody}} ->
-      #katt_response{ status  = Code
-                    , headers = Hdrs
-                    , body    = ParseFun(Hdrs, RawBody, Params, Callbacks)
+    {ok, {{Code, _}, Hdrs, Body}} ->
+      #katt_response{ status      = Code
+                    , headers     = Hdrs
+                    , body        = Body
+                    , parsed_body = ParseFun(Hdrs, Body, Params, Callbacks)
                     };
     Error = {error, _}               ->
       Error
@@ -208,7 +209,7 @@ validate_headers(#katt_response{headers=E0}, #katt_response{headers=A0}) ->
 
 %% Bodies are also allowed to be a superset of expected body, if the parseFun
 %% returns a structure.
-validate_body(#katt_response{body=E}, #katt_response{body=A}) ->
+validate_body(#katt_response{parsed_body=E}, #katt_response{parsed_body=A}) ->
   compare_struct("/body", E, A, ?MATCH_ANY).
 
 %% Compare non-empty JSON structured types; defer to simple comparison otherwise
