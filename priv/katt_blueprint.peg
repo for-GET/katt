@@ -6,7 +6,7 @@
 
 api <-
   empty_line*
-  name:api_name
+  name:api_name?
   empty_line*
   description:api_description?
   empty_line*
@@ -25,14 +25,14 @@ api <-
   `;
 
 api_name <-
-  "---" s+ name:text1 eolf
+  !http_method "---" s+ name:text1 eolf
   `
     Name = proplists:get_value(name, Node),
     re:replace(Name, "\s+---$", "", [{return, binary}])
   `;
 
 api_description <-
-  "---" s* eol lines:api_description_line* "---" s* eolf
+  !http_method "---" s* eol lines:api_description_line* "---" s* eolf
   `
     concatenate_lines(proplists:get_value(lines, Node))
   `;
