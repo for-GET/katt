@@ -76,35 +76,30 @@ recall(headers, Hdrs0, Params, Callbacks) ->
   [{K, katt_util:from_utf8(
          recall(text, katt_util:to_utf8(V), Params, Callbacks)
        )} || {K, V} <- Hdrs0];
-recall(body, [Hdrs, Bin0], Params, Callbacks) ->
+recall(body, [Hdrs, Bin], Params, Callbacks) ->
   ExtFun = proplists:get_value(ext, Callbacks),
   Ext = ExtFun(recall_body),
-  MatchingExt = lists:filter( fun(Fun) ->
-                                  Fun( _JustCheck = true
-                                     , [Hdrs, Bin0]
-                                     , Params
-                                     , Callbacks
-                                     )
-                              end
-                            , Ext
-                            ),
+  MatchingExt = lists:dropwhile( fun(Fun) ->
+                                     not Fun( _JustCheck = true
+                                            , [Hdrs, Bin]
+                                            , Params
+                                            , Callbacks
+                                            )
+                                 end
+                               , Ext
+                               ),
   case MatchingExt of
     [] ->
       [ Hdrs
-      , recall(text, Bin0, Params, Callbacks)
+      , recall(text, Bin, Params, Callbacks)
       ];
-    _ ->
+    [Fun|_] ->
       [ Hdrs
-      , lists:foldl( fun(Fun, BinAcc) ->
-                         Fun( _JustCheck = false
-                            , [Hdrs, BinAcc]
-                            , Params
-                            , Callbacks
-                            )
-                     end
-                   , Bin0
-                   , MatchingExt
-                   )
+      , Fun( _JustCheck = false
+           , [Hdrs, Bin]
+           , Params
+           , Callbacks
+           )
       ]
   end.
 
