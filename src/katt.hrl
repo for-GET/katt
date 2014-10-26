@@ -36,6 +36,7 @@
 -define(DEFAULT_HOSTNAME,           "127.0.0.1").
 -define(DEFAULT_PORT_HTTP,          80).
 -define(DEFAULT_PORT_HTTPS,         443).
+-define(DEFAULT_EXT_FUN,            fun katt_callbacks:ext/1).
 -define(DEFAULT_RECALL_FUN,         fun katt_callbacks:recall/4).
 -define(DEFAULT_PARSE_FUN,          fun katt_callbacks:parse/4).
 -define(DEFAULT_REQUEST_FUN,        fun katt_callbacks:request/3).
@@ -73,7 +74,7 @@
 -type body()                :: null | binary().
 -type headers()             :: [{string(), string()}].
 
--type recall_scope()        :: url | status | headers | body | text | json.
+-type recall_scope()        :: url | status | headers | body | text.
 
 %%%_* Emacs ============================================================
 %%% Local Variables:

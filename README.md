@@ -78,11 +78,41 @@ katt --json ./doc/example-httpbin.apib hostname=httpbin.org my_name=Joe your_nam
     * `request_timeout`
     * `scenario_timeout`
   * `callbacks` (optional)
+    * `ext` to be called with `scope` (recall_body, parse, validate_body)
     * `recall` to be called with `syntax`, `text`, `params`, `callbacks`
     * `parse` to be called with `headers`, `body`, `params`, `callbacks`
     * `request` to be called with `request`, `params`, `callbacks`
     * `validate` to be called with `expected`, `actual`, `params`, `callbacks`
 
+
+### If you would like to disable JSON support
+
+```erlang
+OnlyText = fun(_Scope) -> [] end,
+katt:run("text_only_scenario.apib", [], [{ext, OnlyText}]).
+```
+
+### If you would like to add XML support
+
+```erlang
+XmlJson =
+  fun(recall_body) ->
+    [ fun katt_callbacks_json:recall_body/4
+    , fun custom_callbacks_xml:recall_body/4
+    ];
+  fun(parse) ->
+    [ fun katt_callbacks_json:parse/5
+    , fun custom_callbacks_xml:parse/5
+    ];
+  fun(validate_body) ->
+    [ fun katt_callbacks_json:validate_body/3
+    , fun custom_callbacks_xml:validate_body/3
+    ],
+katt:run("xml_and_json_scenario.apib", [], [{ext, XmlJson}]).
+```
+
+See [src/katt_callbacks_json.erl](src/katt_callbacks_json.erl) to see how your
+`custom_callbacks_xml` module should be implemented.
 
 ## Contributing
 

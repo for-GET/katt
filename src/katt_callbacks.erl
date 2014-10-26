@@ -24,7 +24,8 @@
 
 %%%_* Exports ==========================================================
 %% API
--export([ recall/4
+-export([ ext/1
+        , recall/4
         , parse/4
         , request/3
         , validate/4
@@ -35,7 +36,21 @@
 
 %%%_* API ==============================================================
 
-%% @doc Recall all params inside url/status/headers/body/text/json content.
+%% @doc Get a list of available extensions
+%% @end
+-spec ext(any()) -> list().
+ext(recall_body) ->
+  [ fun katt_callbacks_json:recall_body/4
+  ];
+ext(parse) ->
+  [ fun katt_callbacks_json:parse/5
+  ];
+ext(validate_body) ->
+  [ fun katt_callbacks_json:validate_body/3
+  ].
+
+
+%% @doc Recall all params inside url/status/headers/body/text content.
 %% @end
 -spec recall( recall_scope()
             , any()
@@ -55,30 +70,43 @@ recall(text, Bin0, [{K0, V} | Next], Callbacks) ->
                   , REV
                   , [{return, binary}, global]),
   recall(text, Bin, Next, Callbacks);
-recall(json, Bin0, [{K0, V0} | Next], Callbacks) ->
-  K = ?RECALL_BEGIN_TAG ++ katt_util:to_list(K0) ++ ?RECALL_END_TAG,
-  REK = "\"" ++ katt_util:escape_regex(K) ++ "\"",
-  V = katt_util:maybe_json_string(V0),
-  REV = katt_util:escape_regex(V),
-  Bin1 = re:replace( Bin0
-                   , REK
-                   , REV
-                   , [{return, binary}, global]),
-  Bin = recall(text, Bin1, [{K0, V0}], Callbacks),
-  recall(json, Bin, Next, Callbacks);
 recall(url, Bin, Params, Callbacks) ->
   recall(text, Bin, Params, Callbacks);
 recall(headers, Hdrs0, Params, Callbacks) ->
   [{K, katt_util:from_utf8(
          recall(text, katt_util:to_utf8(V), Params, Callbacks)
        )} || {K, V} <- Hdrs0];
-recall(body, [Hdrs, Bin], Params, Callbacks) ->
-  ContentType = proplists:get_value("Content-Type", Hdrs, ""),
-  Syntax = case is_json_content_type(ContentType) of
-             true  -> json;
-             false -> text
-           end,
-  [Hdrs, recall(Syntax, Bin, Params, Callbacks)].
+recall(body, [Hdrs, Bin0], Params, Callbacks) ->
+  ExtFun = proplists:get_value(ext, Callbacks),
+  Ext = ExtFun(recall_body),
+  MatchingExt = lists:filter( fun(Fun) ->
+                                  Fun( _JustCheck = true
+                                     , [Hdrs, Bin0]
+                                     , Params
+                                     , Callbacks
+                                     )
+                              end
+                            , Ext
+                            ),
+  case MatchingExt of
+    [] ->
+      [ Hdrs
+      , recall(text, Bin0, Params, Callbacks)
+      ];
+    _ ->
+      [ Hdrs
+      , lists:foldl( fun(Fun, BinAcc) ->
+                         Fun( _JustCheck = false
+                            , [Hdrs, BinAcc]
+                            , Params
+                            , Callbacks
+                            )
+                     end
+                   , Bin0
+                   , MatchingExt
+                   )
+      ]
+  end.
 
 %% @doc Parse the body of e.g. an HTTP response.
 %% @end
@@ -89,11 +117,28 @@ recall(body, [Hdrs, Bin], Params, Callbacks) ->
            ) -> any().
 parse(_Hdrs, null, _Params, _Callbacks) ->
   [];
-parse(Hdrs, Body, _Params, _Callbacks) ->
-  ContentType = proplists:get_value("Content-Type", Hdrs, ""),
-  case is_json_content_type(ContentType) of
-    true  -> parse_json(Body);
-    false -> katt_util:from_utf8(Body)
+parse(Hdrs, Body0, Params, Callbacks) ->
+  ExtFun = proplists:get_value(ext, Callbacks),
+  Ext = ExtFun(parse),
+  MatchingExt = lists:dropwhile( fun(Fun) ->
+                                     not Fun( _JustCheck = true
+                                            , Hdrs
+                                            , Body0
+                                            , Params
+                                            , Callbacks
+                                            )
+                                 end
+                               , Ext),
+  case MatchingExt of
+    [] ->
+      katt_util:from_utf8(Body0);
+    [Fun|_] ->
+      Fun( _JustCheck = false
+         , Hdrs
+         , Body0
+         , Params
+         , Callbacks
+         )
   end.
 
 %% @doc Make a request, e.g. an HTTP request.
@@ -125,13 +170,13 @@ request(R = #katt_request{}, Params, Callbacks) ->
 validate( Expected = #katt_response{}
         , Actual = #katt_response{}
         , _Params
-        , _Callbacks)                                     ->
+        , Callbacks)                                     ->
  {AddParams0, Failures0} = get_params_and_failures(
-                             validate_status(Expected, Actual)),
+                             validate_status(Expected, Actual, Callbacks)),
  {AddParams1, Failures1} = get_params_and_failures(
-                             validate_headers(Expected, Actual)),
+                             validate_headers(Expected, Actual, Callbacks)),
  {AddParams2, Failures2} = get_params_and_failures(
-                             validate_body(Expected, Actual)),
+                             validate_body(Expected, Actual, Callbacks)),
  AddParams = lists:flatten([ AddParams0
                            , AddParams1
                            , AddParams2]),
@@ -160,17 +205,6 @@ get_params_and_failures(Result) ->
     lists:flatten([Result])
    ).
 
-parse_json(Bin) when is_binary(Bin), size(Bin) =:= 0 ->
-  [];
-parse_json(Bin) ->
-  to_proplist(mochijson3:decode(Bin)).
-
-is_json_content_type(ContentType) ->
-  case string:str(ContentType, "json") of
-    0 -> false;
-    _ -> true
-  end.
-
 http_request(R = #katt_request{}, Params) ->
   Body = case R#katt_request.body of
     null -> <<>>;
@@ -191,15 +225,36 @@ validate_status(#katt_response{status=E}, #katt_response{status=A}, _Callbacks) 
 %% we don't want tests full of boilerplate like tests for headers such as
 %% Content-Length, Server, Date, etc.
 %% The header name (not the value) is compared case-insensitive
-validate_headers(#katt_response{headers=E0}, #katt_response{headers=A0}) ->
+validate_headers(#katt_response{headers=E0}, #katt_response{headers=A0}, _Callbacks) ->
   E = [{katt_util:to_lower(K), V} || {K, V} <- E0],
   A = [{katt_util:to_lower(K), V} || {K, V} <- A0],
   katt_util:compare_struct("/headers", E, A, ?MATCH_ANY).
 
 %% Bodies are also allowed to be a superset of expected body, if the parseFun
 %% returns a structure.
-validate_body(#katt_response{parsed_body=E}, #katt_response{parsed_body=A}) ->
+validate_body( #katt_response{parsed_body=E} = ER
+             , #katt_response{parsed_body=A} = AR
+             , Callbacks
+             ) ->
+  ExtFun = proplists:get_value(ext, Callbacks),
+  Ext = ExtFun(validate_body),
+  MatchingExt = lists:dropwhile( fun(Fun) ->
+                                     not Fun( _JustCheck = true
+                                            , ER
+                                            , AR
+                                            )
+                                 end
+                               , Ext
+                               ),
+  case MatchingExt of
+    [] ->
       katt_util:compare_struct("/body", E, A, ?MATCH_ANY);
+    [Fun|_] ->
+      Fun( _JustCheck = false
+         , ER
+         , AR
+         )
+  end.
 
 
 %%%_* Emacs ============================================================

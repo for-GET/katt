@@ -115,7 +115,8 @@ make_params(ScenarioParams) ->
   katt_util:merge_proplists(DefaultParams, ScenarioParams).
 
 make_callbacks(Callbacks) ->
-  katt_util:merge_proplists([ {recall, ?DEFAULT_RECALL_FUN}
+  katt_util:merge_proplists([ {ext, ?DEFAULT_EXT_FUN}
+                            , {recall, ?DEFAULT_RECALL_FUN}
                             , {parse, ?DEFAULT_PARSE_FUN}
                             , {request, ?DEFAULT_REQUEST_FUN}
                             , {validate, ?DEFAULT_VALIDATE_FUN}
