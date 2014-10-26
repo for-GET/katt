@@ -112,13 +112,13 @@ recall(body, [Hdrs, Bin], Params, Callbacks) ->
            ) -> any().
 parse(_Hdrs, null, _Params, _Callbacks) ->
   [];
-parse(Hdrs, Body0, Params, Callbacks) ->
+parse(Hdrs, Body, Params, Callbacks) ->
   ExtFun = proplists:get_value(ext, Callbacks),
   Ext = ExtFun(parse),
   MatchingExt = lists:dropwhile( fun(Fun) ->
                                      not Fun( _JustCheck = true
                                             , Hdrs
-                                            , Body0
+                                            , Body
                                             , Params
                                             , Callbacks
                                             )
@@ -126,11 +126,11 @@ parse(Hdrs, Body0, Params, Callbacks) ->
                                , Ext),
   case MatchingExt of
     [] ->
-      katt_util:from_utf8(Body0);
+      katt_util:from_utf8(Body);
     [Fun|_] ->
       Fun( _JustCheck = false
          , Hdrs
-         , Body0
+         , Body
          , Params
          , Callbacks
          )
