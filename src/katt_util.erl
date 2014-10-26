@@ -33,7 +33,13 @@
         , escape_regex/1
         , maybe_json_string/1
         , run_result_to_mochijson3/1
+        , to_proplist/1
+        , compare_struct/4
+        , compare/3
         ]).
+
+%%%_* Includes =========================================================
+-include("katt.hrl").
 
 %%%_* API ==============================================================
 
@@ -169,6 +175,90 @@ transaction_failure_to_mochijson3({Reason, {Key0, Expected0, Actual0}}) ->
            , {expected, Expected}
            , {actual, Actual}
            ]}.
+
+to_proplist(L = [{struct, _}|_])         ->
+  [to_proplist(S) || S <- L];
+to_proplist({struct, L}) when is_list(L) ->
+  [{katt_util:from_utf8(K), to_proplist(V)} || {K, V} <- L];
+to_proplist(List) when is_list(List)     ->
+  lists:sort([to_proplist(L) || L <- List]);
+to_proplist(Str) when is_binary(Str)     ->
+  katt_util:from_utf8(Str);
+to_proplist(Value)                       ->
+  Value.
+
+%% Compare non-empty JSON structured types; defer to simple comparison otherwise
+compare_struct(_ParentKey, ?MATCH_ANY, _A, _Unexpected)                     ->
+  pass;
+compare_struct(ParentKey, E0, A = [{_,_}|_], _Unexpected) when is_list(E0)  ->
+  Unexpected = proplists:get_value(?MATCH_ANY, E0, ?MATCH_ANY),
+  E = proplists:delete(?MATCH_ANY, E0),
+  Keys = lists:usort([K || {K, _} <- lists:merge(E, A)]),
+  [ compare_struct( ParentKey ++ "/" ++ K
+                  , proplists:get_value(K, E)
+                  , proplists:get_value(K, A)
+                  , Unexpected)
+    || K <- Keys
+  ];
+compare_struct(ParentKey, E0, [], _Unexpected) when is_list(E0) ->
+  case lists:member(?UNEXPECTED, E0) of
+    true when length(E0) =/= 1 ->
+      fail;
+    _ ->
+      case E0 of
+        [{Key, NotUnexpected}] when NotUnexpected =/= ?UNEXPECTED ->
+          {not_equal, {ParentKey ++ "/" ++ Key, NotUnexpected, []}};
+        _ ->
+          pass
+      end
+  end;
+compare_struct(ParentKey, E0, A0 = [[_|_]|_], _Unexpected) when is_list(E0) ->
+  Unexpected = case lists:member(?UNEXPECTED, E0) of
+                 true -> ?UNEXPECTED;
+                 false -> ?MATCH_ANY
+               end,
+  E1 = lists:delete(?MATCH_ANY, E0),
+  E2 = lists:delete(?UNEXPECTED, E1),
+  E = enumerate(E2),
+  A = enumerate(A0),
+  Keys = lists:usort([K || {K, _} <- lists:merge(E, A)]),
+  [ compare_struct( ParentKey ++ "/" ++ K
+                  , proplists:get_value(K, E)
+                  , proplists:get_value(K, A)
+                  , Unexpected)
+    || K <- Keys
+  ];
+compare_struct(K, E, A, Unexpected) ->
+  compare(K, E, A, Unexpected).
+
+%% Compare when unexpected values show up
+compare(_Key, undefined, _A, ?MATCH_ANY) ->
+  pass;
+compare(_Key, [], _A, ?MATCH_ANY)        ->
+  pass;
+compare(Key, undefined, A, ?UNEXPECTED)  ->
+  {unexpected, {Key, undefined, A}};
+compare(Key, undefined, A, Unexpected)   ->
+  compare(Key, Unexpected, A);
+compare(Key, E, A, _Unexpected)          ->
+  compare(Key, E, A).
+
+%% Compare JSON primitive types or empty structured types
+compare(_Key, ?MATCH_ANY, _A)              ->
+  pass;
+compare(_Key, ?STORE_BEGIN_TAG ++ Rest, A) ->
+  Param = string:sub_string(Rest, 1, string:str(Rest, ?STORE_END_TAG) - 1),
+  {pass, {Param, A}};
+compare(_Key, E, E)                        ->
+  pass;
+compare(Key, E, A)                         ->
+  {not_equal, {Key, E, A}}.
+
+%% Transform simple list to proplist with keys named 0, 1 etc.
+enumerate(L) ->
+  lists:zip([ integer_to_list(N)
+              || N <- lists:seq(0, length(L) - 1)
+            ], L).
 
 %%%_* Emacs ============================================================
 %%% Local Variables:
