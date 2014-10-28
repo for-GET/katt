@@ -28,6 +28,7 @@
 -define(STORE_END_TAG,              "}}").
 -define(MATCH_ANY,                  "{{_}}").
 -define(UNEXPECTED,                 "{{unexpected}}").
+-define(ANY_ORDER,                  "{{any_order}}").
 -define(PROTOCOL_HTTP,              "http:").
 -define(PROTOCOL_HTTPS,             "https:").
 -define(DEFAULT_SCENARIO_TIMEOUT,   120000).

@@ -50,7 +50,8 @@ katt_test_() ->
     , katt_run_with_unexpected_disallow()
     , katt_run_with_expected_but_undefined()
     , katt_run_with_unexpected_and_undefined()
-    ]
+    , katt_run_with_any_order_array()
+  ]
   }.
 
 
@@ -155,6 +156,17 @@ katt_run_with_unexpected_and_undefined() ->
                , katt:run(Scenario)
                ).
 
+katt_run_with_any_order_array() ->
+  Scenario = "/mock/any_order_array.apib",
+  ?_assertMatch( { pass
+                 , Scenario
+                 , _
+                 , _
+                 , [ {_, _, _, _, pass}
+                   ]
+                 }
+                , katt:run(Scenario)
+                ).
 
 %%% Helpers
 
@@ -302,6 +314,34 @@ mock_lhttpc_request( "http://127.0.0.1/unexpected-and-undefined"
                    , _Options
                    ) ->
   {ok, {{200, []}, [{"Content-Type", "application/json"}], <<"{
+}
+"/utf8>>}};
+
+%% Mock response for any_order_array test:
+mock_lhttpc_request( "http://127.0.0.1/any_order_array"
+                   , "GET"
+                   , _
+                   , _
+                   , _Timeout
+                   , _Options
+                   ) ->
+  {ok, {{200, []}, [{"Content-Type", "application/json"}], <<"
+{
+   \"list_of_objects\":[
+      {
+         \"object\":{
+            \"property1\":\"value11\",
+            \"property2\":\"value12\"
+         }
+      },
+      {
+         \"object\":{
+            \"property1\":\"value21\",
+            \"property2\":\"value22\"
+         }
+      }
+
+   ]
 }
 "/utf8>>}}.
 
@@ -483,6 +523,34 @@ GET /unexpected-and-undefined
 < Content-Type: application/json
 {
     \"expected\": \"{{unexpected}}\"
+}
+"/utf8>>);
+
+mock_katt_blueprint_parse_file("/mock/any_order_array.apib") ->
+  katt_blueprint_parse:string(
+    <<"--- Any Order Array Test ---
+
+#1 Check that having the any_order tag validates arrays regardless of element order
+
+GET /any_order_array
+< 200
+< Content-Type: application/json
+{
+   \"list_of_objects\":[
+      \"{{any_order}}\",
+      {
+         \"object\":{
+            \"property1\":\"value21\",
+            \"property2\":\"value22\"
+         }
+      },
+      {
+         \"object\":{
+            \"property1\":\"value11\",
+            \"property2\":\"value12\"
+         }
+      }
+   ]
 }
 "/utf8>>).
 

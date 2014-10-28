@@ -217,10 +217,12 @@ compare_struct(ParentKey, E0, A0 = [[_|_]|_], _Unexpected) when is_list(E0) ->
                  true -> ?UNEXPECTED;
                  false -> ?MATCH_ANY
                end,
+  AnyOrder = lists:member(?ANY_ORDER, E0),
   E1 = lists:delete(?MATCH_ANY, E0),
   E2 = lists:delete(?UNEXPECTED, E1),
-  E = enumerate(E2),
-  A = enumerate(A0),
+  E3 = lists:delete(?ANY_ORDER, E2),
+  E = enumerate(maybe_sort_list(E3, AnyOrder)),
+  A = enumerate(maybe_sort_list(A0, AnyOrder)),
   Keys = lists:usort([K || {K, _} <- lists:merge(E, A)]),
   [ compare_struct( ParentKey ++ "/" ++ K
                   , proplists:get_value(K, E)
@@ -259,6 +261,11 @@ enumerate(L) ->
   lists:zip([ integer_to_list(N)
               || N <- lists:seq(0, length(L) - 1)
             ], L).
+
+maybe_sort_list(List, true) ->
+  lists:sort(List);
+maybe_sort_list(List, false) ->
+  List.
 
 %%%_* Emacs ============================================================
 %%% Local Variables:
