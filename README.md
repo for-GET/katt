@@ -25,6 +25,10 @@ Store value of the whole string (key must be unique within testcase)
 `"{{<key}}"`  
 Recall stored value.
 
+`"{{any_order}}"`  
+By default matching an array also checks the order of the elements. If you want 
+to ignore element order, place `"{{any_order}}"` as an element in the array.
+
 The `"{{_}}"` tag can also be used as a JSON object's property in order to
 validate any other additional properties.
 
