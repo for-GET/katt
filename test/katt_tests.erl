@@ -20,7 +20,6 @@
 
 -module(katt_tests).
 
-
 -include_lib("eunit/include/eunit.hrl").
 
 %%% Suite
@@ -50,6 +49,7 @@ katt_test_() ->
     , katt_run_with_unexpected_disallow()
     , katt_run_with_expected_but_undefined()
     , katt_run_with_unexpected_and_undefined()
+    , katt_run_with_store()
     ]
   }.
 
@@ -155,10 +155,30 @@ katt_run_with_unexpected_and_undefined() ->
                , katt:run(Scenario)
                ).
 
+katt_run_with_store() ->
+  Scenario = "/mock/store.apib",
+  ?_assertMatch( { pass
+                 , Scenario
+                 , _
+                 , [ _
+                   , _
+                   , _
+                   , _
+                   , _
+                   , {"param1", "cookie"}
+                   , {"param2", "/"}
+                   , {"param3", "param3"}
+                   ]
+                 , [ {_, _, _, _, pass}
+                   ]
+                 }
+               , katt:run(Scenario)
+               ).
+
 
 %%% Helpers
 
-%% Mock response for Step 1:
+%% Mock response for Step 2:
 %% (default hostname is 127.0.0.1, default port is 80, default protocol is http)
 mock_lhttpc_request( "http://127.0.0.1/step1" = _Url
                    , "POST" = _Method
@@ -303,6 +323,20 @@ mock_lhttpc_request( "http://127.0.0.1/unexpected-and-undefined"
                    ) ->
   {ok, {{200, []}, [{"Content-Type", "application/json"}], <<"{
 }
+"/utf8>>}};
+
+%% Mock response for store test:
+mock_lhttpc_request( "http://127.0.0.1/store"
+                   , "GET"
+                   , _
+                   , _
+                   , _Timeout
+                   , _Options
+                   ) ->
+  {ok, {{200, []}, [{"Content-Type", "application/json"},
+                    {"Set-Cookie", "mycookie=cookie; path=/;"}], <<"{
+    \"param3\": \"param3\"
+}
 "/utf8>>}}.
 
 
@@ -410,6 +444,7 @@ HEAD /step5
 <<<
 >>>
 "/utf8>>);
+
 mock_katt_blueprint_parse_file("/mock/test-params.apib") ->
   katt_blueprint_parse:string(
     <<"--- Test 2 ---
@@ -483,6 +518,19 @@ GET /unexpected-and-undefined
 < Content-Type: application/json
 {
     \"expected\": \"{{unexpected}}\"
+}
+"/utf8>>);
+
+mock_katt_blueprint_parse_file("/mock/store.apib") ->
+  katt_blueprint_parse:string(
+    <<"--- Test 7 ---
+
+GET /store
+< 200
+< Content-Type: application/json
+< Set-Cookie: mycookie={{>param1}}; path={{>param2}};
+{
+    \"param3\": \"{{>param3}}\"
 }
 "/utf8>>).
 

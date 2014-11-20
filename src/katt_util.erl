@@ -246,13 +246,55 @@ compare(Key, E, A, _Unexpected)          ->
 %% Compare JSON primitive types or empty structured types
 compare(_Key, ?MATCH_ANY, _A)              ->
   pass;
-compare(_Key, ?STORE_BEGIN_TAG ++ Rest, A) ->
-  Param = string:sub_string(Rest, 1, string:str(Rest, ?STORE_END_TAG) - 1),
-  {pass, {Param, A}};
 compare(_Key, E, E)                        ->
   pass;
+compare(Key, E, A) when is_list(E) orelse is_binary(E) ->
+  case re:run(E, ?STORE_BEGIN_TAG ++ "[^}]+" ++ ?STORE_END_TAG, [global, {capture, first, list}]) of
+    nomatch ->
+      {not_equal, {Key, E, A}};
+    {match, [[_Match]]} ->
+        {pass, {store_tag2param(E), A}};
+    {match, Params0} ->
+      Type = if
+               is_list(A) ->
+                 list;
+               is_binary(A) ->
+                 binary
+             end,
+      Params = lists:map( fun([Match]) ->
+                              store_tag2param(Match)
+                          end
+                        , Params0),
+      RE0 = re:replace( E
+                      , ?STORE_BEGIN_TAG ++ "[^}]+" ++ ?STORE_END_TAG
+                      , "___store___"
+                      , [global]
+                      ),
+      RE1 = re:replace( RE0
+                      , "[\\-\\[\\]\\/\\{\\}\\(\\)\\*\\+" ++
+                          "\\?\\.\\,\\\\\^\\$\\|\\#\\s\\&]"
+                      , "\\\\&"
+                      , [global]
+                      ),
+      RE2 = re:replace( RE1
+                      , "___store___"
+                      , "(.+)"
+                      , [global]
+                      ),
+      RE = ["^", RE2, "$"],
+      case re:run(A, RE, [global, {capture, all_but_first, Type}]) of
+        nomatch ->
+          {not_equal, {Key, E, A}};
+        {match, [Values]} ->
+          {pass, lists:zip(Params, Values)}
+      end
+  end;
 compare(Key, E, A)                         ->
   {not_equal, {Key, E, A}}.
+
+store_tag2param(?STORE_BEGIN_TAG ++ Rest) ->
+  Param = string:sub_string(Rest, 1, string:str(Rest, ?STORE_END_TAG) - 1),
+  Param.
 
 %% Transform simple list to proplist with keys named 0, 1 etc.
 enumerate(L) ->
