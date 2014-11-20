@@ -325,7 +325,7 @@ mock_lhttpc_request( "http://127.0.0.1/unexpected-and-undefined"
 }
 "/utf8>>}};
 
-%% Mock response for store test:
+%% Mock response for store (and case-insensitive http headers) test:
 mock_lhttpc_request( "http://127.0.0.1/store"
                    , "GET"
                    , _
@@ -333,8 +333,8 @@ mock_lhttpc_request( "http://127.0.0.1/store"
                    , _Timeout
                    , _Options
                    ) ->
-  {ok, {{200, []}, [{"Content-Type", "application/json"},
-                    {"Set-Cookie", "mycookie=cookie; path=/;"}], <<"{
+  {ok, {{200, []}, [{"content-type", "application/json"},
+                    {"set-cookie", "mycookie=cookie; path=/;"}], <<"{
     \"param3\": \"param3\"
 }
 "/utf8>>}}.
