@@ -165,9 +165,11 @@ katt_run_with_store() ->
                    , _
                    , _
                    , _
-                   , {"param1", "cookie"}
-                   , {"param2", "/"}
+                   , {"param1", "param1"}
+                   , {"param2", "param2"}
                    , {"param3", "param3"}
+                   , {"param4", "param4"}
+                   , {"param5", "param5"}
                    ]
                  , [ {_, _, _, _, pass}
                    ]
@@ -334,8 +336,10 @@ mock_lhttpc_request( "http://127.0.0.1/store"
                    , _Options
                    ) ->
   {ok, {{200, []}, [{"content-type", "application/json"},
-                    {"set-cookie", "mycookie=cookie; path=/;"}], <<"{
-    \"param3\": \"param3\"
+                    {"set-cookie", "mycookie=param1; path=param2;"},
+                    {"x-foo", "param3"},
+                    {"x-bar", "bazparam4"}], <<"{
+    \"param5\": \"param5\"
 }
 "/utf8>>}}.
 
@@ -529,8 +533,10 @@ GET /store
 < 200
 < Content-Type: application/json
 < Set-Cookie: mycookie={{>param1}}; path={{>param2}};
+< X-Foo: {{>param3}}
+< X-Bar: baz{{>param4}}
 {
-    \"param3\": \"{{>param3}}\"
+    \"param5\": \"{{>param5}}\"
 }
 "/utf8>>).
 

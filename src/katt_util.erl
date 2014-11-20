@@ -249,10 +249,15 @@ compare(_Key, ?MATCH_ANY, _A)              ->
 compare(_Key, E, E)                        ->
   pass;
 compare(Key, E, A) when is_list(E) orelse is_binary(E) ->
-  case re:run(E, ?STORE_BEGIN_TAG ++ "[^}]+" ++ ?STORE_END_TAG, [global, {capture, first, list}]) of
+  case re:run( E
+             , "(" ++ ?STORE_BEGIN_TAG ++ "[^}]+" ++ ?STORE_END_TAG ++ ")"
+             , [ global
+               , {capture, all_but_first, list}
+               ]
+             ) of
     nomatch ->
       {not_equal, {Key, E, A}};
-    {match, [[_Match]]} ->
+    {match, [[E]]} ->
         {pass, {store_tag2param(E), A}};
     {match, Params0} ->
       Type = if
