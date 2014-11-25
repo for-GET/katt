@@ -1,6 +1,6 @@
 .NOTPARALLEL:
 
-REBAR ?= $(shell which rebar 2> /dev/null || which ./rebar)
+REBAR ?= $(shell which rebar 2> /dev/null || echo "$(CURDIR)/rebar")
 
 DEPS_PLT := $(CURDIR)/.deps_plt
 
