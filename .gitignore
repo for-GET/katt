@@ -9,5 +9,5 @@
 .#*
 .eunit
 deps/
-src/katt_blueprint.erl
+/src/katt_blueprint.erl
 .deps_plt
