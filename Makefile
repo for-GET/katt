@@ -27,46 +27,46 @@ endif
 all: get-deps compile xref
 
 compile:
-	@$(REBAR) compile
+	$(REBAR) compile
 
 get-deps:
-	@$(REBAR) get-deps
+	$(REBAR) get-deps
 
 update-deps:
-	@$(REBAR) update-deps
+	$(REBAR) update-deps
 
 delete-deps:
-	@$(REBAR) delete-deps
+	$(REBAR) delete-deps
 
 docs:
-	@$(REBAR) doc skip_deps=true
+	$(REBAR) doc skip_deps=true
 
 xref:
-	@$(REBAR) xref skip_deps=true
+	$(REBAR) xref skip_deps=true
 
 test: eunit dialyzer
 
 eunit:
-	@$(REBAR) eunit skip_deps=true
+	$(REBAR) eunit skip_deps=true
 
 conf_clean:
-	@:
+	:
 
 clean:
-	@$(REBAR) clean
-	@$(RM) doc/*.html
-	@$(RM) doc/*.png
-	@$(RM) doc/*.css
-	@$(RM) doc/edoc-info
-	@$(RM) ebin/*.d
-	@$(RM) src/katt_blueprint.erl
+	$(REBAR) clean
+	$(RM) doc/*.html
+	$(RM) doc/*.png
+	$(RM) doc/*.css
+	$(RM) doc/edoc-info
+	$(RM) ebin/*.d
+	$(RM) src/katt_blueprint.erl
 
 $(DEPS_PLT):
-	@$(DIALYZER) --build_plt --apps $(ERLANG_DIALYZER_APPS) -r deps --output_plt $(DEPS_PLT)
+	$(DIALYZER) --build_plt --apps $(ERLANG_DIALYZER_APPS) -r deps --output_plt $(DEPS_PLT)
 
 dialyzer: $(DEPS_PLT)
-	@$(DIALYZER) --plt $(DEPS_PLT) --src $(shell find src -name *.erl -not -name katt_blueprint.erl)
+	$(DIALYZER) --plt $(DEPS_PLT) --src $(shell find src -name *.erl -not -name katt_blueprint.erl)
 
 distclean:
-	@rm -rf deps $(DEPS_PLT)
-	@$(MAKE) clean
+	rm -rf deps $(DEPS_PLT)
+	$(MAKE) clean
