@@ -23,7 +23,7 @@ endif
 
 
 .PHONY: all
-all: deps ebin/katt.app xref
+all: deps ebin/katt.app
 
 .PHONY: compile
 compile:
