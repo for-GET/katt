@@ -9,7 +9,7 @@ ERLANG_DIALYZER_APPS := erts \
 					    ssl \
 					    stdlib
 
-DIALYZER := $(shell which dialyzer)
+DIALYZER := dialyzer
 
 # Travis CI is slow at building dialyzer PLT
 ifeq ($(TRAVIS), true)
@@ -23,7 +23,7 @@ endif
 
 
 .PHONY: all
-all: get-deps compile xref
+all: deps ebin/katt.app xref
 
 .PHONY: compile
 compile:
@@ -81,3 +81,9 @@ dialyzer: $(DEPS_PLT)
 distclean:
 	rm -rf deps $(DEPS_PLT)
 	$(MAKE) clean
+
+ebin/katt.app:
+	$(MAKE) compile
+
+deps:
+	$(MAKE) get-deps
