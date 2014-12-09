@@ -22,36 +22,45 @@ ifeq ($(TRAVIS), true)
 endif
 
 
-.PHONY: all compile get-deps update-deps delete-deps doc xref test eunit conf_clean clean dialyzer distclean
-
+.PHONY: all
 all: get-deps compile xref
 
+.PHONY: compile
 compile:
 	$(REBAR) compile
 
+.PHONY: get-deps
 get-deps:
 	$(REBAR) get-deps
 
+.PHONY: update-deps
 update-deps:
 	$(REBAR) update-deps
 
+.PHONY: delete-deps
 delete-deps:
 	$(REBAR) delete-deps
 
+.PHONY: docs
 docs:
 	$(REBAR) doc skip_deps=true
 
+.PHONY: xref
 xref:
 	$(REBAR) xref skip_deps=true
 
+.PHONY: test
 test: eunit dialyzer
 
+.PHONY: eunit
 eunit:
 	$(REBAR) eunit skip_deps=true
 
+.PHONY: conf_clean
 conf_clean:
 	:
 
+.PHONY: clean
 clean:
 	$(REBAR) clean
 	$(RM) doc/*.html
@@ -64,9 +73,11 @@ clean:
 $(DEPS_PLT):
 	$(DIALYZER) --build_plt --apps $(ERLANG_DIALYZER_APPS) -r deps --output_plt $(DEPS_PLT)
 
+.PHONY: dialyzer
 dialyzer: $(DEPS_PLT)
 	$(DIALYZER) --plt $(DEPS_PLT) --src $(shell find src -name *.erl -not -name katt_blueprint.erl)
 
+.PHONY: distclean
 distclean:
 	rm -rf deps $(DEPS_PLT)
 	$(MAKE) clean
