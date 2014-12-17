@@ -240,6 +240,8 @@ compare(Key, undefined, A, ?UNEXPECTED)  ->
   {unexpected, {Key, undefined, A}};
 compare(Key, undefined, A, Unexpected)   ->
   compare(Key, Unexpected, A);
+compare(Key, E, undefined = A, _Unexpected) ->
+  {not_equal, {Key, E, A}};
 compare(Key, E, A, _Unexpected)          ->
   compare(Key, E, A).
 
