@@ -27,7 +27,15 @@ katt_run(ScenarioFilename, Params0) ->
     true = code:add_pathz(Dir ++ "/deps/mochijson3/ebin"),
     ok = ssl:start(),
     ok = lhttpc:start(),
-    katt:run(ScenarioFilename, Params).
+    katt:run( ScenarioFilename
+            , Params
+            , [{ progress
+               , fun(Step, Detail) ->
+                         io:fwrite( standard_error
+                                  , "\n== PROGRESS REPORT ~p ==\n\n~p\n\n"
+                                  , [Step, Detail])
+                 end
+               }]).
 
 parse_params(Params) ->
     parse_params(Params, []).
@@ -93,3 +101,6 @@ try_to_convert_to([boolean|Rest], Value0) ->
         _ ->
             try_to_convert_to(Rest, Value0)
     end.
+
+progress(Result) ->
+    io:format(standard_error, "~p\n", [Result]).

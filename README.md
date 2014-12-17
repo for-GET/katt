@@ -83,6 +83,7 @@ katt --json ./doc/example-httpbin.apib hostname=httpbin.org my_name=Joe your_nam
     * `parse` to be called with `headers`, `body`, `params`, `callbacks`
     * `request` to be called with `request`, `params`, `callbacks`
     * `validate` to be called with `expected`, `actual`, `params`, `callbacks`
+    * `progress` to be called with `transaction_result`
 
 
 ### If you would like to disable JSON support

@@ -29,6 +29,7 @@
         , parse/4
         , request/3
         , validate/4
+        , progress/2
         ]).
 
 %%%_* Includes =========================================================
@@ -185,6 +186,13 @@ validate( Expected = #katt_response{}
 validate(Expected, #katt_response{}, _Params, _Callbacks) -> {fail, Expected};
 validate(#katt_response{}, Actual, _Params, _Callbacks)   -> {fail, Actual}.
 
+%% @doc Notify of scenario progress
+%% @end
+-spec progress( term()
+              , any()
+              ) -> ok.
+progress(_Step, _Detail) ->
+  ok.
 
 %%%_* Internal =========================================================
 
