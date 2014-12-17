@@ -69,15 +69,19 @@ try_to_convert_to([integer|Rest], Value) ->
     case string:to_integer(Value) of
         {error, _} ->
             try_to_convert_to(Rest, Value);
-        IntValue ->
-            IntValue
+        {IntValue, []} ->
+            IntValue;
+        _ ->
+            try_to_convert_to(Rest, Value)
     end;
 try_to_convert_to([float|Rest], Value) ->
     case string:to_float(Value) of
         {error, _} ->
             try_to_convert_to(Rest, Value);
-        IntValue ->
-            IntValue
+        {FloatValue, []} ->
+            FloatValue;
+        _ ->
+            try_to_convert_to(Rest, Value)
     end;
 try_to_convert_to([boolean|Rest], Value0) ->
     Value = string:to_lower(Value0),
