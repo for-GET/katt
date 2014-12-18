@@ -78,6 +78,7 @@ run_loop(ScenarioTimeout, ProgressFun) ->
     {done, Result} ->
       Result
   after ScenarioTimeout ->
+      ProgressFun(status, timeout),
       {error, timeout, ScenarioTimeout}
   end.
 
@@ -107,6 +108,7 @@ run(From, Scenario, ScenarioParams, ScenarioCallbacks) ->
              _  -> fail
            end,
   Result = {Status, Scenario, Params, FinalParams, TransactionResults},
+  From ! {progress, status, Status},
   From ! {done, Result}.
 
 %%%_* Internal =========================================================
