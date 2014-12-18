@@ -44,8 +44,8 @@ katt_run(ScenarioFilename, Params0) ->
             , [{ progress
                , fun(Step, Detail) ->
                          io:fwrite( standard_error
-                                  , "\n== PROGRESS REPORT ~p ==\n\n~p\n\n"
-                                  , [Step, Detail])
+                                  , "\n== PROGRESS REPORT ~p ==\n~p\n\n~p\n\n"
+                                  , [Step, erlang:localtime(), Detail])
                  end
                }]).
 
