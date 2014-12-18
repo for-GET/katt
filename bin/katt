@@ -10,7 +10,7 @@ main(["--json", ScenarioFilename|Params]) ->
     KattResult = katt_run(ScenarioFilename, Params),
     JsonResult = katt_util:run_result_to_mochijson3(KattResult),
     Result = iolist_to_binary(mochijson3:encode(JsonResult)),
-    io:fwrite("~s~n", [Result]),
+    io:fwrite("~s\n\n", [Result]),
     case KattResult of
         {pass, _, _, _ , _} ->
             ok;
@@ -19,7 +19,7 @@ main(["--json", ScenarioFilename|Params]) ->
     end;
 main([ScenarioFilename|Params]) ->
     KattResult = katt_run(ScenarioFilename, Params),
-    io:fwrite("~p~n", [KattResult]),
+    io:fwrite("~p\n\n", [KattResult]),
     case KattResult of
         {pass, _, _, _ , _} ->
             ok;
