@@ -12,19 +12,19 @@ main(["--json", ScenarioFilename|Params]) ->
     Result = iolist_to_binary(mochijson3:encode(JsonResult)),
     io:fwrite("~s~n", [Result]),
     case KattResult of
-        {fail, _, _, _ , _} ->
-            halt(1);
+        {pass, _, _, _ , _} ->
+            ok;
         _ ->
-            ok
+            halt(1)
     end;
 main([ScenarioFilename|Params]) ->
     KattResult = katt_run(ScenarioFilename, Params),
     io:fwrite("~p~n", [KattResult]),
     case KattResult of
-        {fail, _, _, _ , _} ->
-            halt(1);
+        {pass, _, _, _ , _} ->
+            ok;
         _ ->
-            ok
+            halt(1)
     end.
 
 %%%
