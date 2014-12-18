@@ -12,7 +12,3 @@ otp_release:
   - R15B02
   - R15B01
   - R15B
-notifications:
-  recipients:
-    - linus.harling@klarna.com
-    - dmitrii.dimandt@klarna.com
