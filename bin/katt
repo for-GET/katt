@@ -113,6 +113,3 @@ try_to_convert_to([boolean|Rest], Value0) ->
         _ ->
             try_to_convert_to(Rest, Value0)
     end.
-
-progress(Result) ->
-    io:format(standard_error, "~p\n", [Result]).
