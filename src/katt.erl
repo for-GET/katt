@@ -61,35 +61,24 @@ run(ScenarioFilename, Params) -> run(ScenarioFilename, Params, []).
 %% parser to use instead of the built-in default parser (maybe_parse_body).
 %% @end
 -spec run(scenario_filename(), params(), callbacks()) -> run_result().
-run(Scenario, Params, Callbacks) ->
+run(Scenario, ScenarioParams, ScenarioCallbacks) ->
+  Params = ordsets:from_list(make_params(ScenarioParams)),
+  Callbacks = make_callbacks(ScenarioCallbacks),
   ScenarioTimeout = proplists:get_value( scenario_timeout
                                        , Params
-                                       , ?DEFAULT_SCENARIO_TIMEOUT
                                        ),
-  ProgressFun = proplists:get_value(progress, Callbacks),
+  ProgressFun = proplists:get_value( progress
+                                   , Callbacks
+                                   ),
   spawn_link(?MODULE, run, [self(), Scenario, Params, Callbacks]),
   run_loop(ScenarioTimeout, ProgressFun).
 
-run_loop(ScenarioTimeout, ProgressFun) ->
-  receive
-    {progress, Step, Detail} ->
-      ProgressFun(Step, Detail),
-      run_loop(ScenarioTimeout, ProgressFun);
-    {done, Result} ->
-      Result
-  after ScenarioTimeout ->
-      ProgressFun(status, timeout),
-      {error, timeout, ScenarioTimeout}
-  end.
-
 %%%_* Internal export --------------------------------------------------
 %% @private
-run(From, Scenario, ScenarioParams, ScenarioCallbacks) ->
+run(From, Scenario, Params, Callbacks) ->
   From ! {progress, parsing, Scenario},
   {ok, Blueprint} = katt_blueprint_parse:file(Scenario),
   From ! {progress, parsed, Scenario},
-  Params = ordsets:from_list(make_params(ScenarioParams)),
-  Callbacks = make_callbacks(ScenarioCallbacks),
   {FinalParams, TransactionResults} = run_scenario( From
                                                   , Scenario
                                                   , Blueprint
@@ -112,6 +101,18 @@ run(From, Scenario, ScenarioParams, ScenarioCallbacks) ->
   From ! {done, Result}.
 
 %%%_* Internal =========================================================
+
+run_loop(ScenarioTimeout, ProgressFun) ->
+  receive
+    {progress, Step, Detail} ->
+      ProgressFun(Step, Detail),
+      run_loop(ScenarioTimeout, ProgressFun);
+    {done, Result} ->
+      Result
+  after ScenarioTimeout ->
+      ProgressFun(status, timeout),
+      {error, timeout, ScenarioTimeout}
+  end.
 
 %% Take default params, and also merge in optional params from Params, to return
 %% a proplist of params.
