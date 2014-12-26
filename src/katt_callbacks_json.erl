@@ -86,7 +86,7 @@ validate_body( false = _Justcheck
              , #katt_response{parsed_body=E}
              , #katt_response{parsed_body=A}
              ) ->
-  katt_util:compare_struct("/body", E, A, ?MATCH_ANY).
+  katt_util:compare("/body", E, A, ?MATCH_ANY).
 
 %%%_* Internal =========================================================
 
@@ -101,8 +101,21 @@ is_json_content_type(Hdrs0) ->
 parse_json(Bin) when is_binary(Bin), size(Bin) =:= 0 ->
   [];
 parse_json(Bin) ->
-  katt_util:to_proplist(mochijson3:decode(Bin)).
+  normalize_mochijson3(mochijson3:decode(Bin)).
 
+%% Convert binary strings, sort object keys and array items, add "array" identifier
+normalize_mochijson3({struct, Items}) ->
+  {struct, lists:sort([ {katt_util:from_utf8(Key), normalize_mochijson3(Value)}
+                        || {Key, Value} <- Items
+                      ])};
+normalize_mochijson3(List) when is_list(List) ->
+  {array, lists:sort([ normalize_mochijson3(Item)
+                       || Item <- List
+                     ])};
+normalize_mochijson3(Str) when is_binary(Str) ->
+  katt_util:from_utf8(Str);
+normalize_mochijson3(Value) ->
+  Value.
 
 %%%_* Emacs ============================================================
 %%% Local Variables:

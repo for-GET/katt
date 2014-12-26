@@ -33,9 +33,8 @@
         , escape_regex/1
         , maybe_json_string/1
         , run_result_to_mochijson3/1
-        , to_proplist/1
-        , compare_struct/4
         , compare/3
+        , compare/4
         ]).
 
 %%%_* Includes =========================================================
@@ -176,81 +175,97 @@ transaction_failure_to_mochijson3({Reason, {Key0, Expected0, Actual0}}) ->
            , {actual, Actual}
            ]}.
 
-to_proplist(L = [{struct, _}|_])         ->
-  [to_proplist(S) || S <- L];
-to_proplist({struct, L}) when is_list(L) ->
-  [{katt_util:from_utf8(K), to_proplist(V)} || {K, V} <- L];
-to_proplist(List) when is_list(List)     ->
-  lists:sort([to_proplist(L) || L <- List]);
-to_proplist(Str) when is_binary(Str)     ->
-  katt_util:from_utf8(Str);
-to_proplist(Value)                       ->
-  Value.
+compare(ParentKey, E, A) ->
+  compare_primitive(ParentKey, E, A).
 
-%% Compare non-empty JSON structured types; defer to simple comparison otherwise
-compare_struct(_ParentKey, ?MATCH_ANY, _A, _Unexpected)                     ->
+%% Expected actual
+compare(_ParentKey, _E, _E, _Unexpected) ->
   pass;
-compare_struct(ParentKey, E0, A = [{_,_}|_], _Unexpected) when is_list(E0)  ->
-  Unexpected = proplists:get_value(?MATCH_ANY, E0, ?MATCH_ANY),
-  E = proplists:delete(?MATCH_ANY, E0),
-  Keys = lists:usort([K || {K, _} <- lists:merge(E, A)]),
-  [ compare_struct( ParentKey ++ "/" ++ K
-                  , proplists:get_value(K, E)
-                  , proplists:get_value(K, A)
-                  , Unexpected)
-    || K <- Keys
+%% Expected anything
+compare(_ParentKey, ?MATCH_ANY = _E, _A, _Unexpected) ->
+  pass;
+%% Expected object, got an object
+compare( ParentKey
+       , {struct, EItems0} = _E
+       , {struct, AItems} = _A
+       , _Unexpected
+       ) ->
+  Unexpected = proplists:get_value(?MATCH_ANY, EItems0, ?MATCH_ANY),
+  EItems = proplists:delete(?MATCH_ANY, EItems0),
+  Keys = lists:usort([ Key
+                       || {Key, _} <- lists:merge(EItems, AItems)
+                     ]),
+  [ compare( ParentKey ++ "/" ++ Key
+           , proplists:get_value(Key, EItems)
+           , proplists:get_value(Key, AItems)
+           , Unexpected
+           )
+    || Key <- Keys
   ];
-%% Expected empty array/object, got empty array/object
-compare_struct(_ParentKey, [] = _E, [] = _A, _Unexpected) ->
-  pass;
-%% Expected empty array, got empty array
-compare_struct(_ParentKey, [?UNEXPECTED] = _E, [] = _A, _Unexpected) ->
-  pass;
-%% Expected empty object, got empty object
-compare_struct(_ParentKey, [{_, ?UNEXPECTED}] = _E, [] = _A, _Unexpected) ->
-  pass;
-%% Expected empty array/object, but got something else
-compare_struct(ParentKey, [{Key, Value}|_] = _E, [] = A, _Unexpected) ->
-  {not_equal, {ParentKey ++ "/" ++ Key, Value, A}};
-compare_struct(ParentKey, E0, A0 = [[_|_]|_], _Unexpected) when is_list(E0) ->
-  Unexpected = case lists:member(?UNEXPECTED, E0) of
+%% Expected array, got an array
+compare( ParentKey
+       , {array, EItems0} = _E
+       , {array, AItems0} = _A
+       , _Unexpected
+       ) ->
+  Unexpected = case lists:member(?UNEXPECTED, EItems0) of
                  true -> ?UNEXPECTED;
                  false -> ?MATCH_ANY
                end,
-  E1 = lists:delete(?MATCH_ANY, E0),
-  E2 = lists:delete(?UNEXPECTED, E1),
-  E = enumerate(E2),
-  A = enumerate(A0),
-  Keys = lists:usort([K || {K, _} <- lists:merge(E, A)]),
-  [ compare_struct( ParentKey ++ "/" ++ K
-                  , proplists:get_value(K, E)
-                  , proplists:get_value(K, A)
-                  , Unexpected)
-    || K <- Keys
+  EItems1 = lists:delete(?MATCH_ANY, EItems0),
+  EItems2 = lists:delete(?UNEXPECTED, EItems1),
+  EItems = enumerate(EItems2),
+  AItems = enumerate(AItems0),
+  Keys = lists:usort([ Key
+                       || {Key, _} <- lists:merge(EItems, AItems)
+                     ]),
+  [ compare( ParentKey ++ "/" ++ Key
+           , proplists:get_value(Key, EItems)
+           , proplists:get_value(Key, AItems)
+           , Unexpected
+           )
+    || Key <- Keys
   ];
-compare_struct(K, E, A, Unexpected) ->
-  compare(K, E, A, Unexpected).
+%% compare( ParentKey
+%%        , {Key, EItem} = _E
+%%        , {Key, AItem} = _A
+%%        , Unexpected) ->
+%%   compare_simple(ParentKey ++ "/" ++ Key, EItem, AItem, Unexpected);
+compare(ParentKey, E, A, Unexpected) ->
+  compare_simple(ParentKey, E, A, Unexpected).
 
 %% Compare when unexpected values show up
-compare(_Key, undefined, _A, ?MATCH_ANY) ->
+%% Expected anything
+compare_simple(_Key, undefined = _E, _A, ?MATCH_ANY) ->
   pass;
-compare(_Key, [], _A, ?MATCH_ANY)        ->
+%% compare_simple(_Key, [] = _E, _A, ?MATCH_ANY) ->
+%%   pass;
+%% Not expected and undefined
+compare_simple(_Key, ?UNEXPECTED = _E, undefined = _A, _Unexpected) ->
   pass;
-compare(Key, undefined, A, ?UNEXPECTED)  ->
-  {unexpected, {Key, undefined, A}};
-compare(Key, undefined, A, Unexpected)   ->
-  compare(Key, Unexpected, A);
-compare(Key, E, undefined = A, _Unexpected) ->
+%% Not expected
+compare_simple(Key, undefined = E, A, ?UNEXPECTED) ->
+  {unexpected, {Key, E, A}};
+%% Expected undefined
+compare_simple(Key, undefined = _E, A, Unexpected) ->
+  compare_primitive(Key, Unexpected, A);
+%% Expected but undefined
+compare_simple(Key, E, undefined = A, _Unexpected) ->
   {not_equal, {Key, E, A}};
-compare(Key, E, A, _Unexpected)          ->
-  compare(Key, E, A).
+%% Otherwise
+compare_simple(Key, E, A, _Unexpected) ->
+  compare_primitive(Key, E, A).
 
 %% Compare JSON primitive types or empty structured types
-compare(_Key, ?MATCH_ANY, _A)              ->
+compare_primitive(_Key, E, E) ->
   pass;
-compare(_Key, E, E)                        ->
+compare_primitive(Key, E, A) when is_binary(A) ->
+  compare_primitive(Key, E, from_utf8(A));
+compare_primitive(Key, E, A) when is_binary(E) ->
+  compare_primitive(Key, from_utf8(E), A);
+compare_primitive(_Key, ?MATCH_ANY, _A) ->
   pass;
-compare(Key, E, A) when is_list(E) orelse is_binary(E) ->
+compare_primitive(Key, E, A) when is_list(E) ->
   case re:run( E
              , "(" ++ ?STORE_BEGIN_TAG ++ "[^}]+" ++ ?STORE_END_TAG ++ ")"
              , [ global
@@ -296,7 +311,7 @@ compare(Key, E, A) when is_list(E) orelse is_binary(E) ->
           {pass, lists:zip(Params, Values)}
       end
   end;
-compare(Key, E, A)                         ->
+compare_primitive(Key, E, A) ->
   {not_equal, {Key, E, A}}.
 
 store_tag2param(?STORE_BEGIN_TAG ++ Rest) ->

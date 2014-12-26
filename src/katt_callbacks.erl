@@ -127,7 +127,7 @@ parse(Hdrs, Body, Params, Callbacks) ->
                                , Ext),
   case MatchingExt of
     [] ->
-      katt_util:from_utf8(Body);
+      Body;
     [Fun|_] ->
       Fun( _JustCheck = false
          , Hdrs
@@ -229,9 +229,9 @@ validate_status(#katt_response{status=E}, #katt_response{status=A}, _Callbacks) 
 %% Content-Length, Server, Date, etc.
 %% The header name (not the value) is compared case-insensitive
 validate_headers(#katt_response{headers=E0}, #katt_response{headers=A0}, _Callbacks) ->
-  E = [{katt_util:to_lower(K), V} || {K, V} <- E0],
-  A = [{katt_util:to_lower(K), V} || {K, V} <- A0],
-  katt_util:compare_struct("/headers", E, A, ?MATCH_ANY).
+  E = {struct, [{katt_util:to_lower(K), V} || {K, V} <- E0]},
+  A = {struct, [{katt_util:to_lower(K), V} || {K, V} <- A0]},
+  katt_util:compare("/headers", E, A, ?MATCH_ANY).
 
 %% Bodies are also allowed to be a superset of expected body, if the parseFun
 %% returns a structure.
@@ -251,7 +251,7 @@ validate_body( #katt_response{parsed_body=E} = ER
                                ),
   case MatchingExt of
     [] ->
-      katt_util:compare_struct("/body", E, A, ?MATCH_ANY);
+      katt_util:compare("/body", E, A, ?MATCH_ANY);
     [Fun|_] ->
       Fun( _JustCheck = false
          , ER
