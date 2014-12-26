@@ -98,7 +98,7 @@ is_json_content_type(Hdrs0) ->
     _ -> true
   end.
 
-parse_json(Bin) when is_binary(Bin), size(Bin) =:= 0 ->
+parse_json(Bin) when is_binary(Bin) andalso size(Bin) =:= 0 ->
   [];
 parse_json(Bin) ->
   normalize_mochijson3(mochijson3:decode(Bin)).

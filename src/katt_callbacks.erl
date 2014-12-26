@@ -74,9 +74,13 @@ recall(text, Bin0, [{K0, V} | Next], Callbacks) ->
 recall(url, Bin, Params, Callbacks) ->
   recall(text, Bin, Params, Callbacks);
 recall(headers, Hdrs0, Params, Callbacks) ->
-  [{K, katt_util:from_utf8(
-         recall(text, katt_util:to_utf8(V), Params, Callbacks)
-       )} || {K, V} <- Hdrs0];
+  [ { K
+    , katt_util:from_utf8(
+        recall(text, katt_util:to_utf8(V), Params, Callbacks)
+       )
+    }
+    || {K, V} <- Hdrs0
+  ];
 recall(body, [Hdrs, Bin], Params, Callbacks) ->
   ExtFun = proplists:get_value(ext, Callbacks),
   Ext = ExtFun(recall_body),
