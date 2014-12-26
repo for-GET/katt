@@ -200,18 +200,18 @@ compare_struct(ParentKey, E0, A = [{_,_}|_], _Unexpected) when is_list(E0)  ->
                   , Unexpected)
     || K <- Keys
   ];
-compare_struct(ParentKey, E0, [], _Unexpected) when is_list(E0) ->
-  case lists:member(?UNEXPECTED, E0) of
-    true when length(E0) =/= 1 ->
-      fail;
-    _ ->
-      case E0 of
-        [{Key, NotUnexpected}] when NotUnexpected =/= ?UNEXPECTED ->
-          {not_equal, {ParentKey ++ "/" ++ Key, NotUnexpected, []}};
-        _ ->
-          pass
-      end
-  end;
+%% Expected empty array/object, got empty array/object
+compare_struct(_ParentKey, [] = _E, [] = _A, _Unexpected) ->
+  pass;
+%% Expected empty array, got empty array
+compare_struct(_ParentKey, [?UNEXPECTED] = _E, [] = _A, _Unexpected) ->
+  pass;
+%% Expected empty object, got empty object
+compare_struct(_ParentKey, [{_, ?UNEXPECTED}] = _E, [] = _A, _Unexpected) ->
+  pass;
+%% Expected empty array/object, but got something else
+compare_struct(ParentKey, [{Key, Value}|_] = _E, [] = A, _Unexpected) ->
+  {not_equal, {ParentKey ++ "/" ++ Key, Value, A}};
 compare_struct(ParentKey, E0, A0 = [[_|_]|_], _Unexpected) when is_list(E0) ->
   Unexpected = case lists:member(?UNEXPECTED, E0) of
                  true -> ?UNEXPECTED;
