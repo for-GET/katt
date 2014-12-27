@@ -109,9 +109,9 @@ normalize_mochijson3({struct, Items}) ->
                         || {Key, Value} <- Items
                       ])};
 normalize_mochijson3(List) when is_list(List) ->
-  {array, lists:sort([ normalize_mochijson3(Item)
-                       || Item <- List
-                     ])};
+  {array, [ normalize_mochijson3(Item)
+            || Item <- List
+          ]};
 normalize_mochijson3(Str) when is_binary(Str) ->
   katt_util:from_utf8(Str);
 normalize_mochijson3(Value) ->
