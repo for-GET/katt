@@ -95,6 +95,15 @@ validate_body( false = _Justcheck
 
 
 validate_type( true = _JustCheck
+             , "set"
+             , _ParentKey
+             , _Expected
+             , _Actual
+             , _Unexpected
+             , _Callbacks
+             ) ->
+  true;
+validate_type( true = _JustCheck
              , _Type
              , _ParentKey
              , _Expected
@@ -103,6 +112,15 @@ validate_type( true = _JustCheck
              , _Callbacks
              ) ->
   false;
+validate_type( false = _JustCheck
+             , "set"
+             , ParentKey
+             , Expected
+             , Actual
+             , Unexpected
+             , Callbacks
+             ) ->
+  katt_compare_as_set:compare(ParentKey, Expected, Actual, Unexpected, Callbacks);
 validate_type( false = _JustCheck
              , _Type
              , _ParentKey
