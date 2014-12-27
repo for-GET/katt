@@ -34,7 +34,7 @@
         , maybe_json_string/1
         , run_result_to_mochijson3/1
         , compare/3
-        , compare/4
+        , compare/5
         , enumerate/1
         ]).
 
@@ -180,16 +180,36 @@ compare(ParentKey, E, A) ->
   compare_primitive(ParentKey, E, A).
 
 %% Expected actual
-compare(_ParentKey, _E, _E, _Unexpected) ->
+compare(_ParentKey, _E, _E, _Unexpected, _Callbacks) ->
   pass;
 %% Expected anything
-compare(_ParentKey, ?MATCH_ANY = _E, _A, _Unexpected) ->
+compare(_ParentKey, ?MATCH_ANY = _E, _A, _Unexpected, _Callbacks) ->
   pass;
-%% Expected struct (JSON array/object), got struct (JSON array/object)
+%% Expected struct, got struct
 compare( ParentKey
-       , {struct, EItems0} = _E
+       , {struct, EItems} = _E
        , {struct, AItems} = _A
+       , Unexpected
+       , Callbacks
+       ) ->
+  case proplists:get_value("{{type}}", EItems) of
+    undefined ->
+      compare( ParentKey
+             , {json_struct, EItems}
+             , {json_struct, AItems}
+             , Unexpected
+             , Callbacks
+             );
+    Type ->
+      EItems1 = proplists:delete("{{type}}", EItems),
+      katt_callbacks:validate_type(Type, ParentKey ++ "/{{" ++ Type ++ "}}", EItems1, AItems, Unexpected, Callbacks)
+  end;
+%% Expected JSON array/object, got JSON array/object
+compare( ParentKey
+       , {json_struct, EItems0} = _E
+       , {json_struct, AItems} = _A
        , _Unexpected
+       , Callbacks
        ) ->
   Unexpected = proplists:get_value(?MATCH_ANY, EItems0, ?MATCH_ANY),
   EItems = proplists:delete(?MATCH_ANY, EItems0),
@@ -200,6 +220,7 @@ compare( ParentKey
            , proplists:get_value(Key, EItems)
            , proplists:get_value(Key, AItems)
            , Unexpected
+           , Callbacks
            )
     || Key <- Keys
   ];
@@ -227,7 +248,7 @@ compare( ParentKey
 %%            )
 %%     || Key <- Keys
 %%   ];
-compare(ParentKey, E, A, Unexpected) ->
+compare(ParentKey, E, A, Unexpected, _Callbacks) ->
   compare_simple(ParentKey, E, A, Unexpected).
 
 %% Compare when unexpected values show up

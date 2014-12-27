@@ -29,6 +29,7 @@
         , parse/4
         , request/3
         , validate/4
+        , validate_type/6
         , progress/2
         ]).
 
@@ -47,7 +48,10 @@ ext(parse) ->
   [ fun katt_callbacks_json:parse/5
   ];
 ext(validate_body) ->
-  [ fun katt_callbacks_json:validate_body/3
+  [ fun katt_callbacks_json:validate_body/4
+  ];
+ext(validate_type) ->
+  [ fun katt_callbacks_json:validate_type/7
   ].
 
 
@@ -235,7 +239,7 @@ validate_status(#katt_response{status=E}, #katt_response{status=A}, _Callbacks) 
 validate_headers(#katt_response{headers=E0}, #katt_response{headers=A0}, _Callbacks) ->
   E = {struct, [{katt_util:to_lower(K), V} || {K, V} <- E0]},
   A = {struct, [{katt_util:to_lower(K), V} || {K, V} <- A0]},
-  katt_util:compare("/headers", E, A, ?MATCH_ANY).
+  katt_util:compare("/headers", E, A, ?MATCH_ANY, []).
 
 %% Bodies are also allowed to be a superset of expected body, if the parseFun
 %% returns a structure.
@@ -249,17 +253,55 @@ validate_body( #katt_response{parsed_body=E} = ER
                                      not Fun( _JustCheck = true
                                             , ER
                                             , AR
+                                            , Callbacks
                                             )
                                  end
                                , Ext
                                ),
   case MatchingExt of
     [] ->
-      katt_util:compare("/body", E, A, ?MATCH_ANY);
+      katt_util:compare("/body", E, A, ?MATCH_ANY, Callbacks);
     [Fun|_] ->
       Fun( _JustCheck = false
          , ER
          , AR
+         , Callbacks
+         )
+  end.
+
+
+validate_type( Type
+             , ParentKey
+             , Expected
+             , Actual
+             , Unexpected
+             , Callbacks
+             ) ->
+  ExtFun = proplists:get_value(ext, Callbacks),
+  Ext = ExtFun(validate_type),
+  MatchingExt = lists:dropwhile( fun(Fun) ->
+                                     not Fun( _JustCheck = true
+                                            , Type
+                                            , ParentKey
+                                            , Expected
+                                            , Actual
+                                            , Unexpected
+                                            , Callbacks
+                                            )
+                                 end
+                               , Ext
+                               ),
+  case MatchingExt of
+    [] ->
+      fail;
+    [Fun|_] ->
+      Fun( _JustCheck = false
+         , Type
+         , ParentKey
+         , Expected
+         , Actual
+         , Unexpected
+         , Callbacks
          )
   end.
 

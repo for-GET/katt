@@ -26,7 +26,8 @@
 %% API
 -export([ recall_body/4
         , parse/5
-        , validate_body/3
+        , validate_body/4
+        , validate_type/7
         ]).
 
 %%%_* Includes =========================================================
@@ -80,13 +81,36 @@ parse(false = _JustCheck, Hdrs, Body, _Params, _Callbacks) ->
 validate_body( true = _Justcheck
              , #katt_response{headers=EHdrs}
              , #katt_response{headers=AHdrs}
+             , _Callbacks
              ) ->
   is_json_content_type(EHdrs) andalso is_json_content_type(AHdrs);
 validate_body( false = _Justcheck
              , #katt_response{parsed_body=E}
              , #katt_response{parsed_body=A}
+             , Callbacks
              ) ->
-  katt_util:compare("/body", E, A, ?MATCH_ANY).
+  katt_util:compare("/body", E, A, ?MATCH_ANY, Callbacks).
+
+
+validate_type( true = _JustCheck
+             , _Type
+             , _ParentKey
+             , _Expected
+             , _Actual
+             , _Unexpected
+             , _Callbacks
+             ) ->
+  false;
+validate_type( false = _JustCheck
+             , _Type
+             , _ParentKey
+             , _Expected
+             , _Actual
+             , _Unexpected
+             , _Callbacks
+             ) ->
+  fail.
+
 
 %%%_* Internal =========================================================
 

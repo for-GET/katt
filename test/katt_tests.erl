@@ -177,7 +177,6 @@ katt_run_with_store() ->
                , katt:run(Scenario)
                ).
 
-
 %%% Helpers
 
 %% Mock response for Step 2:

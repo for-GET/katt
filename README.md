@@ -78,7 +78,7 @@ katt --json ./doc/example-httpbin.apib hostname=httpbin.org my_name=Joe your_nam
     * `request_timeout`
     * `scenario_timeout`
   * `callbacks` (optional)
-    * `ext` to be called with `scope` (recall_body, parse, validate_body)
+    * `ext` to be called with `scope` (recall_body, parse, validate_body, validate_type)
     * `recall` to be called with `syntax`, `text`, `params`, `callbacks`
     * `parse` to be called with `headers`, `body`, `params`, `callbacks`
     * `request` to be called with `request`, `params`, `callbacks`
@@ -108,6 +108,10 @@ XmlJson =
   fun(validate_body) ->
     [ fun katt_callbacks_json:validate_body/3
     , fun custom_callbacks_xml:validate_body/3
+    ],
+  fun(validate_type) ->
+    [ fun katt_callbacks_json:validate_type/7
+    , fun custom_callbacks_xml:validate_type/7
     ],
 katt:run("xml_and_json_scenario.apib", [], [{ext, XmlJson}]).
 ```
