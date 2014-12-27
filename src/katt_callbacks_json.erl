@@ -108,10 +108,22 @@ normalize_mochijson3({struct, Items}) ->
   {struct, lists:sort([ {katt_util:from_utf8(Key), normalize_mochijson3(Value)}
                         || {Key, Value} <- Items
                       ])};
-normalize_mochijson3(List) when is_list(List) ->
-  {array, [ normalize_mochijson3(Item)
-            || Item <- List
-          ]};
+normalize_mochijson3(Items0) when is_list(Items0) ->
+  Items1 = [ normalize_mochijson3(Item)
+             || Item <- Items0
+           ],
+  Unexpected = case lists:member(?UNEXPECTED, Items1) of
+                 true -> [{?MATCH_ANY, ?UNEXPECTED}];
+                 false -> []
+               end,
+  Items2 = lists:delete(?UNEXPECTED, Items1),
+  MatchAny = case lists:member(?MATCH_ANY, Items2) of
+               true -> [{?MATCH_ANY, ?MATCH_ANY}];
+               false -> []
+             end,
+  Items3 = lists:delete(?MATCH_ANY, Items2),
+  Items = katt_util:enumerate(Items3),
+  {struct, Items ++ Unexpected ++ MatchAny};
 normalize_mochijson3(Str) when is_binary(Str) ->
   katt_util:from_utf8(Str);
 normalize_mochijson3(Value) ->

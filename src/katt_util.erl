@@ -35,6 +35,7 @@
         , run_result_to_mochijson3/1
         , compare/3
         , compare/4
+        , enumerate/1
         ]).
 
 %%%_* Includes =========================================================
@@ -184,7 +185,7 @@ compare(_ParentKey, _E, _E, _Unexpected) ->
 %% Expected anything
 compare(_ParentKey, ?MATCH_ANY = _E, _A, _Unexpected) ->
   pass;
-%% Expected object, got an object
+%% Expected struct (JSON array/object), got struct (JSON array/object)
 compare( ParentKey
        , {struct, EItems0} = _E
        , {struct, AItems} = _A
@@ -202,35 +203,30 @@ compare( ParentKey
            )
     || Key <- Keys
   ];
-%% Expected array, got an array
-compare( ParentKey
-       , {array, EItems0} = _E
-       , {array, AItems0} = _A
-       , _Unexpected
-       ) ->
-  Unexpected = case lists:member(?UNEXPECTED, EItems0) of
-                 true -> ?UNEXPECTED;
-                 false -> ?MATCH_ANY
-               end,
-  EItems1 = lists:delete(?MATCH_ANY, EItems0),
-  EItems2 = lists:delete(?UNEXPECTED, EItems1),
-  EItems = enumerate(EItems2),
-  AItems = enumerate(AItems0),
-  Keys = lists:usort([ Key
-                       || {Key, _} <- lists:merge(EItems, AItems)
-                     ]),
-  [ compare( ParentKey ++ "/" ++ Key
-           , proplists:get_value(Key, EItems)
-           , proplists:get_value(Key, AItems)
-           , Unexpected
-           )
-    || Key <- Keys
-  ];
+%% Expected array, got an array (not normalized)
 %% compare( ParentKey
-%%        , {Key, EItem} = _E
-%%        , {Key, AItem} = _A
-%%        , Unexpected) ->
-%%   compare_simple(ParentKey ++ "/" ++ Key, EItem, AItem, Unexpected);
+%%        , {array, EItems0} = _E
+%%        , {array, AItems0} = _A
+%%        , _Unexpected
+%%        ) ->
+%%   Unexpected = case lists:member(?UNEXPECTED, EItems0) of
+%%                  true -> ?UNEXPECTED;
+%%                  false -> ?MATCH_ANY
+%%                end,
+%%   EItems1 = lists:delete(?MATCH_ANY, EItems0),
+%%   EItems2 = lists:delete(?UNEXPECTED, EItems1),
+%%   EItems = enumerate(EItems2),
+%%   AItems = enumerate(AItems0),
+%%   Keys = lists:usort([ Key
+%%                        || {Key, _} <- lists:merge(EItems, AItems)
+%%                      ]),
+%%   [ compare( ParentKey ++ "/" ++ Key
+%%            , proplists:get_value(Key, EItems)
+%%            , proplists:get_value(Key, AItems)
+%%            , Unexpected
+%%            )
+%%     || Key <- Keys
+%%   ];
 compare(ParentKey, E, A, Unexpected) ->
   compare_simple(ParentKey, E, A, Unexpected).
 
