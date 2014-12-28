@@ -196,10 +196,10 @@ validate(ParentKey, E, A) ->
 
 %% Expected actual
 validate(_ParentKey, _E, _E, _Unexpected, _Callbacks) ->
-  pass;
+  {pass, []};
 %% Expected anything
 validate(_ParentKey, ?MATCH_ANY = _E, _A, _Unexpected, _Callbacks) ->
-  pass;
+  {pass, []};
 %% Expected struct, got struct
 validate( ParentKey
         , {struct, EItems} = _E
@@ -251,12 +251,12 @@ validate(ParentKey, E, A, Unexpected, _Callbacks) ->
 %% Validate when unexpected values show up
 %% Expected anything
 validate_simple(_Key, undefined = _E, _A, ?MATCH_ANY) ->
-  pass;
+  {pass, []};
 %% validate_simple(_Key, [] = _E, _A, ?MATCH_ANY) ->
-%%   pass;
+%%   {pass, []};
 %% Not expected and undefined
 validate_simple(_Key, ?UNEXPECTED = _E, undefined = _A, _Unexpected) ->
-  pass;
+  {pass, []};
 %% Not expected
 validate_simple(Key, undefined = E, A, ?UNEXPECTED) ->
   {unexpected, {Key, E, A}};
@@ -272,13 +272,13 @@ validate_simple(Key, E, A, _Unexpected) ->
 
 %% Validate JSON primitive types or empty structured types
 validate_primitive(_Key, E, E) ->
-  pass;
+  {pass, []};
 validate_primitive(Key, E, A) when is_binary(A) ->
   validate_primitive(Key, E, from_utf8(A));
 validate_primitive(Key, E, A) when is_binary(E) ->
   validate_primitive(Key, from_utf8(E), A);
 validate_primitive(_Key, ?MATCH_ANY, _A) ->
-  pass;
+  {pass, []};
 validate_primitive(Key, E, A) when is_list(E) ->
   case re:run( E
              , "(" ++ ?STORE_BEGIN_TAG ++ "[^}]+" ++ ?STORE_END_TAG ++ ")"
@@ -289,7 +289,7 @@ validate_primitive(Key, E, A) when is_list(E) ->
     nomatch ->
       {not_equal, {Key, E, A}};
     {match, [[E]]} ->
-        {pass, {store_tag2param(E), A}};
+        {pass, [{store_tag2param(E), A}]};
     {match, Params0} ->
       Type = if
                is_list(A) ->

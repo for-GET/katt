@@ -183,12 +183,8 @@ validate( Expected = #katt_response{}
                              validate_headers(Expected, Actual, Callbacks)),
  {AddParams2, Failures2} = get_params_and_failures(
                              validate_body(Expected, Actual, Callbacks)),
- AddParams = lists:flatten([ AddParams0
-                           , AddParams1
-                           , AddParams2]),
- Failures = lists:flatten([ Failures0
-                          , Failures1
-                          , Failures2]),
+ AddParams = AddParams0 ++ AddParams1 ++ AddParams2,
+ Failures = Failures0 ++ Failures1 ++ Failures2,
   case Failures of
     [] -> {pass, AddParams};
     _  -> {fail, Failures}
@@ -206,16 +202,17 @@ progress(_Step, _Detail) ->
 
 %%%_* Internal =================================================================
 
+get_params_and_failures(Result) when not is_list(Result) ->
+  get_params_and_failures([Result]);
 get_params_and_failures(Result) ->
   lists:foldl(
-    fun(pass, Acc) -> Acc;
-       ({pass, AddParam}, {AddParams0, Failures0}) ->
-        {[AddParam | AddParams0], Failures0};
-       (Failure, {AddParams0, Failures0})          ->
+    fun({pass, AddParams}, {AddParams0, Failures0}) ->
+        {AddParams ++ AddParams0, Failures0};
+       (Failure, {AddParams0, Failures0}) ->
         {AddParams0, [Failure | Failures0]}
     end,
     {[],[]},
-    lists:flatten([Result])
+    lists:flatten(Result)
    ).
 
 http_request(R = #katt_request{}, Params) ->
