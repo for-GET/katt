@@ -56,11 +56,12 @@
                              | binary().
 -type callbacks()           :: [{atom(), function()}].
 
--type run_result()          :: run_error() | scenario_result().
+-type run_result()          :: run_error()
+                             | scenario_result().
 -type run_error()           :: {error, reason(), details()}.
 -type reason()              :: atom().
 -type details()             :: any().
--type scenario_result()     :: { pass|fail
+-type scenario_result()     :: { pass | fail
                                , scenario_filename()
                                , params()
                                , params()
@@ -72,14 +73,22 @@
                                , #katt_response{}
                                , validation_result()
                                }.
--type validation_result()   :: pass | {fail, [{reason(), details()}]}.
+-type validation_result()   :: pass
+                             | {fail, [validation_failure()]}.
+-type validation_failure()  :: {reason(), details()}.
 
 -type description()         :: string().
--type response()            :: #katt_response{} | {error, any()}.
--type body()                :: null | binary().
+-type response()            :: #katt_response{}
+                             | {error, any()}.
+-type body()                :: null
+                             | binary().
 -type headers()             :: [{string(), string()}].
 
--type recall_scope()        :: url | status | headers | body | text.
+-type recall_scope()        :: url
+                             | status
+                             | headers
+                             | body
+                             | text.
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:
