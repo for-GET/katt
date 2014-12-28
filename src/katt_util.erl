@@ -35,7 +35,9 @@
         , escape_regex/1
         , maybe_json_string/1
         , run_result_to_mochijson3/1
+        , is_valid/3
         , validate/3
+        , is_valid/5
         , validate/5
         , enumerate/1
         ]).
@@ -190,6 +192,22 @@ transaction_failure_to_mochijson3({Reason, {Key0, Expected0, Actual0}}) ->
            , {expected, Expected}
            , {actual, Actual}
            ]}.
+
+is_valid(ParentKey, E, A) ->
+  case validate(ParentKey, E, A) of
+    {pass, _} ->
+      true;
+    _ ->
+      false
+  end.
+
+is_valid(ParentKey, E, A, Unexpected, Callbacks) ->
+  case validate(ParentKey, E, A, Unexpected, Callbacks) of
+    {pass, _} ->
+      true;
+    _ ->
+      false
+  end.
 
 validate(ParentKey, E, A) ->
   validate_primitive(ParentKey, E, A).
