@@ -1,4 +1,4 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Copyright 2013 Klarna AB
 %%%
 %%% Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,12 +17,12 @@
 %%%
 %%% @doc Built-in JSON callback functions.
 %%% @end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%_* Module declaration ===============================================
+%%%_* Module declaration =======================================================
 -module(katt_callbacks_json).
 
-%%%_* Exports ==========================================================
+%%%_* Exports ==================================================================
 %% API
 -export([ recall_body/4
         , parse/5
@@ -30,10 +30,10 @@
         , validate_type/7
         ]).
 
-%%%_* Includes =========================================================
+%%%_* Includes =================================================================
 -include("katt.hrl").
 
-%%%_* API ==============================================================
+%%%_* API ======================================================================
 
 %% @doc Recall all params inside json content.
 %% @end
@@ -111,8 +111,7 @@ validate_type( false = _JustCheck
              ) ->
   fail.
 
-
-%%%_* Internal =========================================================
+%%%_* Internal =================================================================
 
 is_json_content_type(Hdrs0) ->
   Hdrs = [{katt_util:to_lower(K), V} || {K, V} <- Hdrs0],
@@ -127,7 +126,9 @@ parse_json(Bin) when is_binary(Bin) andalso size(Bin) =:= 0 ->
 parse_json(Bin) ->
   normalize_mochijson3(mochijson3:decode(Bin)).
 
-%% Convert binary strings, sort object keys and array items, add "array" identifier
+%% Convert binary strings,
+%% sort object keys and array items,
+%% add "array" identifier
 normalize_mochijson3({struct, Items}) ->
   {struct, lists:sort([ {katt_util:from_utf8(Key), normalize_mochijson3(Value)}
                         || {Key, Value} <- Items
@@ -153,7 +154,7 @@ normalize_mochijson3(Str) when is_binary(Str) ->
 normalize_mochijson3(Value) ->
   Value.
 
-%%%_* Emacs ============================================================
+%%%_* Emacs ====================================================================
 %%% Local Variables:
 %%% allout-layout: t
 %%% erlang-indent-level: 2

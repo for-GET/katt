@@ -1,4 +1,4 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Copyright 2013 Klarna AB
 %%%
 %%% Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,13 +17,13 @@
 %%%
 %%% @doc Klarna API Testing Tool Utils
 %%% @end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%_* Module declaration ===============================================
+%%%_* Module declaration =======================================================
 %% @private
 -module(katt_util).
 
-%%%_* Exports ==========================================================
+%%%_* Exports ==================================================================
 %% API
 -export([ merge_proplists/2
         , to_list/1
@@ -38,10 +38,10 @@
         , enumerate/1
         ]).
 
-%%%_* Includes =========================================================
+%%%_* Includes =================================================================
 -include("katt.hrl").
 
-%%%_* API ==============================================================
+%%%_* API ======================================================================
 
 %% Merge two proplists. If a property exists in both List1 and List2, then the
 %% value from List2 is used.
@@ -111,7 +111,7 @@ run_result_to_mochijson3({ PassOrFail
            , {transaction_results, TransactionResults}
            ]}.
 
-%%%_* Internal =========================================================
+%%%_* Internal =================================================================
 
 my_float_to_list(X) when is_float(X) ->
   my_float_to_list(X, 0).
@@ -141,7 +141,12 @@ maybe_list_to_binary(Str) when is_list(Str) ->
 maybe_list_to_binary(NonStr) ->
   NonStr.
 
-transaction_result_to_mochijson3({Description, Params, Request, Response, Result}) ->
+transaction_result_to_mochijson3({ Description
+                                 , Params
+                                 , Request
+                                 , Response
+                                 , Result
+                                 }) ->
   {katt_request, Method, Url, ReqHeaders, ReqBody} = Request,
   {katt_response, Status, ResHeaders, ResBody, _ResParsedBody} = Response,
   Errors = case Result of
@@ -156,11 +161,19 @@ transaction_result_to_mochijson3({Description, Params, Request, Response, Result
            , {params, {struct, proplist_to_mochijson3(Params)}}
            , {request, {struct, [ {method, list_to_binary(Method)}
                                 , {url, list_to_binary(Url)}
-                                , {headers, {struct, proplist_to_mochijson3(ReqHeaders)}}
+                                , { headers
+                                  , { struct
+                                    , proplist_to_mochijson3(ReqHeaders)
+                                    }
+                                  }
                                 , {body, ReqBody}
                                 ]}}
            , {response, {struct, [ {status, Status}
-                                 , {headers, {struct, proplist_to_mochijson3(ResHeaders)}}
+                                 , { headers
+                                   , { struct
+                                     , proplist_to_mochijson3(ResHeaders)
+                                     }
+                                   }
                                  , {body, ResBody}
                                  ]}}
            , {errors, Errors}
@@ -202,7 +215,13 @@ compare( ParentKey
              );
     Type ->
       EItems1 = proplists:delete("{{type}}", EItems),
-      katt_callbacks:validate_type(Type, ParentKey ++ "/{{" ++ Type ++ "}}", EItems1, AItems, Unexpected, Callbacks)
+      katt_callbacks:validate_type( Type
+                                  , ParentKey ++ "/{{" ++ Type ++ "}}"
+                                  , EItems1
+                                  , AItems
+                                  , Unexpected
+                                  , Callbacks
+                                  )
   end;
 %% Expected JSON array/object, got JSON array/object
 compare( ParentKey

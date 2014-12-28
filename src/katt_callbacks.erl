@@ -1,4 +1,4 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Copyright 2013 Klarna AB
 %%%
 %%% Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,12 +17,12 @@
 %%%
 %%% @doc Built-in default callback functions.
 %%% @end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%_* Module declaration ===============================================
+%%%_* Module declaration =======================================================
 -module(katt_callbacks).
 
-%%%_* Exports ==========================================================
+%%%_* Exports ==================================================================
 %% API
 -export([ ext/1
         , recall/4
@@ -33,10 +33,10 @@
         , progress/2
         ]).
 
-%%%_* Includes =========================================================
+%%%_* Includes =================================================================
 -include("katt.hrl").
 
-%%%_* API ==============================================================
+%%%_* API ======================================================================
 
 %% @doc Get a list of available extensions
 %% @end
@@ -202,7 +202,7 @@ validate(#katt_response{}, Actual, _Params, _Callbacks)   -> {fail, Actual}.
 progress(_Step, _Detail) ->
   ok.
 
-%%%_* Internal =========================================================
+%%%_* Internal =================================================================
 
 get_params_and_failures(Result) ->
   lists:foldl(
@@ -229,14 +229,20 @@ http_request(R = #katt_request{}, Params) ->
                 , []
                 ).
 
-validate_status(#katt_response{status=E}, #katt_response{status=A}, _Callbacks) ->
+validate_status( #katt_response{status=E}
+               , #katt_response{status=A}
+               , _Callbacks
+               ) ->
   katt_util:compare("/status", E, A).
 
 %% Actual headers are allowed to be a superset of expected headers, since
 %% we don't want tests full of boilerplate like tests for headers such as
 %% Content-Length, Server, Date, etc.
 %% The header name (not the value) is compared case-insensitive
-validate_headers(#katt_response{headers=E0}, #katt_response{headers=A0}, _Callbacks) ->
+validate_headers( #katt_response{headers=E0}
+                , #katt_response{headers=A0}
+                , _Callbacks
+                ) ->
   E = {struct, [{katt_util:to_lower(K), V} || {K, V} <- E0]},
   A = {struct, [{katt_util:to_lower(K), V} || {K, V} <- A0]},
   katt_util:compare("/headers", E, A, ?MATCH_ANY, []).
@@ -305,8 +311,7 @@ validate_type( Type
          )
   end.
 
-
-%%%_* Emacs ============================================================
+%%%_* Emacs ====================================================================
 %%% Local Variables:
 %%% allout-layout: t
 %%% erlang-indent-level: 2

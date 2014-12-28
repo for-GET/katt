@@ -1,4 +1,4 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Copyright 2013 Klarna AB
 %%%
 %%% Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,12 +20,12 @@
 %%% Use for shooting http requests in a sequential order and verifying the
 %%% response.
 %%% @end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%_* Module declaration ===============================================
+%%%_* Module declaration =======================================================
 -module(katt).
 
-%%%_* Exports ==========================================================
+%%%_* Exports ==================================================================
 %% API
 -export([ run/1
         , run/2
@@ -36,10 +36,10 @@
 -export([ run/4
         ]).
 
-%%%_* Includes =========================================================
+%%%_* Includes =================================================================
 -include("katt.hrl").
 
-%%%_* API ==============================================================
+%%%_* API ======================================================================
 
 %% @doc Run test scenario. Argument is the full path to the scenario file.
 %% The scenario filename should be a KATT Blueprint file.
@@ -52,7 +52,6 @@ run(ScenarioFilename) -> run(ScenarioFilename, []).
 %% @end
 -spec run(scenario_filename(), params()) -> run_result().
 run(ScenarioFilename, Params) -> run(ScenarioFilename, Params, []).
-
 
 %% @doc Run test scenario. First argument is the full path to the scenario file.
 %% Second argument is a key-value list of parameters, such as hostname, port.
@@ -73,7 +72,7 @@ run(Scenario, ScenarioParams, ScenarioCallbacks) ->
   spawn_link(?MODULE, run, [self(), Scenario, Params, Callbacks]),
   run_loop(ScenarioTimeout, ProgressFun).
 
-%%%_* Internal export --------------------------------------------------
+%%%_* Internal export ==========================================================
 %% @private
 run(From, Scenario, Params, Callbacks) ->
   From ! {progress, parsing, Scenario},
@@ -100,7 +99,7 @@ run(From, Scenario, Params, Callbacks) ->
   From ! {progress, status, Status},
   From ! {done, Result}.
 
-%%%_* Internal =========================================================
+%%%_* Internal =================================================================
 
 run_loop(ScenarioTimeout, ProgressFun) ->
   receive
@@ -255,7 +254,7 @@ make_host(?PROTOCOL_HTTPS, Hostname, 443)  -> Hostname;
 make_host(_Proto,          Hostname, Port) ->
   Hostname ++ ":" ++ katt_util:to_list(Port).
 
-%%%_* Emacs ============================================================
+%%%_* Emacs ====================================================================
 %%% Local Variables:
 %%% allout-layout: t
 %%% erlang-indent-level: 2
