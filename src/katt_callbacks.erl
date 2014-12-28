@@ -235,7 +235,7 @@ validate_status( #katt_response{status=E}
                , #katt_response{status=A}
                , _Callbacks
                ) ->
-  katt_util:compare("/status", E, A).
+  katt_util:validate("/status", E, A).
 
 %% Actual headers are allowed to be a superset of expected headers, since
 %% we don't want tests full of boilerplate like tests for headers such as
@@ -247,7 +247,7 @@ validate_headers( #katt_response{headers=E0}
                 ) ->
   E = {struct, [{katt_util:to_lower(K), V} || {K, V} <- E0]},
   A = {struct, [{katt_util:to_lower(K), V} || {K, V} <- A0]},
-  katt_util:compare("/headers", E, A, ?MATCH_ANY, []).
+  katt_util:validate("/headers", E, A, ?MATCH_ANY, []).
 
 %% Bodies are also allowed to be a superset of expected body, if the parseFun
 %% returns a structure.
@@ -268,7 +268,7 @@ validate_body( #katt_response{parsed_body=E} = ER
                                ),
   case MatchingExt of
     [] ->
-      katt_util:compare("/body", E, A, ?MATCH_ANY, Callbacks);
+      katt_util:validate("/body", E, A, ?MATCH_ANY, Callbacks);
     [Fun|_] ->
       Fun( _JustCheck = false
          , ER

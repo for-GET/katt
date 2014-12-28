@@ -91,7 +91,7 @@ validate_body( false = _Justcheck
              , #katt_response{parsed_body=A}
              , Callbacks
              ) ->
-  katt_util:compare("/body", E, A, ?MATCH_ANY, Callbacks).
+  katt_util:validate("/body", E, A, ?MATCH_ANY, Callbacks).
 
 
 validate_type( true = _JustCheck

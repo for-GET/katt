@@ -35,8 +35,8 @@
         , escape_regex/1
         , maybe_json_string/1
         , run_result_to_mochijson3/1
-        , compare/3
-        , compare/5
+        , validate/3
+        , validate/5
         , enumerate/1
         ]).
 
@@ -191,30 +191,30 @@ transaction_failure_to_mochijson3({Reason, {Key0, Expected0, Actual0}}) ->
            , {actual, Actual}
            ]}.
 
-compare(ParentKey, E, A) ->
-  compare_primitive(ParentKey, E, A).
+validate(ParentKey, E, A) ->
+  validate_primitive(ParentKey, E, A).
 
 %% Expected actual
-compare(_ParentKey, _E, _E, _Unexpected, _Callbacks) ->
+validate(_ParentKey, _E, _E, _Unexpected, _Callbacks) ->
   pass;
 %% Expected anything
-compare(_ParentKey, ?MATCH_ANY = _E, _A, _Unexpected, _Callbacks) ->
+validate(_ParentKey, ?MATCH_ANY = _E, _A, _Unexpected, _Callbacks) ->
   pass;
 %% Expected struct, got struct
-compare( ParentKey
-       , {struct, EItems} = _E
-       , {struct, AItems} = _A
-       , Unexpected
-       , Callbacks
-       ) ->
+validate( ParentKey
+        , {struct, EItems} = _E
+        , {struct, AItems} = _A
+        , Unexpected
+        , Callbacks
+        ) ->
   case proplists:get_value("{{type}}", EItems) of
     undefined ->
-      compare( ParentKey
-             , {json_struct, EItems}
-             , {json_struct, AItems}
-             , Unexpected
-             , Callbacks
-             );
+      validate( ParentKey
+              , {json_struct, EItems}
+              , {json_struct, AItems}
+              , Unexpected
+              , Callbacks
+              );
     Type ->
       EItems1 = proplists:delete("{{type}}", EItems),
       katt_callbacks:validate_type( Type
@@ -226,84 +226,60 @@ compare( ParentKey
                                   )
   end;
 %% Expected JSON array/object, got JSON array/object
-compare( ParentKey
-       , {json_struct, EItems0} = _E
-       , {json_struct, AItems} = _A
-       , _Unexpected
-       , Callbacks
-       ) ->
+validate( ParentKey
+        , {json_struct, EItems0} = _E
+        , {json_struct, AItems} = _A
+        , _Unexpected
+        , Callbacks
+        ) ->
   Unexpected = proplists:get_value(?MATCH_ANY, EItems0, ?MATCH_ANY),
   EItems = proplists:delete(?MATCH_ANY, EItems0),
   Keys = lists:usort([ Key
                        || {Key, _} <- lists:merge(EItems, AItems)
                      ]),
-  [ compare( ParentKey ++ "/" ++ Key
-           , proplists:get_value(Key, EItems)
-           , proplists:get_value(Key, AItems)
-           , Unexpected
-           , Callbacks
-           )
+  [ validate( ParentKey ++ "/" ++ Key
+            , proplists:get_value(Key, EItems)
+            , proplists:get_value(Key, AItems)
+            , Unexpected
+            , Callbacks
+            )
     || Key <- Keys
   ];
-%% Expected array, got an array (not normalized)
-%% compare( ParentKey
-%%        , {array, EItems0} = _E
-%%        , {array, AItems0} = _A
-%%        , _Unexpected
-%%        ) ->
-%%   Unexpected = case lists:member(?UNEXPECTED, EItems0) of
-%%                  true -> ?UNEXPECTED;
-%%                  false -> ?MATCH_ANY
-%%                end,
-%%   EItems1 = lists:delete(?MATCH_ANY, EItems0),
-%%   EItems2 = lists:delete(?UNEXPECTED, EItems1),
-%%   EItems = enumerate(EItems2),
-%%   AItems = enumerate(AItems0),
-%%   Keys = lists:usort([ Key
-%%                        || {Key, _} <- lists:merge(EItems, AItems)
-%%                      ]),
-%%   [ compare( ParentKey ++ "/" ++ Key
-%%            , proplists:get_value(Key, EItems)
-%%            , proplists:get_value(Key, AItems)
-%%            , Unexpected
-%%            )
-%%     || Key <- Keys
-%%   ];
-compare(ParentKey, E, A, Unexpected, _Callbacks) ->
-  compare_simple(ParentKey, E, A, Unexpected).
+validate(ParentKey, E, A, Unexpected, _Callbacks) ->
+  validate_simple(ParentKey, E, A, Unexpected).
 
-%% Compare when unexpected values show up
+%% Validate when unexpected values show up
 %% Expected anything
-compare_simple(_Key, undefined = _E, _A, ?MATCH_ANY) ->
+validate_simple(_Key, undefined = _E, _A, ?MATCH_ANY) ->
   pass;
-%% compare_simple(_Key, [] = _E, _A, ?MATCH_ANY) ->
+%% validate_simple(_Key, [] = _E, _A, ?MATCH_ANY) ->
 %%   pass;
 %% Not expected and undefined
-compare_simple(_Key, ?UNEXPECTED = _E, undefined = _A, _Unexpected) ->
+validate_simple(_Key, ?UNEXPECTED = _E, undefined = _A, _Unexpected) ->
   pass;
 %% Not expected
-compare_simple(Key, undefined = E, A, ?UNEXPECTED) ->
+validate_simple(Key, undefined = E, A, ?UNEXPECTED) ->
   {unexpected, {Key, E, A}};
 %% Expected undefined
-compare_simple(Key, undefined = _E, A, Unexpected) ->
-  compare_primitive(Key, Unexpected, A);
+validate_simple(Key, undefined = _E, A, Unexpected) ->
+  validate_primitive(Key, Unexpected, A);
 %% Expected but undefined
-compare_simple(Key, E, undefined = A, _Unexpected) ->
+validate_simple(Key, E, undefined = A, _Unexpected) ->
   {not_equal, {Key, E, A}};
 %% Otherwise
-compare_simple(Key, E, A, _Unexpected) ->
-  compare_primitive(Key, E, A).
+validate_simple(Key, E, A, _Unexpected) ->
+  validate_primitive(Key, E, A).
 
-%% Compare JSON primitive types or empty structured types
-compare_primitive(_Key, E, E) ->
+%% Validate JSON primitive types or empty structured types
+validate_primitive(_Key, E, E) ->
   pass;
-compare_primitive(Key, E, A) when is_binary(A) ->
-  compare_primitive(Key, E, from_utf8(A));
-compare_primitive(Key, E, A) when is_binary(E) ->
-  compare_primitive(Key, from_utf8(E), A);
-compare_primitive(_Key, ?MATCH_ANY, _A) ->
+validate_primitive(Key, E, A) when is_binary(A) ->
+  validate_primitive(Key, E, from_utf8(A));
+validate_primitive(Key, E, A) when is_binary(E) ->
+  validate_primitive(Key, from_utf8(E), A);
+validate_primitive(_Key, ?MATCH_ANY, _A) ->
   pass;
-compare_primitive(Key, E, A) when is_list(E) ->
+validate_primitive(Key, E, A) when is_list(E) ->
   case re:run( E
              , "(" ++ ?STORE_BEGIN_TAG ++ "[^}]+" ++ ?STORE_END_TAG ++ ")"
              , [ global
@@ -349,7 +325,7 @@ compare_primitive(Key, E, A) when is_list(E) ->
           {pass, lists:zip(Params, Values)}
       end
   end;
-compare_primitive(Key, E, A) ->
+validate_primitive(Key, E, A) ->
   {not_equal, {Key, E, A}}.
 
 store_tag2param(?STORE_BEGIN_TAG ++ Rest) ->
