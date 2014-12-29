@@ -98,11 +98,9 @@ pass_when_there_is_only_one_element_test() ->
   ?assert(
     [] == filter_errors(compare_as_set(
       "Key",
-      [{"value",
-        {struct,[
-          {"0", ?SIMPLE_OBJECT1}
-        ]}
-      }],
+      [
+        {"0", ?SIMPLE_OBJECT1}
+      ],
       [
         {"0", ?SIMPLE_OBJECT1}
       ]
@@ -112,12 +110,10 @@ pass_when_lists_reversed_test() ->
   ?assert(
     [] == filter_errors(compare_as_set(
       "Key",
-      [{"value",
-        {struct,[
-          {"0", ?SIMPLE_OBJECT1},
-          {"1", ?SIMPLE_OBJECT2}
-        ]}
-      }],
+      [
+        {"0", ?SIMPLE_OBJECT1},
+        {"1", ?SIMPLE_OBJECT2}
+      ],
       [
         {"0", ?SIMPLE_OBJECT2},
         {"1", ?SIMPLE_OBJECT1}
@@ -128,13 +124,11 @@ pass_when_lists_reversed_and_unexpected_test() ->
   ?assert(
     [] == filter_errors(compare_as_set(
       "Key",
-      [{"value",
-        {struct, [
-          {"0", ?OBJECT_1},
-          {"1", ?OBJECT_2},
-          {"2", ?UNEXPECTED}
-        ]}
-      }],
+      [
+        {"0", ?OBJECT_1},
+        {"1", ?OBJECT_2},
+        {"2", ?UNEXPECTED}
+      ],
       [
         {"0", ?OBJECT_2},
         {"1", ?OBJECT_1}
@@ -145,12 +139,10 @@ pass_when_expected_contained_by_actual_test() ->
   ?assert(
     [] == filter_errors(compare_as_set(
       "Key",
-      [{"value",
-        {struct, [
-          {"0", ?OBJECT_1},
-          {"1", ?OBJECT_2}
-        ]}
-      }],
+      [
+        {"0", ?OBJECT_1},
+        {"1", ?OBJECT_2}
+      ],
       [
         {"0", ?OBJECT_2},
         {"1", ?OBJECT_1},
@@ -162,13 +154,11 @@ fail_when_expected_contained_by_actual_and_unexpected_test() ->
   ?assert(
     [{unexpected,"Key/2"}] == filter_errors(compare_as_set(
       "Key",
-      [{"value",
-        {struct, [
-          {"0", ?OBJECT_1},
-          {"1", ?OBJECT_2},
-          {"2", ?UNEXPECTED}
-        ]}
-      }],
+      [
+        {"0", ?OBJECT_1},
+        {"1", ?OBJECT_2},
+        {"2", ?UNEXPECTED}
+      ],
       [
         {"0", ?OBJECT_2},
         {"1", ?OBJECT_1},
@@ -183,12 +173,10 @@ fail_with_3_reasons_test() ->
       {unexpected,"Key/1"},
       {not_contains,"Key/0"}] == filter_errors(compare_as_set(
       "Key",
-      [{"value",
-        {struct, [
-          {"0", ?OBJECT_1},
-          {"1", ?UNEXPECTED}
-        ]}
-      }],
+      [
+        {"0", ?OBJECT_1},
+        {"1", ?UNEXPECTED}
+      ],
       [
         {"0", ?OBJECT_2},
         {"1", ?OBJECT_3}
@@ -202,7 +190,8 @@ filter_errors(Errors) ->
   lists:filter(fun({pass, _}) -> false; (_) -> true end, Errors).
 
 %% Do some extra preparation for calling katt_validate_type:validate_type_set/5
-compare_as_set(Key, Expected, ActualList) ->
+compare_as_set(Key, Expected0, ActualList) ->
+  Expected = [{"value", {struct, Expected0}}],
   katt_validate_type:validate_type_set( Key
                                       , Expected
                                       , ActualList
