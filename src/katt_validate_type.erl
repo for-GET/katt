@@ -41,13 +41,37 @@
                        ) -> pass | [validation_failure()].
 validate_type_set(ParentKey, Data, Actual0, _Unexpected, Callbacks) ->
   {struct, Expected0} = proplists:get_value("value", Data),
-  Unexpected = proplists:get_value(?MATCH_ANY, Expected0, ?MATCH_ANY),
-  Expected1 = proplists:delete(?MATCH_ANY, Expected0),
+  {Unexpected, Expected1} = get_unexpected(Expected0, ?MATCH_ANY),
   Expected = lists:keysort(2, Expected1),
   Actual = lists:keysort(2, Actual0),
   validate_set(ParentKey, Expected, Actual, Unexpected, Callbacks, []).
 
 %%%_* Internal =================================================================
+
+%% Extracts the UNEXPECTED parameter from the list
+%% Returns the found value ( or the default if none exists) and the new list
+%% Should probably find a better way to do this
+-spec get_unexpected( proplists:proplist()
+                    , string()
+                    ) -> {string(), proplists:proplist()}.
+get_unexpected(Expected0, Default) ->
+  MatchAnyList = lists:filtermap(
+    fun
+      ({Key,{struct,[{"0",{struct,[{?MATCH_ANY, Unexpected}]}}]}}) ->
+        {true, {Key, Unexpected}};
+      ({Key,?UNEXPECTED}) ->
+        {true, {Key, ?UNEXPECTED}};
+      ({Key,?MATCH_ANY}) ->
+        {true, {Key, ?MATCH_ANY}};
+      (_) ->
+        false
+    end , Expected0),
+  case MatchAnyList of
+    [] ->
+      {Default, Expected0};
+    [{Key, Unexpected} | _MaybeOther] ->
+      {Unexpected, proplists:delete(Key, Expected0)}
+  end.
 
 -spec validate_set( string()
                   , proplists:proplist()

@@ -54,6 +54,10 @@ katt_test_() ->
     , katt_run_with_set_comparison_strict_fails()
     , katt_run_with_set_comparison_unlimited()
     , katt_run_with_set_comparison_unlimited_fails()
+    , katt_run_with_set_comparison_strict()
+    , katt_run_with_set_comparison_strict_fails()
+    , katt_run_with_set_comparison_unlimited()
+    , katt_run_with_set_comparison_unlimited_fails()
     ]
   }.
 
