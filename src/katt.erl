@@ -32,6 +32,7 @@
 -export([ run/1
         , run/2
         , run/3
+        , make_callbacks/1
         ]).
 
 %% Internal exports
@@ -131,6 +132,8 @@ make_params(ScenarioParams) ->
                   ],
   katt_util:merge_proplists(DefaultParams, ScenarioParams).
 
+%%%_* Internal export ==========================================================
+%% @private
 make_callbacks(Callbacks) ->
   katt_util:merge_proplists([ {ext, ?DEFAULT_EXT_FUN}
                             , {recall, ?DEFAULT_RECALL_FUN}
