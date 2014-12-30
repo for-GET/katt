@@ -2,6 +2,8 @@
 
 REBAR ?= $(shell command -v rebar >/dev/null 2>&1 && echo "rebar" || echo "$(CURDIR)/rebar")
 
+ELVIS ?= $(shell command -v elvis >/dev/null 2>&1 && echo "elvis" || echo "$(CURDIR)/elvis")
+
 DEPS_PLT := $(CURDIR)/.deps_plt
 
 ERLANG_DIALYZER_APPS := erts \
@@ -48,6 +50,10 @@ docs:
 .PHONY: xref
 xref:
 	$(REBAR) xref skip_deps=true
+
+.PHONY: elvis
+elvis:
+	$(ELVIS) rock
 
 .PHONY: test
 test: eunit dialyzer
