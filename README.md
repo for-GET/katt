@@ -9,6 +9,8 @@ but it is now being maintained outside the company, by its authors and new contr
 
 ## Quick start
 
+[An example is worth a 1000 words.](doc/example-httpbin.apib)
+
 Use for shooting HTTP requests in a sequential order and verifying the response.
 Any relevant difference between expected and actual responses will cause a
 failure.
