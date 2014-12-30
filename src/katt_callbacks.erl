@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Copyright 2013- Klarna AB
+%%% Copyright 2012- Klarna AB
 %%% Copyright 2014- See AUTHORS
 %%%
 %%% Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +14,7 @@
 %%% See the License for the specific language governing permissions and
 %%% limitations under the License.
 %%%
-%%% @copyright 2013- Klarna AB
+%%% @copyright 2012- Klarna AB
 %%% @copyright 2014- See AUTHORS
 %%%
 %%% @doc Built-in default callback functions.
