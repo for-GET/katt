@@ -35,26 +35,26 @@
         ]).
 
 %%%_* Includes =================================================================
--include("blueprint_types.hrl").
+-include("katt.hrl").
 
 %%%_* API ======================================================================
 
--spec get_body(#katt_response{}) -> binary() | null.
+-spec get_body(response()) -> binary() | null.
 get_body(#katt_response{body = Body}) -> Body.
 
--spec set_body(binary()|null, #katt_response{}) -> #katt_response{}.
+-spec set_body(binary()|null, response()) -> response().
 set_body(Body, #katt_response{} = Res) -> Res#katt_response{body = Body}.
 
--spec get_headers(#katt_response{}) -> [http_header()].
+-spec get_headers(response()) -> [http_header()].
 get_headers(#katt_response{headers = Hdrs}) -> Hdrs.
 
--spec set_headers([http_header()], #katt_response{}) -> #katt_response{}.
+-spec set_headers([http_header()], response()) -> response().
 set_headers(Hdrs, #katt_response{} = Res) -> Res#katt_response{headers = Hdrs}.
 
--spec get_status(#katt_response{}) -> integer().
+-spec get_status(response()) -> integer().
 get_status(#katt_response{status = Status}) -> Status.
 
--spec set_status(integer(), #katt_response{}) -> #katt_response{}.
+-spec set_status(integer(), response()) -> response().
 set_status(Status, #katt_response{} = Res) ->
   Res#katt_response{status = Status}.
 

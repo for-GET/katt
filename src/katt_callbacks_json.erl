@@ -120,7 +120,12 @@ validate_type( false = _JustCheck
              , Unexpected
              , Callbacks
              ) ->
-  katt_validate_type:validate_type_set(ParentKey, Expected, Actual, Unexpected, Callbacks);
+  katt_validate_type:validate_type_set( ParentKey
+                                      , Expected
+                                      , Actual
+                                      , Unexpected
+                                      , Callbacks
+                                      );
 validate_type( false = _JustCheck
              , _Type
              , _ParentKey

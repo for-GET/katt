@@ -149,7 +149,7 @@ parse(Hdrs, Body, Params, Callbacks) ->
 
 %% @doc Make a request, e.g. an HTTP request.
 %% @end
--spec request( #katt_request{}
+-spec request( request()
              , params()
              , callbacks()
              ) -> response().
@@ -168,8 +168,8 @@ request(R = #katt_request{}, Params, Callbacks) ->
 
 %% @doc Validate a response.
 %% @end
--spec validate( #katt_response{}
-              , #katt_response{}
+-spec validate( response()
+              , response()
               , params()
               , callbacks()
               ) -> {pass, details()} | {fail, details()}.
@@ -211,7 +211,7 @@ get_params_and_failures(Result) ->
        (Failure, {AddParams0, Failures0}) ->
         {AddParams0, [Failure | Failures0]}
     end,
-    {[],[]},
+    {[], []},
     lists:flatten(Result)
    ).
 

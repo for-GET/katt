@@ -36,8 +36,8 @@
                   }]
                }
              }
-           , {"1", {struct,[{"object1",1}]}}
-           , {"2",{struct,[{"object2",3}]}}
+           , {"1", {struct, [{"object1", 1}]}}
+           , {"2", {struct, [{"object2", 3}]}}
            ]
          }
        ).

@@ -37,32 +37,32 @@
         ]).
 
 %%%_* Includes =================================================================
--include("blueprint_types.hrl").
+-include("katt.hrl").
 
 %%%_* API ======================================================================
 
--spec get_body(#katt_request{}) -> binary() | null.
+-spec get_body(request()) -> binary() | null.
 get_body(#katt_request{body = Body}) -> Body.
 
--spec set_body(binary()|null, #katt_request{}) -> #katt_request{}.
+-spec set_body(binary()|null, request()) -> request().
 set_body(Body, #katt_request{} = Req) -> Req#katt_request{body = Body}.
 
--spec get_headers(#katt_request{}) -> [http_header()].
+-spec get_headers(request()) -> [http_header()].
 get_headers(#katt_request{headers = Hdrs}) -> Hdrs.
 
--spec set_headers([http_header()], #katt_request{}) -> #katt_request{}.
+-spec set_headers([http_header()], request()) -> request().
 set_headers(Hdrs, #katt_request{} = Req) -> Req#katt_request{headers = Hdrs}.
 
--spec get_method(#katt_request{}) -> string().
+-spec get_method(request()) -> string().
 get_method(#katt_request{method = Method}) -> Method.
 
--spec set_method(string(), #katt_request{}) -> #katt_request{}.
+-spec set_method(string(), request()) -> request().
 set_method(Method, #katt_request{} = Req) -> Req#katt_request{method = Method}.
 
--spec get_url(#katt_request{}) -> string().
+-spec get_url(request()) -> string().
 get_url(#katt_request{url = Url}) -> Url.
 
--spec set_url(string(), #katt_request{}) -> #katt_request{}.
+-spec set_url(string(), request()) -> request().
 set_url(Url, #katt_request{} =  Req) -> Req#katt_request{url = Url}.
 
 %%%_* Emacs ====================================================================

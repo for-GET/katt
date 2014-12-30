@@ -227,7 +227,7 @@ mock_lhttpc_request( "http://example.com/test-params"
 mock_lhttpc_request( "http://127.0.0.1/api-mismatch"
                    , "POST"
                    , [ {"Accept", "application/json"}
-                     , {"Content-Type","application/json"}
+                     , {"Content-Type", "application/json"}
                      ]
                    , _
                    , _Timeout

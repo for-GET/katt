@@ -103,10 +103,10 @@ katt_run_with_set_comparison_unlimited_fails() ->
                , katt:run(Scenario)
                ).
 
-
 %%% Helpers
 
-%% Mock response for set_comparison (match a finite set of values) test:
+%% Mock response for set_comparison test:
+%% (match a finite set of values)
 mock_lhttpc_request( "http://127.0.0.1/set_comparison_strict"
     , "GET"
     , _
@@ -117,10 +117,11 @@ mock_lhttpc_request( "http://127.0.0.1/set_comparison_strict"
   {ok, {{200, []}, [
     {"content-type", "application/json"}
   ], <<"{
-    \"set_of_objects\": [{\"number\":2},{\"number\":1}]
+    \"set_of_objects\": [{\"number\":2}, {\"number\":1}]
 }
 "/utf8>>}};
-%% Mock response for set_comparison (match a finite set of values) test:
+%% Mock response for set_comparison test:
+%% (match a finite set of values):
 mock_lhttpc_request( "http://127.0.0.1/set_comparison_unlimited"
     , "GET"
     , _
@@ -131,10 +132,11 @@ mock_lhttpc_request( "http://127.0.0.1/set_comparison_unlimited"
     {ok, {{200, []}, [
         {"content-type", "application/json"}
     ], <<"{
-    \"set_of_objects\": [{\"number\":2},{\"number\":1}, {\"another_number\":3}]
+    \"set_of_objects\": [{\"number\":2}, {\"number\":1}, {\"another_number\":3}]
 }
 "/utf8>>}};
-%% Mock response for set_comparison_unexpected (match any set of value, except the unexpected) test:
+%% Mock response for set_comparison_unexpected test:
+%% (match any set of value, except the unexpected)
 mock_lhttpc_request( "http://127.0.0.1/set_comparison_unexpected"
     , "GET"
     , _
@@ -145,7 +147,7 @@ mock_lhttpc_request( "http://127.0.0.1/set_comparison_unexpected"
     {ok, {{200, []}, [
         {"content-type", "application/json"}
     ], <<"{
-    \"set_of_objects\": [{\"number\":2},{\"number\":1},{\"number\":0}]
+    \"set_of_objects\": [{\"number\":2}, {\"number\":1}, {\"number\":0}]
 }
 "/utf8>>}}.
 
@@ -158,8 +160,8 @@ GET /set_comparison_strict
 < Content-Type: application/json
 {
     \"set_of_objects\": {
-        \"{{type}}\" : \"set\",
-        \"value\"    : [{\"number\":1},{\"number\":2},\"{{unexpected}}\"]
+        \"{{type}}\": \"set\",
+        \"value\": [{\"number\":1}, {\"number\":2}, \"{{unexpected}}\"]
     }
 }
 "/utf8>>);
@@ -172,8 +174,8 @@ GET /set_comparison_strict
 < Content-Type: application/json
 {
     \"set_of_objects\": {
-        \"{{type}}\" : \"set\",
-        \"value\"    : [{\"number\":1},\"{{unexpected}}\"]
+        \"{{type}}\": \"set\",
+        \"value\": [{\"number\":1}, \"{{unexpected}}\"]
     }
 }
 "/utf8>>);
@@ -186,8 +188,8 @@ GET /set_comparison_unlimited
 < Content-Type: application/json
 {
     \"set_of_objects\": {
-        \"{{type}}\" : \"set\",
-        \"value\"    : [{\"number\":1},{\"number\":2}]
+        \"{{type}}\": \"set\",
+        \"value\": [{\"number\":1}, {\"number\":2}]
     }
 }
 "/utf8>>);
@@ -200,8 +202,8 @@ GET /set_comparison_unlimited
 < Content-Type: application/json
 {
     \"set_of_objects\": {
-        \"{{type}}\" : \"set\",
-        \"value\"    : [{\"number\":1},{\"number\":2},{\"number\":3}]
+        \"{{type}}\": \"set\",
+        \"value\": [{\"number\":1}, {\"number\":2}, {\"number\":3}]
     }
 }
 "/utf8>>).

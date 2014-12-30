@@ -65,7 +65,8 @@ validate_set( _ParentKey
             , Errors
             ) ->
   lists:flatten(Errors);
-%% All expected elements have been consumed, and we allow extra actual elements
+%% All expected elements have been consumed,
+%% and we allow extra actual elements
 validate_set( _ParentKey
             , [] = _Expected
             , _Actual
@@ -74,7 +75,8 @@ validate_set( _ParentKey
             , Errors
             ) ->
   lists:flatten(Errors);
-%% All expected elements have been consumed, and we do not allow extra actual elements
+%% All expected elements have been consumed,
+%% and we do not allow extra actual elements
 validate_set( ParentKey
             , [] = _Expected
             , Actual
@@ -85,7 +87,8 @@ validate_set( ParentKey
   [ {unexpected, ParentKey ++ "/" ++ Key}
     || {Key, _Value} <- Actual
   ] ++ Errors;
-%% All actual elements have been consumed, and there are still expected elements
+%% All actual elements have been consumed,
+%% and there are still expected elements
 validate_set( ParentKey
             , Expected
             , []

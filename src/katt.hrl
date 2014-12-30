@@ -78,6 +78,7 @@
 -type validation_failure()  :: {reason(), details()}.
 
 -type description()         :: string().
+-type request()             :: #katt_request{}.
 -type response()            :: #katt_response{}
                              | {error, any()}.
 -type body()                :: null
