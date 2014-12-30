@@ -36,6 +36,7 @@
 
 %% Internal exports
 -export([ run/4
+        , make_callbacks/1
         ]).
 
 %%%_* Includes =================================================================
@@ -74,7 +75,8 @@ run(Scenario, ScenarioParams, ScenarioCallbacks) ->
   spawn_link(?MODULE, run, [self(), Scenario, Params, Callbacks]),
   run_loop(ScenarioTimeout, ProgressFun).
 
-%%%_* Internal export ==========================================================
+%%%_* Internal exports =========================================================
+
 %% @private
 run(From, Scenario, Params, Callbacks) ->
   From ! {progress, parsing, Scenario},
@@ -100,6 +102,16 @@ run(From, Scenario, Params, Callbacks) ->
   Result = {Status, Scenario, Params, FinalParams, TransactionResults},
   From ! {progress, status, Status},
   From ! {done, Result}.
+
+%% @private
+make_callbacks(Callbacks) ->
+  katt_util:merge_proplists([ {ext, ?DEFAULT_EXT_FUN}
+                            , {recall, ?DEFAULT_RECALL_FUN}
+                            , {parse, ?DEFAULT_PARSE_FUN}
+                            , {request, ?DEFAULT_REQUEST_FUN}
+                            , {validate, ?DEFAULT_VALIDATE_FUN}
+                            , {progress, ?DEFAULT_PROGRESS_FUN}
+                            ], Callbacks).
 
 %%%_* Internal =================================================================
 
@@ -130,15 +142,6 @@ make_params(ScenarioParams) ->
                   , {scenario_timeout, ?DEFAULT_SCENARIO_TIMEOUT}
                   ],
   katt_util:merge_proplists(DefaultParams, ScenarioParams).
-
-make_callbacks(Callbacks) ->
-  katt_util:merge_proplists([ {ext, ?DEFAULT_EXT_FUN}
-                            , {recall, ?DEFAULT_RECALL_FUN}
-                            , {parse, ?DEFAULT_PARSE_FUN}
-                            , {request, ?DEFAULT_REQUEST_FUN}
-                            , {validate, ?DEFAULT_VALIDATE_FUN}
-                            , {progress, ?DEFAULT_PROGRESS_FUN}
-                            ], Callbacks).
 
 run_scenario(From, Scenario, Blueprint, Params, Callbacks) ->
   Result = run_transactions( From
