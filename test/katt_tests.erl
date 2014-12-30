@@ -1,5 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Copyright 2013 Klarna AB
+%%% Copyright 2013- Klarna AB
+%%% Copyright 2014- See AUTHORS
 %%%
 %%% Licensed under the Apache License, Version 2.0 (the "License");
 %%% you may not use this file except in compliance with the License.
@@ -13,7 +14,8 @@
 %%% See the License for the specific language governing permissions and
 %%% limitations under the License.
 %%%
-%%% @copyright 2013 Klarna AB
+%%% @copyright 2013- Klarna AB
+%%% @copyright 2014- See AUTHORS
 %%%
 %%% KATT tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -693,7 +695,7 @@ GET /set_comparison_unlimited
 }
 "/utf8>>).
 
-%%%_* Emacs ============================================================
+%%%_* Emacs ====================================================================
 %%% Local Variables:
 %%% allout-layout: t
 %%% erlang-indent-level: 2
