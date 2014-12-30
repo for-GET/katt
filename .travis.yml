@@ -1,5 +1,5 @@
-language: erlang
-script: "make && make test"
+language:
+  - erlang
 otp_release:
   - 17.3
   - 17.1
@@ -12,3 +12,6 @@ otp_release:
   - R15B02
   - R15B01
   - R15B
+script:
+  - make
+  - make test
