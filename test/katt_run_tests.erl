@@ -17,10 +17,10 @@
 %%% @copyright 2013- Klarna AB
 %%% @copyright 2014- See AUTHORS
 %%%
-%%% KATT tests
+%%% KATT Run Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
--module(katt_tests).
+-module(katt_run_tests).
 
 -include_lib("eunit/include/eunit.hrl").
 
