@@ -62,9 +62,9 @@ katt ./doc/example-httpbin.apib hostname=httpbin.org my_name=Joe your_name=Mike
 
 If you want non-string params, use `:=` as a separator e.g. `my_int:=123`.
 
-You can also output the result in JSON format, with
+You can also output the result in JSON format, with `--json`, and beautify it e.g. with python
 ```bash
-katt --json ./doc/example-httpbin.apib hostname=httpbin.org my_name=Joe your_name=Mike
+katt --json ./doc/example-httpbin.apib hostname=httpbin.org my_name=Joe your_name=Mike | python -m json.tool
 ```
 
 ## Interface
