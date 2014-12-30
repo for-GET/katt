@@ -39,8 +39,8 @@
                        , term()
                        , callbacks()
                        ) -> pass | [validation_failure()].
-validate_type_set(ParentKey, Data, Actual0, _Unexpected, Callbacks) ->
-  {struct, Expected0} = proplists:get_value("value", Data),
+validate_type_set(ParentKey, Options, Actual0, _Unexpected, Callbacks) ->
+  {struct, Expected0} = proplists:get_value("value", Options),
   Unexpected = proplists:get_value(?MATCH_ANY, Expected0, ?MATCH_ANY),
   Expected1 = proplists:delete(?MATCH_ANY, Expected0),
   Expected = lists:keysort(2, Expected1),
