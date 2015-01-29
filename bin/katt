@@ -15,7 +15,9 @@ main(["--json", ScenarioFilename|Params]) ->
         {pass, _, _, _ , _} ->
             ok;
         _ ->
-            init:stop(1)
+            %% init:stop not setting status code correctly
+            %% init:stop(1)
+            halt(1)
     end;
 main([ScenarioFilename|Params]) ->
     KattResult = katt_run(ScenarioFilename, Params),
@@ -24,7 +26,9 @@ main([ScenarioFilename|Params]) ->
         {pass, _, _, _ , _} ->
             ok;
         _ ->
-            init:stop(1)
+            %% init:stop not setting status code correctly
+            %% init:stop(1)
+            halt(1)
     end.
 
 %%%
