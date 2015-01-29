@@ -154,6 +154,8 @@ run_scenario(From, Scenario, Blueprint, Params, Callbacks) ->
   {FinalParams, TransactionResults} = Result,
   {FinalParams, lists:reverse(TransactionResults)}.
 
+run_transactions(_From, _Scenario, [], FinalParams, _Callbacks, Acc) ->
+  {FinalParams, Acc};
 run_transactions( From
                 , Scenario
                 , [#katt_transaction{ description=Description
@@ -201,9 +203,7 @@ run_transactions( From
                 },
       From ! {progress, transaction_result, Summary},
       {Params, [Summary|Acc]}
-  end;
-run_transactions(_From, _Scenario, [], FinalParams, _Callbacks, Acc) ->
-  {FinalParams, Acc}.
+  end.
 
 make_katt_request( #katt_request{headers=Hdrs0, url=Url0, body=Body0} = Req
                  , Params
