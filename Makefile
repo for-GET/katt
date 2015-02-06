@@ -85,7 +85,8 @@ dialyzer: $(DEPS_PLT)
 
 .PHONY: distclean
 distclean:
-	rm -rf deps $(DEPS_PLT)
+	$(RM) $(DEPS_PLT)
+	$(RM) -r deps
 	$(MAKE) clean
 
 ebin/katt.app:
