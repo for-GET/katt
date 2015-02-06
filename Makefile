@@ -69,6 +69,7 @@ conf_clean:
 .PHONY: clean
 clean:
 	$(REBAR) clean
+	$(RM) .rebar/DEV_MODE
 	$(RM) doc/*.html
 	$(RM) doc/*.png
 	$(RM) doc/*.css
@@ -92,5 +93,10 @@ distclean:
 ebin/katt.app:
 	$(MAKE) compile
 
-deps:
+.PHONY: deps
+deps: .rebar/DEV_MODE
 	$(MAKE) get-deps
+
+.rebar/DEV_MODE:
+	mkdir -p .rebar
+	touch .rebar/DEV_MODE

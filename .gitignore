@@ -11,3 +11,4 @@
 deps/
 /src/katt_blueprint.erl
 .deps_plt
+/.rebar
