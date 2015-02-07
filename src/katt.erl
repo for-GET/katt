@@ -28,7 +28,8 @@
 
 %%%_* Exports ==================================================================
 %% API
--export([ run/1
+-export([ main/1
+        , run/1
         , run/2
         , run/3
         ]).
@@ -42,6 +43,12 @@
 -include("katt.hrl").
 
 %%%_* API ======================================================================
+
+%% @doc Run from CLI with arguments.
+%% @end
+-spec main([string()]) -> ok.
+main(Args) ->
+  katt_cli:main(Args).
 
 %% @doc Run test scenario. Argument is the full path to the scenario file.
 %% The scenario filename should be a KATT Blueprint file.

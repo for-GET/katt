@@ -1,5 +1,6 @@
 /.deps_plt
 /.rebar
+/bin
 /deps
 /doc/*.html
 /doc/edoc-info
