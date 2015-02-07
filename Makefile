@@ -25,11 +25,7 @@ endif
 
 
 .PHONY: all
-all: deps ebin/katt.app
-
-.PHONY: escriptize
-escriptize: all
-	$(REBAR) escriptize
+all: deps ebin/katt.app bin/katt
 
 .PHONY: compile
 compile:
@@ -96,6 +92,9 @@ distclean:
 
 ebin/katt.app:
 	$(MAKE) compile
+
+bin/katt: ebin/katt.app
+	$(REBAR) escriptize
 
 .PHONY: deps
 deps: .rebar/DEV_MODE
