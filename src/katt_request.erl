@@ -1,6 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Copyright 2012- Klarna AB
-%%% Copyright 2014- See AUTHORS
+%%% Copyright 2014- AUTHORS
 %%%
 %%% Licensed under the Apache License, Version 2.0 (the "License");
 %%% you may not use this file except in compliance with the License.
@@ -14,8 +14,7 @@
 %%% See the License for the specific language governing permissions and
 %%% limitations under the License.
 %%%
-%%% @copyright 2012- Klarna AB
-%%% @copyright 2014- See AUTHORS
+%%% @copyright 2012- Klarna AB, AUTHORS
 %%%
 %%% @doc Accessors for katt_request
 %%% @end
