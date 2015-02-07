@@ -1,102 +1,43 @@
-.NOTPARALLEL:
+export PATH := $(CURDIR):$(PATH)
 
-REBAR ?= $(shell command -v rebar >/dev/null 2>&1 && echo "rebar" || echo "$(CURDIR)/rebar")
+PROJECT = katt
+DEPS = mochijson3 lhttpc neotoma
+TEST_DEPS = meck
 
-ELVIS ?= $(shell command -v elvis >/dev/null 2>&1 && echo "elvis" || echo "$(CURDIR)/elvis")
+dep_mochijson3 = git git://github.com/tophitpoker/mochijson3.git 1a1c913ac80bb45d3de5fbd74d21e96c45e9e844
+dep_lhttpc = git git://github.com/waisbrot/lhttpc.git 824a89316d59353181990f5a461157751ca67907
+dep_neotoma = git git://github.com/seancribbs/neotoma.git 1.6.1
+dep_meck = git git://github.com/eproxus/meck.git 0.8.2
 
-DEPS_PLT := $(CURDIR)/.deps_plt
+ERLC_OPTS ?= -Werror \
+				+debug_info \
+				+warn_unused_vars \
+				+warn_shadow_vars \
+				+warn_unused_import \
+				+warn_export_all \
+				+warn_export_vars \
+				+warn_obsolete_vars \
+				+warn_untyped_recored \
+				+warnings_as_errors
 
-ERLANG_DIALYZER_APPS := erts \
-					    kernel \
-					    ssl \
-					    stdlib
+CT_SUITES = katt
+CT_OPTS = -cover test/cover.spec
+PLT_APPS = ssl # erts kernel stdlib # included by default
 
-DIALYZER := dialyzer
+all::
 
-# Travis CI is slow at building dialyzer PLT
-ifeq ($(TRAVIS), true)
-	OTP_VSN := $(shell erl -noshell -eval 'io:format("~p", [erlang:system_info(otp_release)]), erlang:halt(0).' | perl -lne 'print for /R(\d+).*/g')
-	SLOW_DIALYZER := $(shell expr $(OTP_VSN) \<= 14 )
+ebin/$(PROJECT).app:: src/katt_blueprint.erl
 
-	ifeq ($(SLOW_DIALYZER), 1)
-		DIALYZER := : not running dialyzer on TRAVIS with R14
-	endif
-endif
+include erlang.mk
 
+deps:: src/katt_blueprint.erl
 
-.PHONY: all
-all: deps ebin/katt.app
-
-.PHONY: compile
-compile:
-	$(REBAR) compile
-
-.PHONY: get-deps
-get-deps:
-	$(REBAR) get-deps
-
-.PHONY: update-deps
-update-deps:
-	$(REBAR) update-deps
-
-.PHONY: delete-deps
-delete-deps:
-	$(REBAR) delete-deps
-
-.PHONY: docs
-docs:
-	$(REBAR) doc skip_deps=true
-
-.PHONY: xref
-xref:
-	$(REBAR) xref skip_deps=true
-
-.PHONY: elvis
-elvis:
-	$(ELVIS) rock
-
-.PHONY: test
-test: eunit dialyzer
-
-.PHONY: eunit
-eunit:
-	$(REBAR) eunit skip_deps=true
-
-.PHONY: conf_clean
-conf_clean:
-	:
-
-.PHONY: clean
-clean:
-	$(REBAR) clean
-	$(RM) .rebar/DEV_MODE
-	$(RM) doc/*.html
-	$(RM) doc/*.png
-	$(RM) doc/*.css
-	$(RM) doc/edoc-info
-	$(RM) ebin/*.d
+clean::
 	$(RM) src/katt_blueprint.erl
 
-$(DEPS_PLT):
-	$(DIALYZER) --build_plt --apps $(ERLANG_DIALYZER_APPS) -r deps --output_plt $(DEPS_PLT)
+# EXTRA
 
-.PHONY: dialyzer
-dialyzer: $(DEPS_PLT)
-	$(DIALYZER) --plt $(DEPS_PLT) --src $(shell find src -name *.erl -not -name katt_blueprint.erl)
+src/katt_blueprint.erl:
+	$(CURDIR)/priv/compile-parser
 
-.PHONY: distclean
-distclean:
-	$(RM) $(DEPS_PLT)
-	$(RM) -r deps
-	$(MAKE) clean
-
-ebin/katt.app:
-	$(MAKE) compile
-
-.PHONY: deps
-deps: .rebar/DEV_MODE
-	$(MAKE) get-deps
-
-.rebar/DEV_MODE:
-	mkdir -p .rebar
-	touch .rebar/DEV_MODE
+test: eunit dialyze

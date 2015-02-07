@@ -24,14 +24,14 @@ defmodule KATT.Mixfile do
 
   defp package do
     [files: ["AUTHORS",
-             "GNUMakefile",
+             "Makefile",
              "LICENSE",
              "README.md",
              "doc",
+             "erlang.mk",
              "include",
              "package.exs",
              "priv",
-             "rebar.config",
              "src"],
      licenses: ["Apache 2.0"],
      links: %{"GitHub" => "https://github.com/for-GET/katt"}]

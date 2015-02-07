@@ -48,7 +48,7 @@
 %% @end
 -spec main([string()]) -> ok.
 main(Args) ->
-  katt_cli(Args).
+  katt_cli:main(Args).
 
 %% @doc Run test scenario. Argument is the full path to the scenario file.
 %% The scenario filename should be a KATT Blueprint file.
