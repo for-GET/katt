@@ -27,6 +27,10 @@ endif
 .PHONY: all
 all: deps ebin/katt.app
 
+.PHONY: escriptize
+escriptize: all
+	$(REBAR) escriptize
+
 .PHONY: compile
 compile:
 	$(REBAR) compile
