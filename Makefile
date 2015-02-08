@@ -26,6 +26,7 @@ endif
 
 .PHONY: all
 all: deps ebin/katt.app bin/katt
+	bin/katt --help
 
 .PHONY: compile
 compile:
