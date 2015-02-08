@@ -67,10 +67,6 @@ main([ScenarioFilename|Params]) ->
 
 katt_run(ScenarioFilename, Params0) ->
     Params = parse_params(Params0),
-    Dir = filename:dirname(filename:dirname(escript:script_name())),
-    code:add_pathz(Dir ++ "/ebin"),
-    code:add_pathz(Dir ++ "/deps/lhttpc/ebin"),
-    code:add_pathz(Dir ++ "/deps/mochijson3/ebin"),
     ok = ssl:start(),
     ok = lhttpc:start(),
     katt:run( ScenarioFilename
