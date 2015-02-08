@@ -9,9 +9,6 @@
 /ebin
 /logs
 /src/katt_blueprint.erl
-*.app
-*.beam
-*.d
 *.plt
 .#*
 .eunit

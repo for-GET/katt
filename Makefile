@@ -70,12 +70,14 @@ conf_clean:
 .PHONY: clean
 clean:
 	$(REBAR) clean
-	$(RM) .rebar/DEV_MODE
+	$(RM) -r .rebar
+	$(RM) -r bin
 	$(RM) doc/*.html
-	$(RM) doc/*.png
-	$(RM) doc/*.css
 	$(RM) doc/edoc-info
-	$(RM) ebin/*.d
+	$(RM) doc/erlang.png
+	$(RM) doc/stylesheet.css
+	$(RM) -r ebin
+	$(RM) -r logs
 	$(RM) src/katt_blueprint.erl
 
 $(DEPS_PLT):
