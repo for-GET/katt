@@ -193,7 +193,7 @@ run_transactions( From
                 , pass
                 },
       From ! {progress, transaction_result, Summary},
-      NextParams = ordsets:union(Params, ordsets:from_list(AddParams)),
+      NextParams = katt_util:merge_proplists(Params, AddParams),
       run_transactions( From
                       , Scenario
                       , T

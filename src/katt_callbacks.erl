@@ -176,14 +176,15 @@ validate( Expected = #katt_response{}
         , Actual = #katt_response{}
         , _Params
         , Callbacks)                                     ->
- {AddParams0, Failures0} = get_params_and_failures(
-                             validate_status(Expected, Actual, Callbacks)),
- {AddParams1, Failures1} = get_params_and_failures(
-                             validate_headers(Expected, Actual, Callbacks)),
- {AddParams2, Failures2} = get_params_and_failures(
-                             validate_body(Expected, Actual, Callbacks)),
- AddParams = AddParams0 ++ AddParams1 ++ AddParams2,
- Failures = Failures0 ++ Failures1 ++ Failures2,
+  {AddParams0, Failures0} = get_params_and_failures(
+                              validate_status(Expected, Actual, Callbacks)),
+  {AddParams1, Failures1} = get_params_and_failures(
+                              validate_headers(Expected, Actual, Callbacks)),
+  AddParams2 = katt_util:merge_proplists(AddParams0, AddParams1),
+  {AddParams3, Failures2} = get_params_and_failures(
+                              validate_body(Expected, Actual, Callbacks)),
+  AddParams = katt_util:merge_proplists(AddParams2, AddParams3),
+  Failures = Failures0 ++ Failures1 ++ Failures2,
   case Failures of
     [] -> {pass, AddParams};
     _  -> {fail, Failures}
@@ -205,8 +206,9 @@ get_params_and_failures(Result) when not is_list(Result) ->
   get_params_and_failures([Result]);
 get_params_and_failures(Result) ->
   lists:foldl(
-    fun({pass, AddParams}, {AddParams0, Failures0}) ->
-        {AddParams ++ AddParams0, Failures0};
+    fun({pass, AddParams1}, {AddParams0, Failures0}) ->
+        AddParams = katt_util:merge_proplists(AddParams0, AddParams1),
+        {AddParams, Failures0};
        (Failure, {AddParams0, Failures0}) ->
         {AddParams0, [Failure | Failures0]}
     end,
