@@ -46,8 +46,8 @@
 
 -type scenario_filename()   :: nonempty_string().
 -type params()              :: [{param_name(), param()}].
--type param_name()          :: atom()
-                             | string().
+-type param_name()          :: string()
+                             | atom().
 -type param()               :: atom()
                              | integer()
                              | float()

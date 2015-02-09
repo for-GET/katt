@@ -72,7 +72,7 @@ run(ScenarioFilename, Params) -> run(ScenarioFilename, Params, []).
 run(Scenario, ScenarioParams, ScenarioCallbacks) ->
   Params = ordsets:from_list(make_params(ScenarioParams)),
   Callbacks = make_callbacks(ScenarioCallbacks),
-  ScenarioTimeout = proplists:get_value( scenario_timeout
+  ScenarioTimeout = proplists:get_value( "scenario_timeout"
                                        , Params
                                        ),
   ProgressFun = proplists:get_value( progress
@@ -135,17 +135,18 @@ run_loop(ScenarioTimeout, ProgressFun) ->
 
 %% Take default params, and also merge in optional params from Params, to return
 %% a proplist of params.
-make_params(ScenarioParams) ->
-  Protocol = proplists:get_value(protocol, ScenarioParams, ?DEFAULT_PROTOCOL),
+make_params(ScenarioParams0) ->
+  ScenarioParams = [ {katt_util:to_list(K), V} || {K, V} <- ScenarioParams0],
+  Protocol = proplists:get_value("protocol", ScenarioParams, ?DEFAULT_PROTOCOL),
   DefaultPort = case Protocol of
                   ?PROTOCOL_HTTP  -> ?DEFAULT_PORT_HTTP;
                   ?PROTOCOL_HTTPS -> ?DEFAULT_PORT_HTTPS
                 end,
-  DefaultParams = [ {protocol, Protocol}
-                  , {hostname, ?DEFAULT_HOSTNAME}
-                  , {port, DefaultPort}
-                  , {request_timeout, ?DEFAULT_REQUEST_TIMEOUT}
-                  , {scenario_timeout, ?DEFAULT_SCENARIO_TIMEOUT}
+  DefaultParams = [ {"protocol", Protocol}
+                  , {"hostname", ?DEFAULT_HOSTNAME}
+                  , {"port", DefaultPort}
+                  , {"request_timeout", ?DEFAULT_REQUEST_TIMEOUT}
+                  , {"scenario_timeout", ?DEFAULT_SCENARIO_TIMEOUT}
                   ],
   katt_util:merge_proplists(DefaultParams, ScenarioParams).
 
@@ -250,9 +251,9 @@ make_katt_response( #katt_response{headers=Hdrs0, body=Body0} = Res
 make_request_url(Url = ?PROTOCOL_HTTP "//" ++ _, _Params)  -> Url;
 make_request_url(Url = ?PROTOCOL_HTTPS "//" ++ _, _Params) -> Url;
 make_request_url(Path, Params) ->
-  Protocol = proplists:get_value(protocol, Params),
-  Hostname = proplists:get_value(hostname, Params),
-  Port = proplists:get_value(port, Params),
+  Protocol = proplists:get_value("protocol", Params),
+  Hostname = proplists:get_value("hostname", Params),
+  Port = proplists:get_value("port", Params),
   string:join([ Protocol
               , "//"
               , make_host(Protocol, Hostname, Port)

@@ -68,7 +68,7 @@ recall(_Scope, null, _Params, _Callbacks) ->
 recall(_Scope, Input, [], _Callbacks) ->
   Input;
 recall(text, Bin0, [{K0, V} | Next], Callbacks) ->
-  K = ?RECALL_BEGIN_TAG ++ katt_util:to_list(K0) ++ ?RECALL_END_TAG,
+  K = ?RECALL_BEGIN_TAG ++ K0 ++ ?RECALL_END_TAG,
   REK = katt_util:escape_regex(K),
   REV = katt_util:escape_regex(V),
   Bin = re:replace( Bin0
@@ -223,7 +223,7 @@ http_request(R = #katt_request{}, Params) ->
                 , R#katt_request.method
                 , R#katt_request.headers
                 , Body
-                , proplists:get_value(request_timeout, Params)
+                , proplists:get_value("request_timeout", Params)
                 , []
                 ).
 

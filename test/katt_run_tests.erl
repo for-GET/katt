@@ -114,15 +114,15 @@ katt_run_with_store() ->
                  , Scenario
                  , _
                  , [ _
-                   , _
-                   , _
-                   , _
-                   , _
                    , {"param1", "param1"}
                    , {"param2", "param2"}
                    , {"param3", "param3"}
                    , {"param4", "param4"}
                    , {"param5", "param5"}
+                   , _
+                   , _
+                   , _
+                   , _
                    ]
                  , [ {_, _, _, _, pass}
                    ]

@@ -96,9 +96,9 @@ parse_param(":=" ++ _Value, []) ->
 parse_param("=" ++ _Value, []) ->
     throw({error, invalid_key});
 parse_param(":=" ++ Value, Key) ->
-    {list_to_atom(lists:reverse(Key)), convert(Value)};
+    {lists:reverse(Key), convert(Value)};
 parse_param("=" ++ Value, Key) ->
-    {list_to_atom(lists:reverse(Key)), Value};
+    {lists:reverse(Key), Value};
 parse_param([Char|Rest], Key) ->
     parse_param(Rest, [Char|Key]).
 
