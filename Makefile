@@ -100,7 +100,7 @@ bin/katt: ebin/katt.app
 	$(REBAR) escriptize
 
 .PHONY: deps
-deps: .rebar/DEV_MODE
+deps:
 	$(MAKE) get-deps
 
 .rebar/DEV_MODE:
