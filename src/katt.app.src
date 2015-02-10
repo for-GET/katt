@@ -9,6 +9,10 @@
                     , {registered,   []}
                     , {applications, [ kernel
                                      , stdlib
+                                     , mochijson3
+                                     , crypto
+                                     , asn1
+                                     , public_key
                                      , ssl
                                      , lhttpc
                                      ]}

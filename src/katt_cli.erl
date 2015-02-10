@@ -67,8 +67,15 @@ main([ScenarioFilename|Params]) ->
 
 katt_run(ScenarioFilename, Params0) ->
     Params = parse_params(Params0),
-    ok = ssl:start(),
-    ok = lhttpc:start(),
+    %% Don't use application:ensure_all_started(katt)
+    %% in order to maintain compatibility with R16B01 and lower
+    ok = application:ensure_started(mochijson3),
+    ok = application:ensure_started(crypto),
+    ok = application:ensure_started(asn1),
+    ok = application:ensure_started(public_key),
+    ok = application:ensure_started(ssl),
+    ok = application:ensure_started(lhttpc),
+    ok = application:ensure_started(katt),
     katt:run( ScenarioFilename
             , Params
             , [{ progress
