@@ -68,14 +68,15 @@ main([ScenarioFilename|Params]) ->
 katt_run(ScenarioFilename, Params0) ->
     Params = parse_params(Params0),
     %% Don't use application:ensure_all_started(katt)
+    %% nor application:ensure_started(_)
     %% in order to maintain compatibility with R16B01 and lower
-    ok = application:ensure_started(mochijson3),
-    ok = application:ensure_started(crypto),
-    ok = application:ensure_started(asn1),
-    ok = application:ensure_started(public_key),
-    ok = application:ensure_started(ssl),
-    ok = application:ensure_started(lhttpc),
-    ok = application:ensure_started(katt),
+    ok = ensure_started(mochijson3),
+    ok = ensure_started(crypto),
+    ok = ensure_started(asn1),
+    ok = ensure_started(public_key),
+    ok = ensure_started(ssl),
+    ok = ensure_started(lhttpc),
+    ok = ensure_started(katt),
     katt:run( ScenarioFilename
             , Params
             , [{ progress
@@ -149,4 +150,12 @@ try_to_convert_to([boolean|Rest], Value0) ->
             false;
         _ ->
             try_to_convert_to(Rest, Value0)
+    end.
+
+ensure_started(App) ->
+    case application:start(App) of
+        ok ->
+            ok;
+        {error, {already_started, App}} ->
+            ok
     end.
