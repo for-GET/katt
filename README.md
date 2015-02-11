@@ -47,8 +47,7 @@ A simple example that will make requests to a third party server:
 
 ```bash
 ERL_LIBS=deps erl -pa ebin -noshell -eval '
-  ok = ssl:start(),
-  ok = lhttpc:start(),
+  application:ensure_all_started(katt),
   BlueprintFile = "./doc/example-httpbin.apib",
   Params = [{hostname, "httpbin.org"}, {my_name, "Joe"}, {your_name, "Mike"}],
   io:format("~p~n", [katt:run(BlueprintFile, Params)]).
