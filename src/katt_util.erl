@@ -89,7 +89,7 @@ maybe_json_string(X) ->
   X.
 
 insert_escape_quotes(Str) when is_binary(Str) ->
-  insert_escape_quotes(to_list(Str));
+  insert_escape_quotes(from_utf8(Str));
 insert_escape_quotes(Str) when is_list(Str) ->
   "\"" ++ Str ++ "\"".
 
