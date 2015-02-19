@@ -9,6 +9,7 @@
                     , {registered,   []}
                     , {applications, [ kernel
                                      , stdlib
+                                     , xmerl
                                      , mochijson3
                                      , crypto
                                      , asn1

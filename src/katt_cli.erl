@@ -70,6 +70,7 @@ katt_run(ScenarioFilename, Params0) ->
     %% Don't use application:ensure_all_started(katt)
     %% nor application:ensure_started(_)
     %% in order to maintain compatibility with R16B01 and lower
+    ok = ensure_started(xmerl),
     ok = ensure_started(mochijson3),
     ok = ensure_started(crypto),
     ok = ensure_started(asn1),
