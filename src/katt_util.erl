@@ -155,6 +155,12 @@ transaction_result_to_mochijson3({ Description
   Errors = case Result of
              pass ->
                [];
+             {error, Reason} ->
+               [{struct, [{reason, Reason}]}];
+             {error, Reason, Details} ->
+               {struct, [ {reason, Reason}
+                        , {details, Details}
+                        ]};
              {fail, Failures0} ->
                lists:map( fun transaction_failure_to_mochijson3/1
                         , Failures0
