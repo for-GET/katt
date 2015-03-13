@@ -74,8 +74,10 @@ parse(false = _JustCheck, _Hdrs, null, _Params, _Callbacks) ->
   [];
 parse(false = _JustCheck, Hdrs, Body, _Params, _Callbacks) ->
   case is_json_content_type(Hdrs) of
-    true  -> parse_json(Body);
-    false -> katt_util:from_utf8(Body)
+    true  ->
+      parse_json(Body);
+    false ->
+      katt_util:from_utf8(Body)
   end.
 
 
