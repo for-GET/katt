@@ -98,7 +98,7 @@ validate_body( false = _Justcheck
 validate_type( true = _JustCheck
              , "set"
              , _ParentKey
-             , _Expected
+             , _Options
              , _Actual
              , _Unexpected
              , _Callbacks
@@ -107,7 +107,7 @@ validate_type( true = _JustCheck
 validate_type( true = _JustCheck
              , _Type
              , _ParentKey
-             , _Expected
+             , _Options
              , _Actual
              , _Unexpected
              , _Callbacks
@@ -116,13 +116,13 @@ validate_type( true = _JustCheck
 validate_type( false = _JustCheck
              , "set"
              , ParentKey
-             , Expected
+             , Options
              , Actual
              , Unexpected
              , Callbacks
              ) ->
   katt_validate_type:validate_type_set( ParentKey
-                                      , Expected
+                                      , Options
                                       , Actual
                                       , Unexpected
                                       , Callbacks
@@ -130,7 +130,7 @@ validate_type( false = _JustCheck
 validate_type( false = _JustCheck
              , _Type
              , _ParentKey
-             , _Expected
+             , _Options
              , _Actual
              , _Unexpected
              , _Callbacks
@@ -155,10 +155,13 @@ parse_json(Bin) ->
 %% Convert binary strings,
 %% sort object keys and array items,
 %% add "array" identifier
-normalize_mochijson3({struct, Items}) ->
-  {struct, lists:sort([ {katt_util:from_utf8(Key), normalize_mochijson3(Value)}
-                        || {Key, Value} <- Items
-                      ])};
+normalize_mochijson3({struct, Items0}) ->
+  Items1 = lists:sort([ {katt_util:from_utf8(Key), normalize_mochijson3(Value)}
+                        || {Key, Value} <- Items0
+                      ]),
+  Type = proplists:get_value(?TYPE, Items1, struct),
+  Items = proplists:delete(?TYPE, Items1),
+  {Type, Items};
 normalize_mochijson3(Items0) when is_list(Items0) ->
   Items1 = [ normalize_mochijson3(Item)
              || Item <- Items0
@@ -174,7 +177,7 @@ normalize_mochijson3(Items0) when is_list(Items0) ->
              end,
   Items3 = lists:delete(?MATCH_ANY, Items2),
   Items = katt_util:enumerate(Items3),
-  {struct, Items ++ Unexpected ++ MatchAny};
+  {array, Items ++ Unexpected ++ MatchAny};
 normalize_mochijson3(Str) when is_binary(Str) ->
   katt_util:from_utf8(Str);
 normalize_mochijson3(Value) ->

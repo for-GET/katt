@@ -23,11 +23,11 @@
 -include_lib("eunit/include/eunit.hrl").
 
 -define( OBJECT_1
-       , { struct
+       , { array
          , [ { "0"
              , { struct
                , [{ "inner_object"
-                  , { struct
+                  , { array
                     , [ {"0", {struct, [{"inner_object1", 1}]}}
                       , {"1", {struct, [{"inner_object2", 2}]}}
                       , {"2", {struct, [{"inner_object3", 3}]}}
@@ -42,11 +42,11 @@
          }
        ).
 -define( OBJECT_2
-       , { struct
+       , { array
          , [ { "0"
              , { struct
                , [{ "inner_object"
-                  , { struct
+                  , { array
                     , [ {"0", {struct, [{"inner_object1", 2}]}}
                       , {"1", {struct, [{"inner_object2", 4}]}}
                       , {"2", {struct, [{"inner_object3", 6}]}}
@@ -61,11 +61,11 @@
          }
        ).
 -define( OBJECT_3
-       , { struct
+       , { array
          , [ { "0"
              , { struct
                , [{ "inner_object"
-                  , { struct
+                  , { array
                     , [ {"0", {struct, [{"inner_object1", 3}]}}
                       , {"1", {struct, [{"inner_object2", 6}]}}
                       , {"2", {struct, [{"inner_object3", 9}]}}
@@ -80,14 +80,14 @@
          }
        ).
 -define( SIMPLE_OBJECT1
-       , { struct
+       , { array
          , [ {"0", {struct, [{"type", "unknown"}]}}
            , {"1", {struct, [{"origin", "space"}]}}
            ]
          }
        ).
 -define( SIMPLE_OBJECT2
-       , { struct
+       , { array
          , [ {"0", {struct, [{"type", "known"}]}}
            , {"1", {struct, [{"origin", "earth"}]}}
            ]
@@ -172,12 +172,12 @@ filter_errors(Errors) ->
               ).
 
 %% Do some extra preparation for calling katt_validate_type:validate_type_set/5
-compare_as_set(Expected, Actual) ->
-  Options = [{"value", {struct, Expected}}],
+compare_as_set(EItems, AItems) ->
+  Options = [{"value", {array, EItems}}],
   Callbacks = katt:make_callbacks([]),
   katt_validate_type:validate_type_set( ""
                                       , Options
-                                      , Actual
+                                      , {array, AItems}
                                       , ?MATCH_ANY
                                       , Callbacks
                                       ).

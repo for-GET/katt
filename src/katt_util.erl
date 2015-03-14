@@ -223,38 +223,45 @@ validate(_ParentKey, _E, _E, _Unexpected, _Callbacks) ->
 %% Expected anything
 validate(_ParentKey, ?MATCH_ANY = _E, _A, _Unexpected, _Callbacks) ->
   {pass, []};
-%% Expected struct, got struct
+%% Expected struct/array, got struct/array
 validate( ParentKey
-        , {struct, EItems} = _E
-        , {struct, AItems} = _A
+        , {Type, EItems} = _E
+        , {Type, AItems} = _A
         , Unexpected
         , Callbacks
-        ) ->
-  case proplists:get_value("{{type}}", EItems) of
-    undefined ->
-      validate( ParentKey
-              , {json_struct, EItems}
-              , {json_struct, AItems}
-              , Unexpected
-              , Callbacks
-              );
-    Type ->
-      EItems1 = proplists:delete("{{type}}", EItems),
-      katt_callbacks:validate_type( Type
-                                  , ParentKey ++ "/{{" ++ Type ++ "}}"
-                                  , EItems1
-                                  , AItems
-                                  , Unexpected
-                                  , Callbacks
-                                  )
-  end;
-%% Expected JSON array/object, got JSON array/object
+        ) when Type =:= struct orelse
+               Type =:= array ->
+  validate_proplist( ParentKey
+                   , EItems
+                   , AItems
+                   , Unexpected
+                   , Callbacks
+                   );
+%% Expected some Type
 validate( ParentKey
-        , {json_struct, EItems0} = _E
-        , {json_struct, AItems} = _A
-        , _Unexpected
+        , {Type, Options} = _E
+        , A
+        , Unexpected
         , Callbacks
-        ) ->
+        ) when Type =/= struct andalso
+               Type =/= array ->
+  katt_callbacks:validate_type( Type
+                              , ParentKey ++ "/{{" ++ Type ++ "}}"
+                              , Options
+                              , A
+                              , Unexpected
+                              , Callbacks
+                              );
+%% Expected something else
+validate(ParentKey, E, A, Unexpected, _Callbacks) ->
+  validate_simple(ParentKey, E, A, Unexpected).
+
+validate_proplist( ParentKey
+                 , EItems0
+                 , AItems
+                 , _Unexpected
+                 , Callbacks
+                 ) ->
   Unexpected = proplists:get_value(?MATCH_ANY, EItems0, ?MATCH_ANY),
   EItems = proplists:delete(?MATCH_ANY, EItems0),
   Keys = lists:usort([ Key
@@ -267,9 +274,8 @@ validate( ParentKey
             , Callbacks
             )
     || Key <- Keys
-  ];
-validate(ParentKey, E, A, Unexpected, _Callbacks) ->
-  validate_simple(ParentKey, E, A, Unexpected).
+  ].
+
 
 %% Validate when unexpected values show up
 %% Expected anything

@@ -39,13 +39,20 @@
                        , term()
                        , callbacks()
                        ) -> pass | [validation_failure()].
-validate_type_set(ParentKey, Options, Actual0, _Unexpected, Callbacks) ->
-  {struct, Expected0} = proplists:get_value("value", Options),
-  Unexpected = proplists:get_value(?MATCH_ANY, Expected0, ?MATCH_ANY),
-  Expected1 = proplists:delete(?MATCH_ANY, Expected0),
-  Expected = lists:keysort(2, Expected1),
-  Actual = lists:keysort(2, Actual0),
-  validate_set(ParentKey, Expected, Actual, Unexpected, Callbacks, []).
+validate_type_set( ParentKey
+                 , Options
+                 , {array, AItems0} = _Actual
+                 , _Unexpected
+                 , Callbacks
+                 ) ->
+  {array, EItems0} = proplists:get_value("value", Options),
+  Unexpected = proplists:get_value(?MATCH_ANY, EItems0, ?MATCH_ANY),
+  EItems1 = proplists:delete(?MATCH_ANY, EItems0),
+  EItems = lists:keysort(2, EItems1),
+  AItems = lists:keysort(2, AItems0),
+  validate_set(ParentKey, EItems, AItems, Unexpected, Callbacks, []);
+validate_type_set(ParentKey, Options, Actual, _Unexpected, _Callbacks) ->
+  [{not_equal, {ParentKey, Options, Actual}}].
 
 %%%_* Internal =================================================================
 

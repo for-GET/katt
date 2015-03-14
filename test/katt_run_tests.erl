@@ -48,6 +48,7 @@ katt_test_() ->
     , katt_run_with_params()
     , katt_run_with_api_mismatch()
     , katt_run_with_store()
+    , katt_run_with_struct()
     ]
   }.
 
@@ -125,6 +126,20 @@ katt_run_with_store() ->
                    , _
                    ]
                  , [ {_, _, _, _, pass}
+                   ]
+                 }
+               , katt:run(Scenario)
+               ).
+
+katt_run_with_struct() ->
+  Scenario = "/mock/struct.apib",
+  ?_assertMatch( { fail
+                 , Scenario
+                 , _
+                 , _
+                 , [ {_, _, _, _, {fail, [ {not_equal, {"/body/not_object", _, _}}
+                                         , {not_equal, {"/body/not_array", _, _}}
+                                         ]}}
                    ]
                  }
                , katt:run(Scenario)
@@ -250,6 +265,22 @@ mock_lhttpc_request( "http://127.0.0.1/store"
                     {"x-foo", "param3"},
                     {"x-bar", "bazparam4"}], <<"{
     \"param5\": \"param5\"
+}
+"/utf8>>}};
+
+%% Mock response for struct test:
+mock_lhttpc_request( "http://127.0.0.1/struct"
+                   , "GET"
+                   , _
+                   , _
+                   , _Timeout
+                   , _Options
+                   ) ->
+  {ok, {{200, []}, [{"content-type", "application/json"}], <<"{
+    \"array\": [],
+    \"object\": {},
+    \"not_array\": [],
+    \"not_object\": {}
 }
 "/utf8>>}}.
 
@@ -405,6 +436,21 @@ GET /store
 < X-Bar: baz{{>param4}}
 {
     \"param5\": \"{{>param5}}\"
+}
+"/utf8>>);
+
+mock_katt_blueprint_parse_file("/mock/struct.apib") ->
+  katt_blueprint_parse:string(
+    <<"--- Test 8 ---
+
+GET /struct
+< 200
+< Content-Type: application/json
+{
+    \"array\": [],
+    \"object\": {},
+    \"not_array\": {},
+    \"not_object\": []
 }
 "/utf8>>).
 
