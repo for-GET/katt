@@ -263,7 +263,8 @@ mock_lhttpc_request( "http://127.0.0.1/store"
   {ok, {{200, []}, [{"content-type", "application/json"},
                     {"set-cookie", "mycookie=param1; path=param2;"},
                     {"x-foo", "param3"},
-                    {"x-bar", "bazparam4"}], <<"{
+                    {"x-bar", "bazparam4"},
+                    {"x-qux", "quxnorf"}], <<"{
     \"param5\": \"param5\"
 }
 "/utf8>>}};
@@ -434,6 +435,7 @@ GET /store
 < Set-Cookie: mycookie={{>param1}}; path={{>param2}};
 < X-Foo: {{>param3}}
 < X-Bar: baz{{>param4}}
+< X-Qux: qux{{_}}
 {
     \"param5\": \"{{>param5}}\"
 }

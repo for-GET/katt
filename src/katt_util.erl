@@ -310,7 +310,7 @@ validate_primitive(_Key, ?MATCH_ANY, _A) ->
   {pass, []};
 validate_primitive(Key, E, A) when is_list(E) ->
   case re:run( E
-             , "(" ++ ?STORE_BEGIN_TAG ++ "[^}]+" ++ ?STORE_END_TAG ++ ")"
+             , "(" ++ ?STORE_BEGIN_TAG ++ "[^}]+" ++ ?STORE_END_TAG ++ "|" ++ ?MATCH_ANY ++ ")"
              , [ global
                , {capture, all_but_first, list}
                ]
@@ -318,7 +318,12 @@ validate_primitive(Key, E, A) when is_list(E) ->
     nomatch ->
       {not_equal, {Key, E, A}};
     {match, [[E]]} ->
-        {pass, [{store_tag2param(E), A}]};
+      case E of
+        ?MATCH_ANY ->
+          {pass, []};
+        _ ->
+          {pass, [{store_tag2param(E), A}]}
+      end;
     {match, Params0} ->
       Type = if
                is_list(A) ->
@@ -326,7 +331,9 @@ validate_primitive(Key, E, A) when is_list(E) ->
                is_binary(A) ->
                  binary
              end,
-      Params = lists:map( fun([Match]) ->
+      Params = lists:map( fun([?MATCH_ANY]) ->
+                              ?MATCH_ANY;
+                             ([Match]) ->
                               store_tag2param(Match)
                           end
                         , Params0),
@@ -336,22 +343,34 @@ validate_primitive(Key, E, A) when is_list(E) ->
                       , [global]
                       ),
       RE1 = re:replace( RE0
+                      , ?MATCH_ANY
+                      , "___store___"
+                      , [global]
+                      ),
+      RE2 = re:replace( RE1
                       , "[\\-\\[\\]\\/\\{\\}\\(\\)\\*\\+"
                         ++ "\\?\\.\\,\\\\\^\\$\\|\\#\\s\\&]"
                       , "\\\\&"
                       , [global]
                       ),
-      RE2 = re:replace( RE1
+      RE3 = re:replace( RE2
                       , "___store___"
                       , "(.+)"
                       , [global]
                       ),
-      RE = ["^", RE2, "$"],
+      RE = ["^", RE3, "$"],
       case re:run(A, RE, [global, {capture, all_but_first, Type}]) of
         nomatch ->
           {not_equal, {Key, E, A}};
         {match, [Values]} ->
-          {pass, lists:zip(Params, Values)}
+          ParamsValues = lists:filter( fun({?MATCH_ANY, _Value}) ->
+                                           false;
+                                          (_) ->
+                                           true
+                                       end
+                                     , lists:zip(Params, Values)
+                                     ),
+          {pass, ParamsValues}
       end
   end;
 validate_primitive(Key, E, A) ->
