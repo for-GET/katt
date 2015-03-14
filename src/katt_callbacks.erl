@@ -216,18 +216,32 @@ get_params_and_failures(Result) ->
     lists:flatten(Result)
    ).
 
-http_request(R = #katt_request{}, Params) ->
-  Body = case R#katt_request.body of
+http_request( #katt_request{ method = Method
+                           , url = Url
+                           , headers = Hdrs0
+                           , body = Body0
+                           } = _R
+            , Params) ->
+  Body = case Body0 of
     null -> <<>>;
     Bin  -> Bin
   end,
-  lhttpc:request( R#katt_request.url
-                , R#katt_request.method
-                , R#katt_request.headers
-                , Body
-                , proplists:get_value("request_timeout", Params)
-                , []
-                ).
+  Sleep = case proplists:get_value("x-katt-request-sleep", Hdrs0) of
+            undefined ->
+              0;
+            SleepStr ->
+              list_to_integer(SleepStr)
+          end,
+  Timeout = case proplists:get_value("x-katt-request-timeout", Hdrs0) of
+              undefined ->
+                proplists:get_value("request_timeout", Params);
+              TimeoutStr ->
+                list_to_integer(TimeoutStr)
+            end,
+  Hdrs1 = proplists:delete("x-katt-sleep", Hdrs0),
+  Hdrs = proplists:delete("x-katt-timeout", Hdrs1),
+  timer:sleep(Sleep),
+  lhttpc:request(Url, Method, Hdrs, Body, Timeout, []).
 
 validate_status( #katt_response{status=E}
                , #katt_response{status=A}

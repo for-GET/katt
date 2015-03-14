@@ -90,6 +90,10 @@ katt --json ./doc/example-httpbin.apib hostname=httpbin.org my_name=Joe your_nam
     * `validate` to be called with `expected`, `actual`, `params`, `callbacks`
     * `progress` to be called with `transaction_result`
 
+A request can also be configured via HTTP request headers:
+
+* `x-katt-request-timeout` would take precedence over the `request_timeout` param
+* `x-katt-request-sleep` would delay the request for a specific amount of milliseconds
 
 ### If you would like to disable JSON support
 
