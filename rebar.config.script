@@ -26,9 +26,9 @@ MergeConfig = fun({Key, ToAdd}, C) ->
 
 %% This macro can be used to conditionally enable code (e.g. tests)
 %% that depend on development only dependencies.
-ErlOpts = {erl_opts, [
-    {d, 'DEV_ONLY'}
-]},
+ErlOpts = {erl_opts, [ {d, 'DEV_ONLY'}
+                     , debug_info
+                     ]},
 
 %% Development only dependencies can be specified in the main
 %% rebar.config. This file should not need to be edited directly.
