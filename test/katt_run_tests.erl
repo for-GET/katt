@@ -444,8 +444,8 @@ mock_katt_blueprint_parse_file("/mock/struct.apib") ->
     <<"--- Test 8 ---
 
 GET /struct
-> x-katt-request-sleep: 25000
-> x-katt-request-timeout: 30000
+> x-katt-request-sleep: 500
+> x-katt-request-timeout: 50000
 < 200
 < Content-Type: application/json
 {
