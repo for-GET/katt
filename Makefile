@@ -57,7 +57,7 @@ elvis:
 	$(ELVIS) rock
 
 .PHONY: test
-test: eunit dialyzer
+test: .rebar/DEV_MODE deps eunit dialyzer
 
 .PHONY: eunit
 eunit:
