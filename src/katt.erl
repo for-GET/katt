@@ -165,14 +165,23 @@ run_transactions(_From, _Scenario, [], FinalParams, _Callbacks, Acc) ->
   {FinalParams, Acc};
 run_transactions( From
                 , Scenario
-                , [#katt_transaction{ description=Description
-                                    , request=Req
-                                    , response=Res
+                , [#katt_transaction{ description = Description0
+                                    , request = Req0
+                                    , response = Res
                                     }|T]
                 , Params
                 , Callbacks
                 , Acc
                 ) ->
+  Hdrs0 = Req0#katt_request.headers,
+  Description = case proplists:get_value("x-katt-description", Hdrs0) of
+                  undefined ->
+                    Description0;
+                  Description1 ->
+                    Description1
+                end,
+  Hdrs = proplists:delete("x-katt-description", Hdrs0),
+  Req = Req0#katt_request{headers = Hdrs},
   From ! {progress, run_transaction, Description},
   Request = make_katt_request(Req, Params, Callbacks),
   ExpectedResponse = make_katt_response(Res, Params, Callbacks),

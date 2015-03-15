@@ -92,6 +92,7 @@ katt --json ./doc/example-httpbin.apib hostname=httpbin.org my_name=Joe your_nam
 
 A request can also be configured via HTTP request headers:
 
+* `x-katt-description` would take precedence over the transaction's description
 * `x-katt-request-timeout` would take precedence over the `request_timeout` param
 * `x-katt-request-sleep` would delay the request for a specific amount of milliseconds
 
