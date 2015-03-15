@@ -156,13 +156,13 @@ run_scenario(From, Scenario, Blueprint, Params, Callbacks) ->
                            , Blueprint#katt_blueprint.transactions
                            , Params
                            , Callbacks
-                           , []
+                           , {0, []}
                            ),
-  {FinalParams, TransactionResults} = Result,
+  {FinalParams, {_Count, TransactionResults}} = Result,
   {FinalParams, lists:reverse(TransactionResults)}.
 
-run_transactions(_From, _Scenario, [], FinalParams, _Callbacks, Acc) ->
-  {FinalParams, Acc};
+run_transactions(_From, _Scenario, [], FinalParams, _Callbacks, {Count, Results}) ->
+  {FinalParams, {Count, Results}};
 run_transactions( From
                 , Scenario
                 , [#katt_transaction{ description = Description0
@@ -171,12 +171,17 @@ run_transactions( From
                                     }|T]
                 , Params
                 , Callbacks
-                , Acc
+                , {Count, Results}
                 ) ->
   Hdrs0 = Req0#katt_request.headers,
   Description = case proplists:get_value("x-katt-description", Hdrs0) of
                   undefined ->
-                    Description0;
+                    case Description0 of
+                      <<>> ->
+                        "Transaction " ++ integer_to_list(Count);
+                      _ ->
+                        Description0
+                    end;
                   Description1 ->
                     Description1
                 end,
@@ -195,30 +200,30 @@ run_transactions( From
                                 ),
   case ValidationResult of
     {pass, AddParams} ->
-      Summary = { Description
-                , Params
-                , Request
-                , ActualResponse
-                , pass
-                },
-      From ! {progress, transaction_result, Summary},
+      Result = { Description
+               , Params
+               , Request
+               , ActualResponse
+               , pass
+               },
+      From ! {progress, transaction_result, Result},
       NextParams = katt_util:merge_proplists(Params, AddParams),
       run_transactions( From
                       , Scenario
                       , T
                       , NextParams
                       , Callbacks
-                      , [Summary|Acc]
+                      , {Count + 1, [Result|Results]}
                       );
     _                 ->
-      Summary = { Description
-                , Params
-                , Request
-                , ActualResponse
-                , ValidationResult
-                },
-      From ! {progress, transaction_result, Summary},
-      {Params, [Summary|Acc]}
+      Result = { Description
+               , Params
+               , Request
+               , ActualResponse
+               , ValidationResult
+               },
+      From ! {progress, transaction_result, Result},
+      {Params, {Count + 1, [Result|Results]}}
   end.
 
 make_katt_request( #katt_request{headers=Hdrs0, url=Url0, body=Body0} = Req
