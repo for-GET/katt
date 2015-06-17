@@ -156,7 +156,15 @@ mock_lhttpc_request( "http://127.0.0.1/step1" = _Url
                    , _Timeout
                    , _Options
                    ) ->
-  {ok, {{201, []}, [{"Location", "http://127.0.0.1/step2"}], <<>>}};
+  {ok, { {201, []}
+       , [ {"Location", "http://127.0.0.1/step2"}
+         , {"Cache-Control", "no-cache"}
+         , {"Cache-Control", "no-store"}
+         , {"Cache-Control", "must-revalidate"}
+         , {"X-Another-Duplicate-Header", "foo"}
+         , {"X-Another-Duplicate-Header", "bar"}
+         ]
+       , <<>>}};
 %% Mock response for Step 2:
 mock_lhttpc_request( "http://127.0.0.1/step2"
                    , "GET"
@@ -324,6 +332,10 @@ POST /step1
 }
 < 201
 < Location: {{>example_uri}}
+< Cache-Control: no-cache
+< Cache-Control: no-store
+< Cache-Control: must-revalidate
+< X-Another-Duplicate-Header: foo,bar
 
 
 # Step 2

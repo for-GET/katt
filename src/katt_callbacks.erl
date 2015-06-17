@@ -257,9 +257,40 @@ validate_headers( #katt_response{headers=E0}
                 , #katt_response{headers=A0}
                 , _Callbacks
                 ) ->
-  E = {struct, [{katt_util:to_lower(K), V} || {K, V} <- E0]},
-  A = {struct, [{katt_util:to_lower(K), V} || {K, V} <- A0]},
+  LowerE = [{katt_util:to_lower(K), V} || {K, V} <- E0],
+  LowerA = [{katt_util:to_lower(K), V} || {K, V} <- A0],
+  %% From RFC 2616:
+  %% Multiple message-header fields with the same field-name MAY be present in a
+  %% message if and only if the entire field-value for that header field is
+  %% defined as a comma-separated list [i.e., #(values)]. It MUST be possible to
+  %% combine the multiple header fields into one "field-name: field-value" pair,
+  %% without changing the semantics of the message,
+  %% by appending each subsequent field-value to the first,
+  %% each separated by a comma. The order in which header fields with the same
+  %% field-name are received is therefore significant to the interpretation of
+  %% the combined field value,
+  %% and thus a proxy MUST NOT change the order of these field values when a
+  %% message is forwarded.
+  %%
+  %% We are liberal here and assume all duplicate headers were defined
+  %% as a comma-separated list
+  ConcatenatedE = lists:map( fun(Header) ->
+                                 {Header, concatenate_header(Header, LowerE)}
+                             end
+                           , proplists:get_keys(LowerE)
+                           ),
+  ConcatenatedA = lists:map( fun(Header) ->
+                                 {Header, concatenate_header(Header, LowerA)}
+                             end
+                           , proplists:get_keys(LowerA)
+                           ),
+  E = {struct, ConcatenatedE},
+  A = {struct, ConcatenatedA},
   katt_util:validate("/headers", E, A, ?MATCH_ANY, []).
+
+concatenate_header(Header, Headers) ->
+  Values = proplists:get_all_values(Header, Headers),
+  string:join(Values, ",").
 
 %% Bodies are also allowed to be a superset of expected body, if the parseFun
 %% returns a structure.
