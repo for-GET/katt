@@ -320,7 +320,6 @@ validate_body( #katt_response{parsed_body=E} = ER
          )
   end.
 
-
 validate_type( Type
              , ParentKey
              , Expected
