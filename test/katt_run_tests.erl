@@ -333,7 +333,7 @@ POST /step1
 < 201
 < Location: {{>example_uri}}
 < Cache-Control: no-cache
-< Cache-Control: no-store
+< Cache-Control: {{_}}
 < Cache-Control: must-revalidate
 < X-Another-Duplicate-Header: foo,bar
 
