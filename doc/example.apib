@@ -40,6 +40,10 @@ POST /foo/examples
 }
 < 201
 < Location: {{>example_uri}}
+< Cache-Control: no-cache
+< Cache-Control: {{_}}
+< Cache-Control: must-revalidate
+< X-Another-Duplicate-Header: foo,bar
 
 
 # Step 2
