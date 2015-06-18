@@ -52,6 +52,13 @@ string(Str) ->
 -spec file(file:name()) -> {ok, katt_blueprint()}.
 %% @doc Parse a KATT Blueprint file.
 file(File) ->
+  FileIO = (catch file:open(File, [read])),
+  case FileIO of
+    {ok, IO} ->
+      file:close(IO);
+    {error, Reason} ->
+      throw({error, File, Reason})
+  end,
   #katt_blueprint{} = BP = katt_blueprint:file(File),
   {ok, BP}.
 
