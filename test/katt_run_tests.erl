@@ -337,7 +337,7 @@ POST /step1
 < Cache-Control: no-cache
 < Cache-Control: {{_}}
 < Cache-Control: must-revalidate
-< X-Another-Duplicate-Header: foo,bar
+< X-Another-Duplicate-Header: foo, bar
 
 
 # Step 2
