@@ -43,6 +43,7 @@
 -record(katt_blueprint,   { name = null                 :: utf8_string()
                           , description = null          :: utf8_string()
                           , transactions = []           :: [#katt_transaction{}]
+                          , footer = null               :: utf8_string()
                           }).
 
 %%%_* Emacs ====================================================================
