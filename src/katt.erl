@@ -161,7 +161,13 @@ run_scenario(From, Scenario, Blueprint, Params, Callbacks) ->
   {FinalParams, {_Count, TransactionResults}} = Result,
   {FinalParams, lists:reverse(TransactionResults)}.
 
-run_transactions(_From, _Scenario, [], FinalParams, _Callbacks, {Count, Results}) ->
+run_transactions( _From
+                , _Scenario
+                , []
+                , FinalParams
+                , _Callbacks
+                , {Count, Results}
+                ) ->
   {FinalParams, {Count, Results}};
 run_transactions( From
                 , Scenario

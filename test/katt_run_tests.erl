@@ -137,9 +137,11 @@ katt_run_with_struct() ->
                  , Scenario
                  , _
                  , _
-                 , [ {_, _, _, _, {fail, [ {not_equal, {"/body/not_object", _, _}}
-                                         , {not_equal, {"/body/not_array", _, _}}
-                                         ]}}
+                 , [ {_, _, _, _, { fail
+                                  , [ {not_equal, {"/body/not_object", _, _}}
+                                    , {not_equal, {"/body/not_array", _, _}}
+                                    ]
+                                  }}
                    ]
                  }
                , katt:run(Scenario)

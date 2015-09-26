@@ -309,12 +309,14 @@ validate_primitive(Key, E, A) when is_binary(E) ->
 validate_primitive(_Key, ?MATCH_ANY, _A) ->
   {pass, []};
 validate_primitive(Key, E, A) when is_list(E) ->
-  case re:run( E
-             , "(" ++ ?STORE_BEGIN_TAG ++ "[^}]+" ++ ?STORE_END_TAG ++ "|" ++ ?MATCH_ANY ++ ")"
-             , [ global
-               , {capture, all_but_first, list}
-               ]
-             ) of
+  RE_HAS_PARAMS = "("
+    ++ ?STORE_BEGIN_TAG
+    ++ "[^}]+"
+    ++ ?STORE_END_TAG
+    ++ "|"
+    ++ ?MATCH_ANY
+    ++ ")",
+  case re:run(E, RE_HAS_PARAMS, [global, {capture, all_but_first, list}]) of
     nomatch ->
       {not_equal, {Key, E, A}};
     {match, [[E]]} ->
