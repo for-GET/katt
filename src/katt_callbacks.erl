@@ -290,7 +290,7 @@ validate_headers( #katt_response{headers=E0}
 
 concatenate_header(Header, Headers) ->
   Values = proplists:get_all_values(Header, Headers),
-  string:join(Values, ",").
+  string:join(Values, ", ").
 
 %% Bodies are also allowed to be a superset of expected body, if the parseFun
 %% returns a structure.
