@@ -11,16 +11,18 @@ api <-
   description:api_description?
   empty_line*
   transactions:transactions
-  empty_line*
+  footer:api_footer?
   eof
   `
     Name = proplists:get_value(name, Node),
     Description = proplists:get_value(description, Node),
     Transactions = proplists:get_value(transactions, Node),
+    Footer = proplists:get_value(footer, Node),
     #katt_blueprint{
       name=null_if_empty(Name),
       description=null_if_empty(Description),
-      transactions=Transactions
+      transactions=Transactions,
+      footer=null_if_empty(Footer)
     }
   `;
 
@@ -39,6 +41,18 @@ api_description <-
 
 api_description_line <-
   !("---" s* eolf) text:text0 eol
+  `
+    proplists:get_value(text, Node)
+  `;
+
+api_footer <-
+  empty_line+ lines:api_footer_line*
+  `
+    concatenate_lines(proplists:get_value(lines, Node))
+  `;
+
+api_footer_line <-
+  text:text0 eol
   `
     proplists:get_value(text, Node)
   `;
