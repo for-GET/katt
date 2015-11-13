@@ -23,6 +23,7 @@ ifeq ($(TRAVIS), true)
 	endif
 endif
 
+SRCS := $(wildcard src/* include/*)
 
 .PHONY: all
 all: deps ebin/katt.app bin/katt
@@ -93,7 +94,7 @@ distclean:
 	$(RM) -r deps
 	$(MAKE) clean
 
-ebin/katt.app:
+ebin/katt.app: $(SRCS)
 	$(MAKE) compile
 
 bin/katt: ebin/katt.app
