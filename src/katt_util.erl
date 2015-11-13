@@ -190,13 +190,20 @@ transaction_result_to_mochijson3({ Description
 
 transaction_failure_to_mochijson3({Reason, {Key0, Expected0, Actual0}}) ->
   Key = list_to_binary(Key0),
-  Expected = list_to_binary(io_lib:format("~p", [Expected0])),
-  Actual = list_to_binary(io_lib:format("~p", [Actual0])),
+  Expected = value_to_mochijson3(Expected0),
+  Actual = value_to_mochijson3(Actual0),
   {struct, [ {reason, Reason}
            , {key, Key}
            , {expected, Expected}
            , {actual, Actual}
            ]}.
+
+value_to_mochijson3({struct, Proplist}) ->
+  {struct, [{K, value_to_mochijson3(V)} || {K, V} <- Proplist]};
+value_to_mochijson3({array, List}) ->
+  lists:map(fun value_to_mochijson3/1, List);
+value_to_mochijson3(Value) ->
+  Value.
 
 is_valid(ParentKey, E, A) ->
   case validate(ParentKey, E, A) of
