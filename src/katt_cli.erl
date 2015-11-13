@@ -35,35 +35,42 @@ main([]) ->
 main(["-h"]) ->
     main(["--help"]);
 main(["--help"]) ->
-    io:fwrite( "Usage: ~s [--json] file.katt param=string param:=non_string ~n"
+    io:fwrite( "Usage: ~s [--json] param=string param:=non_string -- file.katt [file.katt] ~n"
              , [escript:script_name()]
              );
-main(["--json", ScenarioFilename|Params]) ->
-    KattResult = katt_run(ScenarioFilename, Params),
-    JsonResult = katt_util:run_result_to_mochijson3(KattResult),
-    Result = iolist_to_binary(mochijson3:encode(JsonResult)),
-    io:fwrite("~s\n\n", [Result]),
+main(Options) ->
+    main(Options, [], [], []).
+
+main(["--json"|Rest], Options, [], []) ->
+    main(Rest, Options ++ [{json, true}], [], []);
+
+main(["--"|ScenarioFilenames], Options, Params, []) ->
+    run(Options, Params, ScenarioFilenames);
+main([Param|Rest], Options, Params, []) ->
+    main(Rest, Options, [Param|Params], []).
+
+%%%_* Internal =================================================================
+
+run(_Options, _Params, []) ->
+    ok;
+run(Options, Params0, [ScenarioFilename|ScenarioFilenames]) ->
+    KattResult = katt_run(ScenarioFilename, Params0),
+    case proplists:get_value(json, Options) of
+        undefined ->
+            io:fwrite("~p\n\n", [KattResult]);
+        true ->
+            JsonResult = katt_util:run_result_to_mochijson3(KattResult),
+            Result = iolist_to_binary(mochijson3:encode(JsonResult)),
+            io:fwrite("~s\n\n", [Result])
+    end,
     case KattResult of
-        {pass, _, _, _ , _} ->
-            ok;
-        _ ->
-            %% init:stop not setting status code correctly
-            %% init:stop(1)
-            halt(1)
-    end;
-main([ScenarioFilename|Params]) ->
-    KattResult = katt_run(ScenarioFilename, Params),
-    io:fwrite("~p\n\n", [KattResult]),
-    case KattResult of
-        {pass, _, _, _ , _} ->
-            ok;
+        {pass, Params, _, _ , _} ->
+            run(Options, Params, ScenarioFilenames);
         _ ->
             %% init:stop not setting status code correctly
             %% init:stop(1)
             halt(1)
     end.
-
-%%%_* Internal =================================================================
 
 katt_run(ScenarioFilename, Params0) ->
     Params = parse_params(Params0),
