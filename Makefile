@@ -30,7 +30,7 @@ all: deps ebin/katt.app bin/katt
 	bin/katt --help
 
 .PHONY: compile
-compile:
+compile: $(SRCS)
 	$(REBAR) compile
 
 .PHONY: get-deps
