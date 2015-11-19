@@ -35,7 +35,8 @@ main([]) ->
 main(["-h"]) ->
     main(["--help"]);
 main(["--help"]) ->
-    io:fwrite( "Usage: ~s [--json] param=string param:=non_string -- file.katt [file.katt] ~n"
+    io:fwrite( "Usage: ~s [--json] param=string param:=non_string -- "
+               "file.katt [file.katt] ~n"
              , [escript:script_name()]
              );
 main(Options) ->
