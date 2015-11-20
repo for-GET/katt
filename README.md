@@ -62,14 +62,14 @@ erl -pa ebin`).
 
 You can also fire up `katt` from the CLI, with
 ```bash
-katt hostname=httpbin.org my_name=Joe your_name=Mike -- ./doc/example-httpbin.apib
+bin/katt hostname=httpbin.org my_name=Joe your_name=Mike -- ./doc/example-httpbin.apib
 ```
 
 If you want non-string params, use `:=` as a separator e.g. `my_int:=123`.
 
 You can also output the result in JSON format, with `--json`, and beautify it e.g. with python
 ```bash
-katt --json hostname=httpbin.org my_name=Joe your_name=Mike -- ./doc/example-httpbin.apib | python -m json.tool
+bin/katt --json hostname=httpbin.org my_name=Joe your_name=Mike -- ./doc/example-httpbin.apib | python -m json.tool
 ```
 
 ## Interface
