@@ -23,7 +23,7 @@ ifeq ($(TRAVIS), true)
 	endif
 endif
 
-SRCS := $(wildcard src/* include/*)
+SRCS := $(wildcard src/* include/* rebar.config)
 
 .PHONY: all
 all: deps ebin/katt.app bin/katt
