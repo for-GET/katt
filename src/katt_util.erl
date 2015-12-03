@@ -210,8 +210,13 @@ value_to_mochijson3({struct, Proplist}) ->
   {struct, [{K, value_to_mochijson3(V)} || {K, V} <- Proplist]};
 value_to_mochijson3({array, List}) ->
   lists:map(fun value_to_mochijson3/1, List);
-value_to_mochijson3(Value) when is_list(Value) ->
-  list_to_binary(Value);
+value_to_mochijson3(List) when is_list(List) ->
+  try
+    list_to_binary(List)
+  catch
+    _:_ ->
+      lists:map(fun value_to_mochijson3/1, List)
+  end;
 value_to_mochijson3(Value) ->
   Value.
 
