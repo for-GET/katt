@@ -1,4 +1,6 @@
+/*.plt
 /.deps_plt
+/.eunit
 /.rebar
 /bin
 /deps
@@ -7,9 +9,7 @@
 /doc/erlang.png
 /doc/stylesheet.css
 /ebin
+/erl_crash.dump
 /logs
 /src/katt_blueprint.erl
-*.plt
 .#*
-.eunit
-erl_crash.dump
