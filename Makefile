@@ -29,40 +29,7 @@ SRCS := $(wildcard src/* include/* rebar.config)
 all: deps ebin/katt.app bin/katt
 	bin/katt --help
 
-.PHONY: compile
-compile: $(SRCS)
-	$(REBAR) compile
-
-.PHONY: get-deps
-get-deps:
-	$(REBAR) get-deps
-
-.PHONY: update-deps
-update-deps:
-	$(REBAR) update-deps
-
-.PHONY: delete-deps
-delete-deps:
-	$(REBAR) delete-deps
-
-.PHONY: docs
-docs:
-	$(REBAR) doc skip_deps=true
-
-.PHONY: xref
-xref:
-	$(REBAR) xref skip_deps=true
-
-.PHONY: elvis
-elvis:
-	$(ELVIS) rock
-
-.PHONY: test
-test: .rebar/DEV_MODE deps eunit dialyzer
-
-.PHONY: eunit
-eunit:
-	$(REBAR) eunit skip_deps=true
+# Clean
 
 .PHONY: conf_clean
 conf_clean:
@@ -81,6 +48,64 @@ clean:
 	$(RM) -r logs
 	$(RM) src/katt_blueprint.erl
 
+.PHONY: distclean
+distclean:
+	$(RM) $(DEPS_PLT)
+	$(RM) -r deps
+	$(MAKE) clean
+
+# Deps
+
+.PHONY: get-deps
+get-deps:
+	$(REBAR) get-deps
+
+.PHONY: update-deps
+update-deps:
+	$(REBAR) update-deps
+
+.PHONY: delete-deps
+delete-deps:
+	$(REBAR) delete-deps
+
+.PHONY: deps
+deps: get-deps
+
+# Docs
+
+.PHONY: docs
+docs:
+	$(REBAR) doc skip_deps=true
+
+# Compile
+
+ebin/katt.app: compile
+
+bin/katt: ebin/katt.app
+	$(REBAR) escriptize
+
+.PHONY: compile
+compile: $(SRCS)
+	$(REBAR) compile
+
+# Tests
+
+.rebar/DEV_MODE:
+	mkdir -p .rebar
+	touch .rebar/DEV_MODE
+
+.PHONY: xref
+xref:
+	$(REBAR) xref skip_deps=true
+
+.PHONY: test
+test: .rebar/DEV_MODE deps eunit dialyzer
+
+
+.PHONY: eunit
+eunit:
+	$(REBAR) eunit skip_deps=true
+
 $(DEPS_PLT):
 	$(DIALYZER) --build_plt --apps $(ERLANG_DIALYZER_APPS) -r deps --output_plt $(DEPS_PLT)
 
@@ -88,22 +113,6 @@ $(DEPS_PLT):
 dialyzer: $(DEPS_PLT)
 	$(DIALYZER) --plt $(DEPS_PLT) --src $(shell find src -name *.erl -not -name katt_blueprint.erl)
 
-.PHONY: distclean
-distclean:
-	$(RM) $(DEPS_PLT)
-	$(RM) -r deps
-	$(MAKE) clean
-
-ebin/katt.app: $(SRCS)
-	$(MAKE) compile
-
-bin/katt: ebin/katt.app
-	$(REBAR) escriptize
-
-.PHONY: deps
-deps:
-	$(MAKE) get-deps
-
-.rebar/DEV_MODE:
-	mkdir -p .rebar
-	touch .rebar/DEV_MODE
+.PHONY: elvis
+elvis:
+	$(ELVIS) rock
