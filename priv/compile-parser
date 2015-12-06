@@ -4,6 +4,6 @@
 %% grammar file.
 
 main(_) ->
-  Neotoma = filename:dirname(escript:script_name()) ++ "/../deps/neotoma/ebin",
-  code:add_pathz(filename:absname(Neotoma)),
-  neotoma:file("priv/katt_blueprint.peg", [{output, "src/"}]).
+    Neotoma = filename:dirname(escript:script_name()) ++ "/../deps/neotoma/ebin",
+    code:add_pathz(filename:absname(Neotoma)),
+    neotoma:file("priv/katt_blueprint.peg", [{output, "src/"}]).
