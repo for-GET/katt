@@ -206,19 +206,40 @@ transaction_failure_to_mochijson3({Reason, {Key0, Expected0, Actual0}}) ->
            , {actual, Actual}
            ]}.
 
-value_to_mochijson3({struct, Proplist}) ->
-  {struct, [{K, value_to_mochijson3(V)} || {K, V} <- Proplist]};
+
+value_to_mochijson3({struct, PropList}) ->
+  {struct, lists:map( fun ({K, V}) ->
+                          {K, value_to_mochijson3(V)}
+                      end
+                    , PropList
+                    )};
+value_to_mochijson3([{_, _}|_] = PropList) ->
+  {struct, lists:map( fun ({K, V}) ->
+                          {K, value_to_mochijson3(V)}
+                      end
+                    , PropList
+                    )};
 value_to_mochijson3({array, List}) ->
-  lists:map(fun value_to_mochijson3/1, List);
+  lists:map( fun ({_K, V}) ->
+                 value_to_mochijson3(V)
+             end
+           , List
+           );
 value_to_mochijson3(List) when is_list(List) ->
   try
     list_to_binary(List)
   catch
     _:_ ->
-      lists:map(fun value_to_mochijson3/1, List)
+      lists:map( fun ({_K, V}) ->
+                     value_to_mochijson3(V);
+                     (V) ->
+                     value_to_mochijson3(V)
+                 end
+               , List
+               )
   end;
 value_to_mochijson3(Value) ->
-  Value.
+  list_to_binary(io_lib:format("~p", [Value])).
 
 is_valid(ParentKey, E, A) ->
   case validate(ParentKey, E, A) of
