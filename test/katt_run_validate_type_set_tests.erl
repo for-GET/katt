@@ -70,12 +70,14 @@ katt_run_with_set_comparison_strict_fails() ->
                  , _
                  , _
                  , [ {_, _, _, _, {fail, [ { unexpected
-                                           , "/body/set_of_objects/{{set}}/0"
-                                           }
+                                           , { "/body/set_of_objects/{{set}}/0"
+                                             , undefined
+                                             , {struct, [{"number", 2}]}
+                                             }}
                                          ]}}
                    ]
                  }
-               , katt:run(Scenario)
+               , katt:run(Scenario) %%  ?debugFmt("~p", [katt:run(Scenario)])
                ).
 katt_run_with_set_comparison_unlimited() ->
   Scenario = "/mock/set_comparison_unlimited.apib",
@@ -95,8 +97,10 @@ katt_run_with_set_comparison_unlimited_fails() ->
                  , _
                  , _
                  , [ {_, _, _, _, {fail, [ { not_contains
-                                           , "/body/set_of_objects/{{set}}/2"
-                                           }
+                                           , { "/body/set_of_objects/{{set}}/2"
+                                             , {struct, [{"number", 3}]}
+                                             , undefined
+                                             }}
                                          ]}}
                    ]
                  }

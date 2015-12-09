@@ -136,7 +136,7 @@ pass_when_expected_contained_by_actual_test() ->
                                             ))
               ).
 fail_when_expected_contained_by_actual_and_unexpected_test() ->
-  ?assertMatch( [{unexpected, "/2"}]
+  ?assertMatch( [{unexpected, {"/2", undefined, ?OBJECT_3}}]
               , filter_errors(compare_as_set( [ {"0", ?OBJECT_1}
                                               , {"1", ?OBJECT_2}
                                               , ?UNEXPECTED_OBJECT
@@ -149,9 +149,9 @@ fail_when_expected_contained_by_actual_and_unexpected_test() ->
               ).
 
 fail_with_3_reasons_test() ->
-  ?assertMatch( [ {unexpected, "/0"}
-                , {unexpected, "/1"}
-                , {not_contains, "/0"}
+  ?assertMatch( [ {unexpected, {"/0", undefined, ?OBJECT_2}}
+                , {unexpected, {"/1", undefined, ?OBJECT_3}}
+                , {not_contains, {"/0", ?OBJECT_1, undefined}}
                 ]
               , filter_errors(compare_as_set( [ {"0", ?OBJECT_1}
                                               , ?UNEXPECTED_OBJECT

@@ -91,8 +91,8 @@ validate_set( ParentKey
             , _Callbacks
             , Errors
             ) ->
-  [ {unexpected, ParentKey ++ "/" ++ Key}
-    || {Key, _Value} <- Actual
+  [ {unexpected, {ParentKey ++ "/" ++ AKey, undefined, AValue}}
+    || {AKey, AValue} <- Actual
   ] ++ Errors;
 %% All actual elements have been consumed,
 %% and there are still expected elements
@@ -103,8 +103,8 @@ validate_set( ParentKey
             , _Callbacks
             , Errors
             ) ->
-  [ {not_contains, ParentKey ++ "/" ++ Key}
-    || {Key, _Value} <- Expected
+  [ {not_contains, {ParentKey ++ "/" ++ EKey, EValue, undefined}}
+    || {EKey, EValue} <- Expected
   ] ++ Errors;
 %% There is at least one expected and one actual element
 validate_set( ParentKey
@@ -126,7 +126,9 @@ validate_set( ParentKey
                    , Actual),
   case Split of
     {Actual, []} ->
-      Errors1 = [{not_contains, ParentKey ++ "/" ++ EKey}] ++ Errors,
+      Errors1 =
+        [{not_contains, {ParentKey ++ "/" ++ EKey, EValue, undefined}}] ++
+        Errors,
       validate_set(ParentKey, ERest, Actual, Unexpected, Callbacks, Errors1);
     {ARest1, [{_AKey, AValue}|ARest2]} ->
       ARest = ARest1 ++ ARest2,
