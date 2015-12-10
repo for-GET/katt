@@ -27,7 +27,6 @@ SRCS := $(wildcard src/* include/* rebar.config)
 
 .PHONY: all
 all: deps ebin/katt.app bin/katt
-	bin/katt --help
 
 # Clean
 
@@ -83,6 +82,7 @@ ebin/katt.app: compile
 
 bin/katt: ebin/katt.app
 	$(REBAR) escriptize
+	bin/katt --help
 
 .PHONY: compile
 compile: $(SRCS)
