@@ -12,4 +12,5 @@
 /erl_crash.dump
 /logs
 /src/katt_blueprint.erl
+/test/*.beam
 .#*
