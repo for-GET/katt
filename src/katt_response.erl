@@ -56,9 +56,3 @@ get_status(#katt_response{status = Status}) -> Status.
 -spec set_status(integer(), response()) -> response().
 set_status(Status, #katt_response{} = Res) ->
   Res#katt_response{status = Status}.
-
-%%%_* Emacs ====================================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 2
-%%% End:

@@ -63,9 +63,3 @@ get_url(#katt_request{url = Url}) -> Url.
 
 -spec set_url(string(), request()) -> request().
 set_url(Url, #katt_request{} =  Req) -> Req#katt_request{url = Url}.
-
-%%%_* Emacs ====================================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 2
-%%% End:

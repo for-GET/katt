@@ -181,9 +181,3 @@ compare_as_set(EItems, AItems) ->
                                       , ?MATCH_ANY
                                       , Callbacks
                                       ).
-
-%%%_* Emacs ====================================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 2
-%%% End:

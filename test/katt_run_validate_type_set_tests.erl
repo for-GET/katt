@@ -211,9 +211,3 @@ GET /set_comparison_unlimited
     }
 }
 "/utf8>>).
-
-%%%_* Emacs ====================================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 2
-%%% End:

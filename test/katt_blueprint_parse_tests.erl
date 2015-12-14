@@ -889,9 +889,3 @@ unindent(Str) ->
   Lines = re:split(Str, "\n", [{return, list}]),
   F = fun(Line) -> string:strip(Line, left, hd(" ")) end,
   string:join(lists:map(F, Lines), "\n").
-
-%%%_* Emacs ====================================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 2
-%%% End:

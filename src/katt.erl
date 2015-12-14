@@ -285,9 +285,3 @@ make_host(?PROTOCOL_HTTP,  Hostname, 80)   -> Hostname;
 make_host(?PROTOCOL_HTTPS, Hostname, 443)  -> Hostname;
 make_host(_Proto,          Hostname, Port) ->
   Hostname ++ ":" ++ katt_util:to_list(Port).
-
-%%%_* Emacs ====================================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 2
-%%% End:

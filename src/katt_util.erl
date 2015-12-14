@@ -430,9 +430,3 @@ enumerate(L) ->
   lists:zip([ integer_to_list(N)
               || N <- lists:seq(0, length(L) - 1)
             ], L).
-
-%%%_* Emacs ============================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 2
-%%% End:

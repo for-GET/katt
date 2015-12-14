@@ -354,9 +354,3 @@ validate_type( Type
          , Callbacks
          )
   end.
-
-%%%_* Emacs ====================================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 2
-%%% End:

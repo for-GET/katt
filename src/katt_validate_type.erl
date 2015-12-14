@@ -140,9 +140,3 @@ validate_set( ParentKey
                                    )] ++ Errors,
       validate_set(ParentKey, ERest, ARest, Unexpected, Callbacks, Errors1)
   end.
-
-%%%_* Emacs ====================================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 2
-%%% End:

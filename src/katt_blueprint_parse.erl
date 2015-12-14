@@ -61,9 +61,3 @@ file(File) ->
   end,
   #katt_blueprint{} = BP = katt_blueprint:file(File),
   {ok, BP}.
-
-%%%_* Emacs ====================================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 2
-%%% End:

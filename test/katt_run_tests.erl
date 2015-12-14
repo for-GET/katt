@@ -471,9 +471,3 @@ GET /struct
     \"not_object\": []
 }
 "/utf8>>).
-
-%%%_* Emacs ====================================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 2
-%%% End:

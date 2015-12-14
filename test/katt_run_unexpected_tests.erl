@@ -182,9 +182,3 @@ GET /unexpected-and-undefined
     \"expected\": \"{{unexpected}}\"
 }
 "/utf8>>).
-
-%%%_* Emacs ====================================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 2
-%%% End:

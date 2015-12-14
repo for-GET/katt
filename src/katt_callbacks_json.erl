@@ -182,9 +182,3 @@ normalize_mochijson3(Str) when is_binary(Str) ->
   katt_util:from_utf8(Str);
 normalize_mochijson3(Value) ->
   Value.
-
-%%%_* Emacs ====================================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 2
-%%% End:
