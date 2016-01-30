@@ -15,7 +15,7 @@
                                      , asn1
                                      , public_key
                                      , ssl
-                                     , lhttpc
+                                     , hackney
                                      , tdiff
                                      ]}
                     ]}.

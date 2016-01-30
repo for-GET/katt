@@ -39,6 +39,7 @@
         , is_valid/5
         , validate/5
         , enumerate/1
+        , external_http_request/6
         ]).
 
 %%%_* Includes =================================================================
@@ -113,6 +114,29 @@ run_result_to_mochijson3({ PassOrFail
            , {final_params, {struct, proplist_to_mochijson3(FinalParams)}}
            , {transaction_results, TransactionResults}
            ]}.
+
+external_http_request(Url, Method, Hdrs, Body, Timeout, []) ->
+  BUrl = list_to_binary(Url),
+  BHdrs = lists:map( fun({Name, Value})->
+                         {list_to_binary(Name), list_to_binary(Value)}
+                     end
+                   , Hdrs
+                   ),
+  Options = [{recv_timeout, Timeout}],
+  case hackney:request(Method, BUrl, BHdrs, Body, Options) of
+    {ok, Status, BResHdrs, Client} ->
+      %% lhttpc was the predecesor of hackney
+      %% and we're maintaining a backwards compatible return value
+      {ok, ResBody} = hackney:body(Client),
+      ResHdrs = lists:map( fun({Name, Value})->
+                               {binary_to_list(Name), binary_to_list(Value)}
+                           end
+                         , BResHdrs
+                         ),
+      {ok, {{Status, ""}, ResHdrs, ResBody}};
+    Error ->
+      Error
+  end.
 
 %%%_* Internal =================================================================
 
