@@ -25,6 +25,8 @@ endif
 
 SRCS := $(wildcard src/* include/* rebar.config)
 
+SRC_BEAMS := $(patsubst src/%.erl, ebin/%.beam, $(wildcard src/*.erl))
+
 .PHONY: all
 all: deps ebin/katt.app bin/katt
 
@@ -80,7 +82,7 @@ docs:
 
 ebin/katt.app: compile
 
-bin/katt: ebin/katt.app
+bin/katt: ebin/katt.app $(SRC_BEAMS)
 	$(REBAR) escriptize
 	bin/katt --help
 
