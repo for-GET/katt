@@ -204,8 +204,33 @@ transaction_failure_to_mochijson3({Reason, {Key0, Expected0, Actual0}}) ->
            , {key, Key}
            , {expected, Expected}
            , {actual, Actual}
-           ]}.
+           ]};
+transaction_failure_to_mochijson3({ Reason
+                                  , {Key0, Expected0, Actual0, Details}
+                                  }) ->
+  Key = list_to_binary(Key0),
+  Expected = value_to_mochijson3(Expected0),
+  Actual = value_to_mochijson3(Actual0),
+  Props = [ {reason, Reason}
+          , {key, Key}
+          , {expected, Expected}
+          , {actual, Actual}
+          ],
+  TextDiff = proplists:get_value( text_diff
+                                , Details
+                                ),
+  {struct, Props ++ text_diff_to_props(TextDiff)}.
 
+text_diff_to_props(undefined) ->
+  [];
+text_diff_to_props(TextDiff) ->
+  [{ text_diff
+   , lists:map( fun({K, V}) ->
+                    {struct, [{K, list_to_binary(V)}]}
+                end
+              , TextDiff
+              )
+   }].
 
 value_to_mochijson3({struct, PropList}) ->
   {struct, lists:map( fun ({K, V}) ->
@@ -258,7 +283,7 @@ is_valid(ParentKey, E, A, Unexpected, Callbacks) ->
   end.
 
 validate(ParentKey, E, A) ->
-  validate_primitive(ParentKey, E, A).
+  validate_primitive(ParentKey, E, A, []).
 
 %% Expected actual
 validate(_ParentKey, _E, _E, _Unexpected, _Callbacks) ->
@@ -296,8 +321,8 @@ validate( ParentKey
                               , Callbacks
                               );
 %% Expected something else
-validate(ParentKey, E, A, Unexpected, _Callbacks) ->
-  validate_simple(ParentKey, E, A, Unexpected).
+validate(ParentKey, E, A, Unexpected, Callbacks) ->
+  validate_simple(ParentKey, E, A, Unexpected, Callbacks).
 
 validate_proplist( ParentKey
                  , EItems0
@@ -322,36 +347,44 @@ validate_proplist( ParentKey
 
 %% Validate when unexpected values show up
 %% Expected anything
-validate_simple(_Key, undefined = _E, _A, ?MATCH_ANY) ->
+validate_simple(_Key, undefined = _E, _A, ?MATCH_ANY, _Callbacks) ->
   {pass, []};
 %% validate_simple(_Key, [] = _E, _A, ?MATCH_ANY) ->
 %%   {pass, []};
 %% Not expected and undefined
-validate_simple(_Key, ?UNEXPECTED = _E, undefined = _A, _Unexpected) ->
+validate_simple( _Key
+               , ?UNEXPECTED = _E
+               , undefined = _A
+               , _Unexpected
+               , _Callbacks
+               ) ->
   {pass, []};
 %% Not expected
-validate_simple(Key, undefined = E, A, ?UNEXPECTED) ->
+validate_simple(Key, undefined = E, A, ?UNEXPECTED, _Callbacks) ->
   {unexpected, {Key, E, A}};
 %% Expected undefined
-validate_simple(Key, undefined = _E, A, Unexpected) ->
-  validate_primitive(Key, Unexpected, A);
+validate_simple(Key, undefined = _E, A, Unexpected, Callbacks) ->
+  validate_primitive(Key, Unexpected, A, Callbacks);
 %% Expected but undefined
-validate_simple(Key, E, undefined = A, _Unexpected) ->
+validate_simple(Key, E, undefined = A, _Unexpected, _Callbacks) ->
   {not_equal, {Key, E, A}};
 %% Otherwise
-validate_simple(Key, E, A, _Unexpected) ->
-  validate_primitive(Key, E, A).
+validate_simple(Key, E, A, _Unexpected, Callbacks) ->
+  validate_primitive(Key, E, A, Callbacks).
 
 %% Validate JSON primitive types or empty structured types
-validate_primitive(_Key, E, E) ->
+validate_primitive(_Key, E, E, _Callbacks) ->
   {pass, []};
-validate_primitive(Key, E, A) when is_binary(A) ->
-  validate_primitive(Key, E, from_utf8(A));
-validate_primitive(Key, E, A) when is_binary(E) ->
-  validate_primitive(Key, from_utf8(E), A);
-validate_primitive(_Key, ?MATCH_ANY, _A) ->
+validate_primitive(Key, E, A, Callbacks) when is_binary(A) ->
+  validate_primitive(Key, E, from_utf8(A), Callbacks);
+validate_primitive(Key, E, A, Callbacks) when is_binary(E) ->
+  validate_primitive(Key, from_utf8(E), A, Callbacks);
+validate_primitive(_Key, ?MATCH_ANY, _A, _Callbacks) ->
   {pass, []};
-validate_primitive(Key, E, A) when is_list(E) ->
+validate_primitive(Key, E, A, Callbacks) when is_list(E) ->
+  TextDiffFun = proplists:get_value( text_diff
+                                   , Callbacks
+                                   ),
   RE_HAS_PARAMS = "("
     ++ ?STORE_BEGIN_TAG
     ++ "[^}]+"
@@ -361,7 +394,7 @@ validate_primitive(Key, E, A) when is_list(E) ->
     ++ ")",
   case re:run(E, RE_HAS_PARAMS, [global, {capture, all_but_first, list}]) of
     nomatch ->
-      {not_equal, {Key, E, A}};
+      {not_equal, {Key, E, A, TextDiffFun(E, A)}};
     {match, [[E]]} ->
       case E of
         ?MATCH_ANY ->
@@ -406,7 +439,7 @@ validate_primitive(Key, E, A) when is_list(E) ->
       RE = ["^", RE3, "$"],
       case re:run(A, RE, [global, {capture, all_but_first, Type}]) of
         nomatch ->
-          {not_equal, {Key, E, A}};
+          {not_equal, {Key, E, A, TextDiffFun(E, A)}};
         {match, [Values]} ->
           ParamsValues = lists:filter( fun({?MATCH_ANY, _Value}) ->
                                            false;
@@ -418,7 +451,7 @@ validate_primitive(Key, E, A) when is_list(E) ->
           {pass, ParamsValues}
       end
   end;
-validate_primitive(Key, E, A) ->
+validate_primitive(Key, E, A, _Callbacks) ->
   {not_equal, {Key, E, A}}.
 
 store_tag2param(?STORE_BEGIN_TAG ++ Rest) ->

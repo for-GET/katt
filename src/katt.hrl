@@ -44,6 +44,7 @@
 -define(DEFAULT_REQUEST_FUN,        fun katt_callbacks:request/3).
 -define(DEFAULT_VALIDATE_FUN,       fun katt_callbacks:validate/4).
 -define(DEFAULT_PROGRESS_FUN,       fun katt_callbacks:progress/2).
+-define(DEFAULT_TEXT_DIFF_FUN,      fun katt_callbacks:text_diff/2).
 
 -type scenario_filename()   :: nonempty_string().
 -type params()              :: [{param_name(), param()}].

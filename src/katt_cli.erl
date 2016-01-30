@@ -85,6 +85,7 @@ katt_run(ScenarioFilename, Params0) ->
   ok = ensure_started(public_key),
   ok = ensure_started(ssl),
   ok = ensure_started(lhttpc),
+  ok = ensure_started(tdiff),
   ok = ensure_started(katt),
   katt:run( ScenarioFilename
           , Params

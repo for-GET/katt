@@ -16,5 +16,6 @@
                                      , public_key
                                      , ssl
                                      , lhttpc
+                                     , tdiff
                                      ]}
                     ]}.
