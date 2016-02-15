@@ -128,11 +128,12 @@ external_http_request(Url, Method, Hdrs, Body, Timeout, []) ->
       %% lhttpc was the predecesor of hackney
       %% and we're maintaining a backwards compatible return value
       {ok, ResBody} = hackney:body(Client),
-      ResHdrs = lists:map( fun({Name, Value})->
-                               {binary_to_list(Name), binary_to_list(Value)}
-                           end
-                         , BResHdrs
-                         ),
+      ResHdrs0 = lists:map( fun({Name, Value})->
+                                {binary_to_list(Name), binary_to_list(Value)}
+                            end
+                          , BResHdrs
+                          ),
+      ResHdrs = lists:reverse(ResHdrs0),
       {ok, {{Status, ""}, ResHdrs, ResBody}};
     Error ->
       Error
