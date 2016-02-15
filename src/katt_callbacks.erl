@@ -32,6 +32,7 @@
         , validate/4
         , validate_type/6
         , progress/2
+        , text_diff/2
         ]).
 
 %%%_* Includes =================================================================
@@ -200,6 +201,14 @@ validate(#katt_response{}, Actual, _Params, _Callbacks)   -> {fail, Actual}.
 progress(_Step, _Detail) ->
   ok.
 
+%% @doc Perform a text diff
+%% @end
+-spec text_diff( list()
+               , list()
+               ) -> proplists:proplist().
+text_diff(A, B) ->
+  [{text_diff, tdiff:diff(A, B)}].
+
 %%%_* Internal =================================================================
 
 get_params_and_failures(Result) when not is_list(Result) ->
@@ -255,7 +264,7 @@ validate_status( #katt_response{status=E}
 %% The header name (not the value) is compared case-insensitive
 validate_headers( #katt_response{headers=E0}
                 , #katt_response{headers=A0}
-                , _Callbacks
+                , Callbacks
                 ) ->
   LowerE = [{katt_util:to_lower(K), V} || {K, V} <- E0],
   LowerA = [{katt_util:to_lower(K), V} || {K, V} <- A0],
@@ -286,7 +295,7 @@ validate_headers( #katt_response{headers=E0}
                            ),
   E = {struct, ConcatenatedE},
   A = {struct, ConcatenatedA},
-  katt_util:validate("/headers", E, A, ?MATCH_ANY, []).
+  katt_util:validate("/headers", E, A, ?MATCH_ANY, Callbacks).
 
 concatenate_header(Header, Headers) ->
   Values = proplists:get_all_values(Header, Headers),

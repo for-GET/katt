@@ -89,6 +89,7 @@ bin/katt --json hostname=httpbin.org my_name=Joe your_name=Mike -- ./doc/example
     * `request` to be called with `request`, `params`, `callbacks`
     * `validate` to be called with `expected`, `actual`, `params`, `callbacks`
     * `progress` to be called with `transaction_result`
+    * `text_diff` to be called with `text`, `text`
 
 A request can also be configured via HTTP request headers:
 

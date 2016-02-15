@@ -117,6 +117,7 @@ make_callbacks(Callbacks) ->
                             , {request, ?DEFAULT_REQUEST_FUN}
                             , {validate, ?DEFAULT_VALIDATE_FUN}
                             , {progress, ?DEFAULT_PROGRESS_FUN}
+                            , {text_diff, ?DEFAULT_TEXT_DIFF_FUN}
                             ], Callbacks).
 
 %%%_* Internal =================================================================
