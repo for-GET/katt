@@ -19,7 +19,6 @@ otp_release:
   - R15B
 script:
   - "[[ ${TRAVIS_OTP_RELEASE} == 18.1 ]] && make elvis || true"
-  - make .rebar/DEV_MODE
   - make
   - make .rebar/DEV_MODE deps eunit
   - "[[ ${TRAVIS_OTP_RELEASE} == 18.1 ]] && make dialyzer || true"
