@@ -34,15 +34,15 @@ katt_test_() ->
                  , file
                  , fun mock_katt_blueprint_parse_file/1
                  ),
-      meck:new(lhttpc, [passthrough]),
-      meck:expect( lhttpc
-                 , request
+      meck:new(katt_callbacks, [passthrough]),
+      meck:expect( katt_util
+                 , external_http_request
                  , fun mock_lhttpc_request/6
                  )
     end
   , fun(_) ->
       meck:unload(katt_blueprint_parse),
-      meck:unload(lhttpc)
+      meck:unload(katt_callbacks)
     end
   , [ katt_run_with_unexpected_disallow()
     , katt_run_with_expected_but_undefined()
