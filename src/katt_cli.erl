@@ -45,7 +45,8 @@ main(Options) ->
 main(["--json"|Rest], Options, [], []) ->
   main(Rest, Options ++ [{json, true}], [], []);
 
-main(["--"|ScenarioFilenames], Options, Params, []) ->
+main(["--"|ScenarioFilenames], Options, Params0, []) ->
+  Params = parse_params(Params0),
   run(Options, Params, ScenarioFilenames);
 main([Param|Rest], Options, Params, []) ->
   main(Rest, Options, [Param|Params], []).
@@ -54,8 +55,8 @@ main([Param|Rest], Options, Params, []) ->
 
 run(_Options, _Params, []) ->
   ok;
-run(Options, Params0, [ScenarioFilename|ScenarioFilenames]) ->
-  KattResult = katt_run(ScenarioFilename, Params0),
+run(Options, Params, [ScenarioFilename|ScenarioFilenames]) ->
+  KattResult = katt_run(ScenarioFilename, Params),
   case proplists:get_value(json, Options) of
     undefined ->
       io:fwrite("~p\n\n", [KattResult]);
@@ -65,16 +66,15 @@ run(Options, Params0, [ScenarioFilename|ScenarioFilenames]) ->
       io:fwrite("~s\n\n", [Result])
   end,
   case KattResult of
-    {pass, Params, _, _ , _} ->
-      run(Options, Params, ScenarioFilenames);
+    {pass, _, _, NewParams , _} ->
+      run(Options, NewParams, ScenarioFilenames);
     _ ->
       %% init:stop not setting status code correctly
       %% init:stop(1)
       halt(1)
   end.
 
-katt_run(ScenarioFilename, Params0) ->
-  Params = parse_params(Params0),
+katt_run(ScenarioFilename, Params) ->
   %% Don't use application:ensure_all_started(katt)
   %% nor application:ensure_started(_)
   %% in order to maintain compatibility with R16B01 and lower
