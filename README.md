@@ -31,6 +31,24 @@ Store value of the whole string (key must be unique within testcase)
 `"{{<key}}"`  
 Recall stored value.
 
+`"{{module:function(arg1, arg2,.....)}}"`
+Use custom function for validation and/or value extraction. The module must be available in the code path at runtime. 
+
+This annotation invokes the function with  the supplied argument(s) and the entire Json node as as argument. 
+
+If no args is specified  the function is called with only one argument, the Json node.
+
+The Json node will always be the first argument supplied to the function 
+
+The function should return either
+
+`{pass,[{"Key","Value"}]}` returns key value pairs that can be referenced through recall
+further down in the blueprint file . The list can contain one or more keyvalue pairs. 
+
+`{not_equal,{"ErrorName","Description"}}` if validation is done and errors are found, they can be passed back to katt with this payload. 
+
+`{pass,[]}`, in case of successfull validation when no values needs to be stored this can be passed back   
+
 The `"{{_}}"` tag can also be used as a JSON object's property in order to
 validate any other additional properties.
 

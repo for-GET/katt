@@ -27,6 +27,9 @@
 -define(RECALL_END_TAG,             "}}").
 -define(STORE_BEGIN_TAG,            "{{>").
 -define(STORE_END_TAG,              "}}").
+-define(FUN_BEGIN_TAG,              "{{{").
+-define(FUN_END_TAG,                "}}}").
+-define(INPUT_PARAM,                'InputParameter').
 -define(MATCH_ANY,                  "{{_}}").
 -define(UNEXPECTED,                 "{{unexpected}}").
 -define(TYPE,                       "{{type}}").

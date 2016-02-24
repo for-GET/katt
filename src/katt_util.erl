@@ -316,6 +316,9 @@ validate(_ParentKey, _E, _E, _Unexpected, _Callbacks) ->
 %% Expected anything
 validate(_ParentKey, ?MATCH_ANY = _E, _A, _Unexpected, _Callbacks) ->
   {pass, []};
+%% Custom function evaluation
+validate(_ParentKey, ?FUN_BEGIN_TAG ++ Tag, A, _Unexpected, _Callbacks) ->
+  validate_fun(Tag, A);
 %% Expected struct/array, got struct/array
 validate( ParentKey
         , {Type, EItems} = _E
@@ -406,6 +409,10 @@ validate_primitive(Key, E, A, Callbacks) when is_binary(E) ->
   validate_primitive(Key, from_utf8(E), A, Callbacks);
 validate_primitive(_Key, ?MATCH_ANY, _A, _Callbacks) ->
   {pass, []};
+
+validate_primitive(_Key, ?FUN_BEGIN_TAG ++ Tag, A, _Callbacks) ->
+  validate_fun(Tag, A);
+
 validate_primitive(Key, E, A, Callbacks) when is_list(E) ->
   TextDiffFun = proplists:get_value( text_diff
                                    , Callbacks
@@ -478,6 +485,23 @@ validate_primitive(Key, E, A, Callbacks) when is_list(E) ->
   end;
 validate_primitive(Key, E, A, _Callbacks) ->
   {not_equal, {Key, E, A}}.
+
+validate_fun(Tag0, Value ) ->
+  Tag  = string:sub_string(Tag0, 1, string:rstr(Tag0, ?FUN_END_TAG) - 1),
+  Call =  try
+            {ok, Tokens, _} = erl_scan:string(Tag ++ "."),
+            {ok, Exprs} = erl_parse:parse_exprs(Tokens),
+            [{call, 1, MF, A}]  = Exprs,
+            {call, 1, MF, [{var, 1, ?INPUT_PARAM }|A]}
+          catch
+            _:_ ->
+              erlang:error({invalid_call, Tag})
+          end,
+  {_, Res, _} = erl_eval:expr( Call
+                           , erl_eval:add_binding(?INPUT_PARAM
+                                                 , Value
+                                                 , erl_eval:new_bindings())),
+  Res.
 
 store_tag2param(?STORE_BEGIN_TAG ++ Rest) ->
   Param = string:sub_string(Rest, 1, string:str(Rest, ?STORE_END_TAG) - 1),
