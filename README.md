@@ -31,7 +31,7 @@ Store value of the whole string (key must be unique within testcase)
 `"{{<key}}"`  
 Recall stored value.
 
-`"{{module:function(arg1, arg2,.....)}}"`
+`"{{{module:function(arg1, arg2,.....)}}}"`
 Use custom function for validation and/or value extraction. The module must be available in the code path at runtime. 
 
 This annotation invokes the function with  the supplied argument(s) and the entire Json node as as argument. 
