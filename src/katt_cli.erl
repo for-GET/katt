@@ -35,7 +35,7 @@ main([]) ->
 main(["-h"]) ->
   main(["--help"]);
 main(["--help"]) ->
-  io:fwrite( "Usage: ~s [--json] param=string param:=non_string -- "
+  io:fwrite( "Usage: ~s [--json] [--all] param=string param:=non_string -- "
              "file.katt [file.katt] ~n"
            , [escript:script_name()]
            );
@@ -43,7 +43,10 @@ main(Options) ->
   main(Options, [], [], []).
 
 main(["--json"|Rest], Options, [], []) ->
-  main(Rest, Options ++ [{json, true}], [], []);
+  main(Rest, [{json, true}|Options], [], []);
+
+main(["--all"|Rest], Options, [], []) ->
+  main(Rest, [{all, true}|Options], [], []);
 
 main(["--"|ScenarioFilenames], Options, Params0, []) ->
   Params = parse_params(Params0),
@@ -55,8 +58,24 @@ main([Param|Rest], Options, Params, []) ->
 
 run(_Options, _Params, []) ->
   ok;
-run(Options, Params, [ScenarioFilename|ScenarioFilenames]) ->
-  KattResult = katt_run(ScenarioFilename, Params),
+run(Options, Params0, [ScenarioFilename|ScenarioFilenames]) ->
+  KattResult0 = katt_run(ScenarioFilename, Params0),
+  KattResult = case {proplists:get_value('all', Options), KattResult0} of
+                 {false, { PassOrFail
+                         , ScenarioFilename
+                         , Params
+                         , FinalParams
+                         , TransactionResults0
+                         }} ->
+                   { PassOrFail
+                   , ScenarioFilename
+                   , Params
+                   , FinalParams
+                   , [lists:last(TransactionResults0)]
+                   };
+                 _ ->
+                   KattResult0
+               end,
   case proplists:get_value(json, Options) of
     undefined ->
       io:fwrite("~p\n\n", [KattResult]);
