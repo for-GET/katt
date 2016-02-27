@@ -150,20 +150,22 @@ is_json_content_type(Hdrs0) ->
 parse_json(Bin) when is_binary(Bin) andalso size(Bin) =:= 0 ->
   [];
 parse_json(Bin) ->
-  normalize_mochijson3(mochijson3:decode(Bin)).
+  normalize_jsx(jsx:decode(Bin)).
 
 %% Convert binary strings,
 %% sort object keys and array items,
 %% add "array" identifier
-normalize_mochijson3({struct, Items0}) ->
-  Items1 = lists:sort([ {katt_util:from_utf8(Key), normalize_mochijson3(Value)}
+normalize_jsx([{_, _}|_] = Items0) ->
+  Items1 = lists:sort([ {katt_util:from_utf8(Key), normalize_jsx(Value)}
                         || {Key, Value} <- Items0
                       ]),
   Type = proplists:get_value(?TYPE, Items1, struct),
   Items = proplists:delete(?TYPE, Items1),
   {Type, Items};
-normalize_mochijson3(Items0) when is_list(Items0) ->
-  Items1 = [ normalize_mochijson3(Item)
+normalize_jsx([{}] = _Items) ->
+  {struct, []};
+normalize_jsx(Items0) when is_list(Items0) ->
+  Items1 = [ normalize_jsx(Item)
              || Item <- Items0
            ],
   Unexpected = case lists:member(?UNEXPECTED, Items1) of
@@ -178,7 +180,7 @@ normalize_mochijson3(Items0) when is_list(Items0) ->
   Items3 = lists:delete(?MATCH_ANY, Items2),
   Items = katt_util:enumerate(Items3),
   {array, Items ++ Unexpected ++ MatchAny};
-normalize_mochijson3(Str) when is_binary(Str) ->
+normalize_jsx(Str) when is_binary(Str) ->
   katt_util:from_utf8(Str);
-normalize_mochijson3(Value) ->
+normalize_jsx(Value) ->
   Value.

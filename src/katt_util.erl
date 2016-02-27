@@ -33,7 +33,7 @@
         , to_lower/1
         , escape_regex/1
         , maybe_json_string/1
-        , run_result_to_mochijson3/1
+        , run_result_to_jsx/1
         , is_valid/3
         , validate/3
         , is_valid/5
@@ -70,9 +70,11 @@ from_utf8(X) when is_binary(X) ->
   end.
 
 %% Transform list to utf8 encoded binary, ignore everything else
-to_utf8(X) when is_list(X) -> unicode:characters_to_binary(X, utf8).
+to_utf8(X) when is_list(X) ->
+  unicode:characters_to_binary(X, utf8).
 
-to_lower(X) when is_list(X) -> string:to_lower(X).
+to_lower(X) when is_list(X) ->
+  string:to_lower(X).
 
 escape_regex(Other) when not is_list(Other) andalso not is_binary(Other) ->
   to_list(Other);
@@ -94,26 +96,26 @@ insert_escape_quotes(Str) when is_binary(Str) ->
 insert_escape_quotes(Str) when is_list(Str) ->
   "\"" ++ Str ++ "\"".
 
-run_result_to_mochijson3({error, Reason, Details}) ->
-  {struct, [ {error, true}
-           , {reason, Reason}
-           , {details, list_to_binary(io_lib:format("~p", [Details]))}
-           ]};
-run_result_to_mochijson3({ PassOrFail
-                   , ScenarioFilename
-                   , Params
-                   , FinalParams
-                   , TransactionResults0
-                   }) ->
-  TransactionResults = lists:map( fun transaction_result_to_mochijson3/1
+run_result_to_jsx({error, Reason, Details}) ->
+  [ {error, true}
+  , {reason, Reason}
+  , {details, list_to_binary(io_lib:format("~p", [Details]))}
+  ];
+run_result_to_jsx({ PassOrFail
+                  , ScenarioFilename
+                  , Params
+                  , FinalParams
+                  , TransactionResults0
+                  }) ->
+  TransactionResults = lists:map( fun transaction_result_to_jsx/1
                                 , TransactionResults0
                                 ),
-  {struct, [ {status, PassOrFail}
-           , {scenario, list_to_binary(ScenarioFilename)}
-           , {params, {struct, proplist_to_mochijson3(Params)}}
-           , {final_params, {struct, proplist_to_mochijson3(FinalParams)}}
-           , {transaction_results, TransactionResults}
-           ]}.
+  [ {status, PassOrFail}
+  , {scenario, list_to_binary(ScenarioFilename)}
+  , {params, proplist_to_jsx(Params)}
+  , {final_params, proplist_to_jsx(FinalParams)}
+  , {transaction_results, TransactionResults}
+  ].
 
 external_http_request(Url, Method, Hdrs, Body, Timeout, []) ->
   BUrl = list_to_binary(Url),
@@ -161,20 +163,22 @@ my_float_to_list(X, Decimals) when is_float(X) ->
       my_float_to_list(X, Decimals1)
   end.
 
-proplist_to_mochijson3(Proplist) ->
-  [{K, maybe_list_to_binary(V)} || {K, V} <- Proplist].
+proplist_to_jsx([]) ->
+  [{}];
+proplist_to_jsx(Proplist) ->
+  [{maybe_list_to_binary(K), maybe_list_to_binary(V)} || {K, V} <- Proplist].
 
 maybe_list_to_binary(Str) when is_list(Str) ->
   list_to_binary(Str);
 maybe_list_to_binary(NonStr) ->
   NonStr.
 
-transaction_result_to_mochijson3({ Description
-                                 , Params
-                                 , Request
-                                 , Response
-                                 , Result
-                                 }) ->
+transaction_result_to_jsx({ Description
+                          , Params
+                          , Request
+                          , Response
+                          , Result
+                          }) ->
   {katt_request, Method, Url, ReqHeaders, ReqBody} = Request,
   {Status, ResHeaders, ResBody} =
     case Response of
@@ -187,15 +191,15 @@ transaction_result_to_mochijson3({ Description
              pass ->
                [];
              {error, Reason} ->
-               [{struct, [{reason, Reason}]}];
+               [[{reason, Reason}]];
              {error, Reason, Details} ->
-               {struct, [ {reason, Reason}
-                        , {details, Details}
-                        ]};
+               [ {reason, Reason}
+               , {details, Details}
+               ];
              {fail, {error, Reason}} ->
-               [{struct, [{reason, Reason}]}];
+               [[{reason, Reason}]];
              {fail, Failures0} ->
-               lists:map( fun transaction_failure_to_mochijson3/1
+               lists:map( fun transaction_failure_to_jsx/1
                         , Failures0
                         )
            end,
@@ -205,42 +209,38 @@ transaction_result_to_mochijson3({ Description
                   _ ->
                     {errors, Errors}
                 end,
-  {struct, [ {description, Description}
-           , {params, {struct, proplist_to_mochijson3(Params)}}
-           , {request, {struct, [ {method, list_to_binary(Method)}
-                                , {url, list_to_binary(Url)}
-                                , { headers
-                                  , { struct
-                                    , proplist_to_mochijson3(ReqHeaders)
-                                    }
-                                  }
-                                , {body, ReqBody}
-                                ]}}
-           , {response, {struct, [ {status, Status}
-                                 , { headers
-                                   , { struct
-                                     , proplist_to_mochijson3(ResHeaders)
-                                     }
-                                   }
-                                 , {body, ResBody}
-                                 ]}}
-           ] ++ MaybeErrors}.
+  [ {description, Description}
+  , {params, proplist_to_jsx(Params)}
+  , {request, [ {method, list_to_binary(Method)}
+              , {url, list_to_binary(Url)}
+              , { headers
+                , proplist_to_jsx(ReqHeaders)
+                }
+              , {body, value_to_jsx(ReqBody)}
+              ]}
+  , {response, [ {status, Status}
+               , { headers
+                 , proplist_to_jsx(ResHeaders)
+                 }
+               , {body, value_to_jsx(ResBody)}
+               ]}
+  ] ++ MaybeErrors.
 
-transaction_failure_to_mochijson3({Reason, {Key0, Expected0, Actual0}}) ->
+transaction_failure_to_jsx({Reason, {Key0, Expected0, Actual0}}) ->
   Key = list_to_binary(Key0),
-  Expected = value_to_mochijson3(Expected0),
-  Actual = value_to_mochijson3(Actual0),
-  {struct, [ {reason, Reason}
-           , {key, Key}
-           , {expected, Expected}
-           , {actual, Actual}
-           ]};
-transaction_failure_to_mochijson3({ Reason
-                                  , {Key0, Expected0, Actual0, Details}
-                                  }) ->
+  Expected = value_to_jsx(Expected0),
+  Actual = value_to_jsx(Actual0),
+  [ {reason, Reason}
+  , {key, Key}
+  , {expected, Expected}
+  , {actual, Actual}
+  ];
+transaction_failure_to_jsx({ Reason
+                           , {Key0, Expected0, Actual0, Details}
+                           }) ->
   Key = list_to_binary(Key0),
-  Expected = value_to_mochijson3(Expected0),
-  Actual = value_to_mochijson3(Actual0),
+  Expected = value_to_jsx(Expected0),
+  Actual = value_to_jsx(Actual0),
   Props = [ {reason, Reason}
           , {key, Key}
           , {expected, Expected}
@@ -249,51 +249,53 @@ transaction_failure_to_mochijson3({ Reason
   TextDiff = proplists:get_value( text_diff
                                 , Details
                                 ),
-  {struct, Props ++ text_diff_to_props(TextDiff)}.
+  Props ++ text_diff_to_props(TextDiff).
 
 text_diff_to_props(undefined) ->
   [];
 text_diff_to_props(TextDiff) ->
   [{ text_diff
    , lists:map( fun({K, V}) ->
-                    {struct, [{K, list_to_binary(V)}]}
+                    [{K, list_to_binary(V)}]
                 end
               , TextDiff
               )
    }].
 
-value_to_mochijson3({struct, PropList}) ->
-  {struct, lists:map( fun ({K, V}) ->
-                          {K, value_to_mochijson3(V)}
-                      end
-                    , PropList
-                    )};
-value_to_mochijson3([{_, _}|_] = PropList) ->
-  {struct, lists:map( fun ({K, V}) ->
-                          {K, value_to_mochijson3(V)}
-                      end
-                    , PropList
-                    )};
-value_to_mochijson3({array, List}) ->
+value_to_jsx({struct, []}) ->
+  [{}];
+value_to_jsx({struct, PropList}) ->
+  lists:map( fun ({K, V}) ->
+                 {value_to_jsx(K), value_to_jsx(V)}
+             end
+           , PropList
+           );
+value_to_jsx([{_, _}|_] = PropList) ->
+  lists:map( fun ({K, V}) ->
+                 {value_to_jsx(K), value_to_jsx(V)}
+             end
+           , PropList
+           );
+value_to_jsx({array, List}) ->
   lists:map( fun ({_K, V}) ->
-                 value_to_mochijson3(V)
+                 value_to_jsx(V)
              end
            , List
            );
-value_to_mochijson3(List) when is_list(List) ->
+value_to_jsx(List) when is_list(List) ->
   try
     list_to_binary(List)
   catch
     _:_ ->
       lists:map( fun ({_K, V}) ->
-                     value_to_mochijson3(V);
+                     value_to_jsx(V);
                      (V) ->
-                     value_to_mochijson3(V)
+                     value_to_jsx(V)
                  end
                , List
                )
   end;
-value_to_mochijson3(Value) ->
+value_to_jsx(Value) ->
   list_to_binary(io_lib:format("~p", [Value])).
 
 is_valid(ParentKey, E, A) ->
