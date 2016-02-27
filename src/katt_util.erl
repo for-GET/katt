@@ -199,6 +199,12 @@ transaction_result_to_mochijson3({ Description
                         , Failures0
                         )
            end,
+  MaybeErrors = case Errors of
+                  [] ->
+                    [];
+                  _ ->
+                    {errors, Errors}
+                end,
   {struct, [ {description, Description}
            , {params, {struct, proplist_to_mochijson3(Params)}}
            , {request, {struct, [ {method, list_to_binary(Method)}
@@ -218,8 +224,7 @@ transaction_result_to_mochijson3({ Description
                                    }
                                  , {body, ResBody}
                                  ]}}
-           , {errors, Errors}
-           ]}.
+           ] ++ MaybeErrors}.
 
 transaction_failure_to_mochijson3({Reason, {Key0, Expected0, Actual0}}) ->
   Key = list_to_binary(Key0),
