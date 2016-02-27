@@ -40,6 +40,22 @@ default, one can do `{..., "{{_}}": "{{unexpected}}"}` or
 `[..., "{{unexpected}}"]`, effectively making a rule that no properties/items
 are expected beyond the ones defined.
 
+For more complex validations, KATT supports extensible validation types.
+An example is the built-in "set" validation type for JSON,
+which will ignore the order of an array's items, and just check for existence:
+
+```
+{
+  "some_array": {
+    "{{type}}": "set",
+    "value": [1, 2, 3]
+  }
+}
+```
+
+The above example would validate against JSON instances such as
+`{"some_array": [1, 3, 2]}`, or `{"some_array": [3, 2, 1]}`,
+or even `{"some_array": [4, 3, 2, 1]}` unless we add `{{unexpected}}`.
 
 ## Examples
 
