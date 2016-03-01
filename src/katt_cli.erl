@@ -80,8 +80,8 @@ run(Options, Params0, [ScenarioFilename|ScenarioFilenames]) ->
     undefined ->
       io:fwrite("~p\n\n", [KattResult]);
     true ->
-      JsonResult = katt_util:run_result_to_mochijson3(KattResult),
-      Result = iolist_to_binary(mochijson3:encode(JsonResult)),
+      JsonResult = katt_util:run_result_to_jsx(KattResult),
+      Result = jsx:encode(JsonResult),
       io:fwrite("~s\n\n", [Result])
   end,
   case KattResult of
@@ -97,8 +97,7 @@ katt_run(ScenarioFilename, Params) ->
   %% Don't use application:ensure_all_started(katt)
   %% nor application:ensure_started(_)
   %% in order to maintain compatibility with R16B01 and lower
-  ok = ensure_started(xmerl),
-  ok = ensure_started(mochijson3),
+  ok = ensure_started(jsx),
   ok = ensure_started(crypto),
   ok = ensure_started(asn1),
   ok = ensure_started(public_key),
