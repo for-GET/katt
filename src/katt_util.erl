@@ -40,6 +40,8 @@
         , validate/5
         , enumerate/1
         , external_http_request/6
+        , erl_to_list/1
+        , os_cmd/2
         ]).
 
 %%%_* Includes =================================================================
@@ -99,7 +101,7 @@ insert_escape_quotes(Str) when is_list(Str) ->
 run_result_to_jsx({error, Reason, Details}) ->
   [ {error, true}
   , {reason, Reason}
-  , {details, list_to_binary(io_lib:format("~p", [Details]))}
+  , {details, list_to_binary(erl_to_list(Details))}
   ];
 run_result_to_jsx({ PassOrFail
                   , ScenarioFilename
@@ -140,6 +142,22 @@ external_http_request(Url, Method, Hdrs, Body, Timeout, []) ->
     Error ->
       Error
   end.
+
+erl_to_list(Term) ->
+  io_lib:format("~p", [Term]).
+
+os_cmd(Cmd, Env) ->
+  Opt = [ stream
+        , exit_status
+        , use_stdio
+        , stderr_to_stdout
+        , in
+        , eof
+        , hide
+        , {env, Env}
+        ],
+  Port = open_port({spawn, Cmd}, Opt),
+  os_cmd_result(Port, []).
 
 %%%_* Internal =================================================================
 
@@ -296,7 +314,7 @@ value_to_jsx(List) when is_list(List) ->
                )
   end;
 value_to_jsx(Value) ->
-  list_to_binary(io_lib:format("~p", [Value])).
+  list_to_binary(erl_to_list(Value)).
 
 is_valid(ParentKey, E, A) ->
   case validate(ParentKey, E, A) of
@@ -489,3 +507,15 @@ enumerate(L) ->
   lists:zip([ integer_to_list(N)
               || N <- lists:seq(0, length(L) - 1)
             ], L).
+
+os_cmd_result(Port, Output) ->
+  receive
+    {Port, {data, NewOutput}} ->
+      os_cmd_result(Port, [Output|NewOutput]);
+    {Port, eof} ->
+      port_close(Port),
+      receive
+        {Port, {exit_status, ExitStatus}} ->
+          {ExitStatus, lists:flatten(Output)}
+      end
+  end.

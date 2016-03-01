@@ -26,6 +26,8 @@
 %%%_* Exports ==================================================================
 %% API
 -export([ validate_type_set/5
+        , validate_type_runtime_value/5
+        , validate_type_runtime_validation/5
         ]).
 
 %%%_* Includes =================================================================
@@ -53,6 +55,158 @@ validate_type_set( ParentKey
   validate_set(ParentKey, EItems, AItems, Unexpected, Callbacks, []);
 validate_type_set(ParentKey, Options, Actual, _Unexpected, _Callbacks) ->
   [{not_equal, {ParentKey, Options, Actual}}].
+
+-spec validate_type_runtime_value( string()
+                                 , proplists:proplist()
+                                 , proplists:proplist()
+                                 , term()
+                                 , callbacks()
+                                 ) -> pass | [validation_failure()].
+validate_type_runtime_value( ParentKey
+                           , [{"erlang", Erlang0} | _Options]
+                           , Actual
+                           , Unexpected
+                           , Callbacks
+                           ) ->
+  Erlang = case Erlang0 of
+             {array, ErlangLines} ->
+               string:join(lists:map(fun({_, V}) -> V end, ErlangLines), "\n");
+             _ ->
+               Erlang0
+           end ++ ".",
+  {Error, Expected} =
+    try
+      {ok, Tokens, _} = erl_scan:string(Erlang),
+      {ok, Exprs} = erl_parse:parse_exprs(Tokens),
+      {value, Expected0, _} = erl_eval:exprs( Exprs
+                                            , [ {'ParentKey', ParentKey}
+                                              , {'Actual', Actual}
+                                              , {'Unexpected', Unexpected}
+                                              , {'Callbacks', Callbacks}]
+                                            ),
+      {undefined, Expected0}
+    catch
+      C:E ->
+        { Erlang ++ "~n"
+          ++ katt_util:erl_to_list(C) ++ ":" ++ katt_util:erl_to_list(E)
+        , undefined
+        }
+    end,
+  case Error of
+    undefined ->
+      katt_util:validate(ParentKey, Expected, Actual, Unexpected, Callbacks);
+    _ ->
+      {not_equal, {ParentKey, Error, Actual}}
+  end;
+validate_type_runtime_value( ParentKey
+                           , [{"shell", Shell0} | _Options]
+                           , Actual
+                           , Unexpected
+                           , Callbacks
+                           ) ->
+  Shell = case Shell0 of
+            {array, ShellLines} ->
+              string:join(lists:map(fun({_, V}) -> V end, ShellLines), "\n");
+            _ ->
+              Shell0
+          end,
+  try
+    {0, Erlang} = katt_util:os_cmd( Shell
+                                  , [ {"KATT_PARENT_KEY", ParentKey}
+                                    , { "KATT_ACTUAL"
+                                      , io_lib:format("~p", [Actual])
+                                      }
+                                    , { "KATT_UNEXPECTED"
+                                      , io_lib:format("~p", [Unexpected])
+                                      }
+                                    ]),
+    validate_type_runtime_value( ParentKey
+                               , [{"erlang", Erlang}]
+                               , Actual
+                               , Unexpected
+                               , Callbacks
+                               )
+  catch
+    C:E ->
+      Error = Shell ++ "~n"
+        ++ katt_util:erl_to_list(C) ++ ":" ++ katt_util:erl_to_list(E),
+      {not_equal, {ParentKey, Error, Actual}}
+  end.
+
+
+-spec validate_type_runtime_validation( string()
+                                      , proplists:proplist()
+                                      , proplists:proplist()
+                                      , term()
+                                      , callbacks()
+                                      ) -> pass | [validation_failure()].
+validate_type_runtime_validation( ParentKey
+                                , [{"erlang", Erlang0} | _Options]
+                                , Actual
+                                , Unexpected
+                                , Callbacks
+                                ) ->
+  Erlang = case Erlang0 of
+             {array, ErlangLines} ->
+               string:join(lists:map(fun({_, V}) -> V end, ErlangLines), "\n");
+             _ ->
+               Erlang0
+           end ++ ".",
+  try
+    {ok, Tokens, _} = erl_scan:string(Erlang),
+    {ok, Exprs} = erl_parse:parse_exprs(Tokens),
+    {value, Result, _} = erl_eval:exprs( Exprs
+                                       , [ {'ParentKey', ParentKey}
+                                         , {'Actual', Actual}
+                                         , {'Unexpected', Unexpected}
+                                         , {'Callbacks', Callbacks}]
+                                       ),
+    Result
+  catch
+    C:E ->
+      Error = { Erlang ++ "~n"
+                ++ katt_util:erl_to_list(C) ++ ":" ++ katt_util:erl_to_list(E)
+              , undefined
+              },
+      {not_equal, {ParentKey, Error, Actual}}
+  end;
+validate_type_runtime_validation( ParentKey
+                                , [{"shell", Shell0} | _Options]
+                                , Actual
+                                , Unexpected
+                                , Callbacks
+                                ) ->
+  Shell = case Shell0 of
+            {array, ShellLines} ->
+              string:join(lists:map(fun({_, V}) -> V end, ShellLines), "\n");
+            _ ->
+              Shell0
+          end,
+  try
+    {0, Erlang} = katt_util:os_cmd( Shell
+                                  , [ {"KATT_PARENT_KEY", ParentKey}
+                                    , { "KATT_ACTUAL"
+                                      , io_lib:format("~p", [Actual])
+                                      }
+                                    , { "KATT_UNEXPECTED"
+                                      , io_lib:format("~p", [Unexpected])
+                                      }
+                                    ]),
+    validate_type_runtime_validation( ParentKey
+                                    , [{"erlang", Erlang}]
+                                    , Actual
+                                    , Unexpected
+                                    , Callbacks
+                                    )
+  catch
+    C:E ->
+      Error = { Shell ++ "~n"
+                ++ katt_util:erl_to_list(C) ++ ":" ++ katt_util:erl_to_list(E)
+              , undefined
+              },
+      {not_equal, {ParentKey, Error, Actual}}
+  end.
+
 
 %%%_* Internal =================================================================
 

@@ -41,8 +41,9 @@ default, one can do `{..., "{{_}}": "{{unexpected}}"}` or
 are expected beyond the ones defined.
 
 For more complex validations, KATT supports extensible validation types.
-An example is the built-in "set" validation type for JSON,
-which will ignore the order of an array's items, and just check for existence:
+Built-in validation types: `set`, `runtime_value`, `runtime_validation`.
+
+`set` will ignore the order of an array's items, and just check for existence:
 
 ```
 {
@@ -53,9 +54,73 @@ which will ignore the order of an array's items, and just check for existence:
 }
 ```
 
-The above example would validate against JSON instances such as
+So the above would validate against JSON instances such as
 `{"some_array": [1, 3, 2]}`, or `{"some_array": [3, 2, 1]}`,
 or even `{"some_array": [4, 3, 2, 1]}` unless we add `{{unexpected}}`.
+
+`runtime_value` would just run code (only `erlang` and `shell` supported for now),
+while having access to `ParentKey`, `Actual`, `Unexpected` and `Callbacks`,
+and return the expected value and matched against the actual one.
+
+```
+{
+  "rfc1123": {
+    "{{type}}": "runtime_validation",
+    "erlang": "list_to_binary(httpd_util:rfc1123_date(calendar:now_to_datetime(erlang:now())))"
+  }
+}
+```
+
+or in array format
+
+```
+{
+  "rfc1123": {
+    "{{type}}": "runtime_validation",
+    "erlang": ["list_to_binary(",
+               "  httpd_util:rfc1123_date(",
+               "    calendar:now_to_datetime(",
+               "      erlang:now()",
+               ")))"
+              ]
+  }
+}
+```
+
+`runtime_validation` would just run code (only `erlang` and `shell` supported for now),
+while having access to `ParentKey`, `Actual`, `Unexpected` and `Callbacks`,
+and return
+
+* `{pass, [{"Key", "Value"}]}` i.e. validation passed, store new param "Key" with value "Value"
+* `{not_equal, {Key, Expected, Actual}}`
+* `{not_equal, {Key, Expected, Actual, [{"more", "info"}]}}`
+
+```
+{
+  "rfc1123": {
+    "{{type}}": "runtime_validation",
+    "erlang": "Expected = httpd_util:rfc1123_date(calendar:now_to_datetime(erlang:now())), case Actual =:= Expected of true -> {pass, []}; false -> {not_equal, {ParentKey, Expected, Actual}} end"
+  }
+}
+```
+
+or in array format
+
+```
+{
+  "rfc1123": {
+    "{{type}}": "runtime_validation",
+    "erlang": ["Expected = httpd_util:rfc1123_date(calendar:now_to_datetime(erlang:now())),",
+               "case Actual =:= Expected of",
+               "  true ->",
+               "    {pass, []};",
+               "  false ->",
+               "    {not_equal, {ParentKey, Expected, Actual}}",
+               "end"
+              ]
+  }
+}
+```
 
 ## Examples
 
