@@ -35,9 +35,9 @@ katt_test_() ->
                  , fun mock_katt_blueprint_parse_file/1
                  ),
       meck:new(katt_callbacks, [passthrough]),
-      meck:expect( katt_util
-                 , external_http_request
-                 , fun mock_lhttpc_request/6
+      meck:expect( katt_http_client_hackney
+                 , request
+                 , fun mock_hackney_request/5
                  )
     end
   , fun(_) ->
@@ -101,12 +101,11 @@ katt_run_with_unexpected_and_undefined() ->
 %%% Helpers
 
 %% Mock response for unexpected disallow test:
-mock_lhttpc_request( "http://127.0.0.1/unexpected-disallow"
-                   , "GET"
+mock_hackney_request( "GET"
+                   , "http://127.0.0.1/unexpected-disallow"
                    , _
                    , _
                    , _Timeout
-                   , _Options
                    ) ->
   {ok, {{200, []}, [{"Content-Type", "application/json"}], <<"{
     \"ok\": true,
@@ -119,24 +118,22 @@ mock_lhttpc_request( "http://127.0.0.1/unexpected-disallow"
 "/utf8>>}};
 
 %% Mock response for expected but undefined test:
-mock_lhttpc_request( "http://127.0.0.1/expected-but-undefined"
-                   , "GET"
+mock_hackney_request( "GET"
+                   , "http://127.0.0.1/expected-but-undefined"
                    , _
                    , _
                    , _Timeout
-                   , _Options
                    ) ->
   {ok, {{200, []}, [{"Content-Type", "application/json"}], <<"{
 }
 "/utf8>>}};
 
 %% Mock response for unexpected and undefined test:
-mock_lhttpc_request( "http://127.0.0.1/unexpected-and-undefined"
-                   , "GET"
+mock_hackney_request( "GET"
+                   , "http://127.0.0.1/unexpected-and-undefined"
                    , _
                    , _
                    , _Timeout
-                   , _Options
                    ) ->
   {ok, {{200, []}, [{"Content-Type", "application/json"}], <<"{
 }

@@ -35,9 +35,9 @@ katt_test_() ->
                  , fun mock_katt_blueprint_parse_file/1
                  ),
       meck:new(katt_callbacks, [passthrough]),
-      meck:expect( katt_util
-                 , external_http_request
-                 , fun mock_lhttpc_request/6
+      meck:expect( katt_http_client_hackney
+                 , request
+                 , fun mock_hackney_request/5
                  )
     end
   , fun(_) ->
@@ -151,12 +151,11 @@ katt_run_with_struct() ->
 
 %% Mock response for Step 2:
 %% (default hostname is 127.0.0.1, default port is 80, default protocol is http)
-mock_lhttpc_request( "http://127.0.0.1/step1" = _Url
-                   , "POST" = _Method
+mock_hackney_request( "POST" = _Method
+                   , "http://127.0.0.1/step1" = _Url
                    , _Headers
                    , _Body
                    , _Timeout
-                   , _Options
                    ) ->
   {ok, { {201, []}
        , [ {"Location", "http://127.0.0.1/step2"}
@@ -168,12 +167,11 @@ mock_lhttpc_request( "http://127.0.0.1/step1" = _Url
          ]
        , <<>>}};
 %% Mock response for Step 2:
-mock_lhttpc_request( "http://127.0.0.1/step2"
-                   , "GET"
+mock_hackney_request( "GET"
+                   , "http://127.0.0.1/step2"
                    , [{"Accept", "application/json"}]
                    , <<>>
                    , _Timeout
-                   , _Options
                    ) ->
   {ok, {{200, []}, [{"Content-Type", "application/json"}], <<"{
     \"required_fields\": [
@@ -188,12 +186,11 @@ mock_lhttpc_request( "http://127.0.0.1/step2"
 
 "/utf8>>}};
 %% Mock response for Step 3:
-mock_lhttpc_request( "http://127.0.0.1/step2/step3"
-                   , "POST"
+mock_hackney_request( "POST"
+                   , "http://127.0.0.1/step2/step3"
                    , _
                    , _
                    , _Timeout
-                   , _Options
                    ) ->
   {ok, {{200, []}, [{"Content-Type", "application/json"}], <<"{
     \"required_fields\": [
@@ -203,34 +200,31 @@ mock_lhttpc_request( "http://127.0.0.1/step2/step3"
 }
 "/utf8>>}};
 %% Mock response for Step 4:
-mock_lhttpc_request( "http://127.0.0.1/step2/step4"
-                   , "POST"
+mock_hackney_request( "POST"
+                   , "http://127.0.0.1/step2/step4"
                    , _
                    , _
                    , _Timeout
-                   , _Options
                    ) ->
   {ok, {{402, []}, [{"Content-Type", "application/json"}], <<"{
     \"error\": \"payment required\"
 }
 "/utf8>>}};
 %% Mock response for Step 5:
-mock_lhttpc_request( "http://127.0.0.1/step5"
-                   , "HEAD"
+mock_hackney_request( "HEAD"
+                   , "http://127.0.0.1/step5"
                    , _
                    , _
                    , _Timeout
-                   , _Options
                    ) ->
   {ok, {{404, []}, [{"Content-Type", "text/html"}], <<>>}};
 
 %% Mock response for test-params:
-mock_lhttpc_request( "http://example.com/test-params"
-                   , "POST"
+mock_hackney_request( "POST"
+                   , "http://example.com/test-params"
                    , _
                    , _
                    , _Timeout
-                   , _Options
                    ) ->
   {ok, {{200, []}, [{"Content-Type", "application/vnd.katt.test-v1+json"}], <<"{
     \"protocol\": \"http:\",
@@ -248,14 +242,13 @@ mock_lhttpc_request( "http://example.com/test-params"
 "/utf8>>}};
 
 %% Mock response for api mismatch test:
-mock_lhttpc_request( "http://127.0.0.1/api-mismatch"
-                   , "POST"
+mock_hackney_request( "POST"
+                   , "http://127.0.0.1/api-mismatch"
                    , [ {"Accept", "application/json"}
                      , {"Content-Type", "application/json"}
                      ]
                    , _
                    , _Timeout
-                   , _Options
                    ) ->
   {ok, {{401, []}, [{"Content-Type", "application/json"}], <<"{
     \"error\": \"unauthorized\"
@@ -263,12 +256,11 @@ mock_lhttpc_request( "http://127.0.0.1/api-mismatch"
 "/utf8>>}};
 
 %% Mock response for store (and case-insensitive http headers) test:
-mock_lhttpc_request( "http://127.0.0.1/store"
-                   , "GET"
+mock_hackney_request( "GET"
+                   , "http://127.0.0.1/store"
                    , _
                    , _
                    , _Timeout
-                   , _Options
                    ) ->
   {ok, {{200, []}, [{"content-type", "application/json"},
                     {"set-cookie", "mycookie=param1; path=param2;"},
@@ -280,12 +272,11 @@ mock_lhttpc_request( "http://127.0.0.1/store"
 "/utf8>>}};
 
 %% Mock response for struct test:
-mock_lhttpc_request( "http://127.0.0.1/struct"
-                   , "GET"
+mock_hackney_request( "GET"
+                   , "http://127.0.0.1/struct"
                    , _
                    , _
                    , _Timeout
-                   , _Options
                    ) ->
   {ok, {{200, []}, [{"content-type", "application/json"}], <<"{
     \"array\": [],

@@ -34,9 +34,9 @@ katt_test_() ->
                  , fun mock_katt_blueprint_parse_file/1
                  ),
       meck:new(katt_callbacks, [passthrough]),
-      meck:expect( katt_util
-                 , external_http_request
-                 , fun mock_lhttpc_request/6
+      meck:expect( katt_http_client_hackney
+                 , request
+                 , fun mock_hackney_request/5
                  )
     end
   , fun(_) ->
@@ -111,12 +111,11 @@ katt_run_with_set_comparison_unlimited_fails() ->
 
 %% Mock response for set_comparison test:
 %% (match a finite set of values)
-mock_lhttpc_request( "http://127.0.0.1/set_comparison_strict"
-    , "GET"
+mock_hackney_request( "GET"
+    , "http://127.0.0.1/set_comparison_strict"
     , _
     , _
     , _Timeout
-    , _Options
 ) ->
   {ok, {{200, []}, [
     {"content-type", "application/json"}
@@ -126,12 +125,11 @@ mock_lhttpc_request( "http://127.0.0.1/set_comparison_strict"
 "/utf8>>}};
 %% Mock response for set_comparison test:
 %% (match a finite set of values):
-mock_lhttpc_request( "http://127.0.0.1/set_comparison_unlimited"
-    , "GET"
+mock_hackney_request( "GET"
+    , "http://127.0.0.1/set_comparison_unlimited"
     , _
     , _
     , _Timeout
-    , _Options
 ) ->
     {ok, {{200, []}, [
         {"content-type", "application/json"}
@@ -141,12 +139,11 @@ mock_lhttpc_request( "http://127.0.0.1/set_comparison_unlimited"
 "/utf8>>}};
 %% Mock response for set_comparison_unexpected test:
 %% (match any set of value, except the unexpected)
-mock_lhttpc_request( "http://127.0.0.1/set_comparison_unexpected"
-    , "GET"
+mock_hackney_request( "GET"
+    , "http://127.0.0.1/set_comparison_unexpected"
     , _
     , _
     , _Timeout
-    , _Options
 ) ->
     {ok, {{200, []}, [
         {"content-type", "application/json"}

@@ -97,17 +97,9 @@ katt_run(ScenarioFilename, Params) ->
   %% Don't use application:ensure_all_started(katt)
   %% nor application:ensure_started(_)
   %% in order to maintain compatibility with R16B01 and lower
-  ok = ensure_started(jsx),
-  ok = ensure_started(crypto),
-  ok = ensure_started(asn1),
-  ok = ensure_started(public_key),
-  ok = ensure_started(ssl),
-  ok = ensure_started(idna),
-  ok = ensure_started(mimerl),
-  ok = ensure_started(certifi),
-  ok = ensure_started(hackney),
-  ok = ensure_started(tdiff),
-  ok = ensure_started(katt),
+  ok = katt_util:ensure_applications_started([ jsx
+                                             , tdiff
+                                             , katt]),
   katt:run( ScenarioFilename
           , Params
           , [{ progress
@@ -181,12 +173,4 @@ try_to_convert_to([boolean|Rest], Value0) ->
       false;
     _ ->
       try_to_convert_to(Rest, Value0)
-  end.
-
-ensure_started(App) ->
-  case application:start(App) of
-    ok ->
-      ok;
-    {error, {already_started, App}} ->
-      ok
   end.

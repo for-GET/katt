@@ -44,14 +44,30 @@ Deps = {deps, DevOnlyDeps},
 ConfigPath = filename:dirname(SCRIPT),
 DevMarker = filename:join([ConfigPath, ".rebar", "DEV_MODE"]),
 _ = filelib:ensure_dir(DevMarker),
-case filelib:is_file(DevMarker) of
-    true ->
-        lists:foldl(fun(I, C) -> MergeConfig(I, C) end,
-                    CONFIG, [Deps, ErlOpts]);
+
+CONFIG1 = case filelib:is_file(DevMarker) of
+              true ->
+                  lists:foldl(fun(I, C) -> MergeConfig(I, C) end,
+                              CONFIG, [Deps, ErlOpts]);
+              false ->
+                  %% If the ./.rebar/DEV_MODE marker is not present, this script
+                  %% simply returns the config specified in rebar.config. This
+                  %% will be the behavior when the project is built as a
+                  %% dependency of another project.
+                  CONFIG
+          end,
+
+NoClientMarker = filename:join([ConfigPath, ".rebar", "NO_HTTP_CLIENT"]),
+case filelib:is_file(NoClientMarker) of
     false ->
-        %% If the ./.rebar/DEV_MODE marker is not present, this script simply
-        %% returns the config specified in rebar.config. This will be
-        %% the behavior when the project is built as a dependency of
-        %% another project.
-        CONFIG
-end.
+        %% If the ./.rebar/NO_HTTP_CLIENT marker is not present, this script
+        %% adds hackney as the dependency.
+        {_, {Name, _, _} = HttpClient} = lists:keyfind(http_client_library,
+                                                       1,
+                                                       CONFIG1),
+        lists:foldl(fun(I, C) -> MergeConfig(I, C) end,
+                    CONFIG1,
+                    [{deps, [HttpClient]}, {escript_incl_apps, [Name]}]);
+    true ->
+        CONFIG1
+         end.
