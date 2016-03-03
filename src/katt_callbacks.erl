@@ -28,7 +28,7 @@
 -export([ ext/1
         , recall/4
         , parse/4
-        , request/3
+        , request/4
         , validate/4
         , validate_type/6
         , progress/2
@@ -152,10 +152,11 @@ parse(Hdrs, Body, Params, Callbacks) ->
 -spec request( request()
              , params()
              , callbacks()
+             , options()
              ) -> response().
-request(R = #katt_request{}, Params, Callbacks) ->
+request(R = #katt_request{}, Params, Callbacks, Options) ->
   ParseFun = proplists:get_value(parse, Callbacks),
-  case http_request(R, Params) of
+  case http_request(R, Params, Options) of
     {ok, {{Code, _}, Hdrs, Body}} ->
       #katt_response{ status      = Code
                     , headers     = Hdrs
@@ -230,7 +231,8 @@ http_request( #katt_request{ method = Method
                            , headers = Hdrs0
                            , body = Body0
                            } = _R
-            , Params) ->
+            , Params
+            , Options) ->
   Body = case Body0 of
     null -> <<>>;
     Bin  -> Bin
@@ -250,7 +252,8 @@ http_request( #katt_request{ method = Method
   Hdrs1 = proplists:delete("x-katt-sleep", Hdrs0),
   Hdrs = proplists:delete("x-katt-timeout", Hdrs1),
   timer:sleep(Sleep),
-  katt_util:external_http_request(Url, Method, Hdrs, Body, Timeout, []).
+  Client = proplists:get_value(http_client, Options),
+  Client:request(Method, Url, Hdrs, Body, Timeout).
 
 validate_status( #katt_response{status=E}
                , #katt_response{status=A}

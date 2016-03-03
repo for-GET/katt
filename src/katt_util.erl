@@ -26,7 +26,8 @@
 
 %%%_* Exports ==================================================================
 %% API
--export([ merge_proplists/2
+-export([ ensure_applications_started/1
+        , merge_proplists/2
         , to_list/1
         , from_utf8/1
         , to_utf8/1
@@ -39,13 +40,15 @@
         , is_valid/5
         , validate/5
         , enumerate/1
-        , external_http_request/6
         ]).
 
 %%%_* Includes =================================================================
 -include("katt.hrl").
 
 %%%_* API ======================================================================
+
+ensure_applications_started(Apps) ->
+  lists:foreach(fun ensure_application_started/1, Apps).
 
 %% Merge two proplists. If a property exists in both List1 and List2, then the
 %% value from List2 is used.
@@ -117,29 +120,6 @@ run_result_to_jsx({ PassOrFail
   , {transaction_results, TransactionResults}
   ].
 
-external_http_request(Url, Method, Hdrs, Body, Timeout, []) ->
-  BUrl = list_to_binary(Url),
-  BHdrs = lists:map( fun({Name, Value})->
-                         {list_to_binary(Name), list_to_binary(Value)}
-                     end
-                   , Hdrs
-                   ),
-  Options = [{recv_timeout, Timeout}],
-  case hackney:request(Method, BUrl, BHdrs, Body, Options) of
-    {ok, Status, BResHdrs, Client} ->
-      %% lhttpc was the predecesor of hackney
-      %% and we're maintaining a backwards compatible return value
-      {ok, ResBody} = hackney:body(Client),
-      ResHdrs0 = lists:map( fun({Name, Value})->
-                                {binary_to_list(Name), binary_to_list(Value)}
-                            end
-                          , BResHdrs
-                          ),
-      ResHdrs = lists:reverse(ResHdrs0),
-      {ok, {{Status, ""}, ResHdrs, ResBody}};
-    Error ->
-      Error
-  end.
 
 %%%_* Internal =================================================================
 
@@ -495,3 +475,13 @@ enumerate(L) ->
   lists:zip([ integer_to_list(N)
               || N <- lists:seq(0, length(L) - 1)
             ], L).
+
+%%%_* Internal =================================================================
+
+ensure_application_started(App) ->
+  case application:start(App) of
+    ok ->
+      ok;
+    {error, {already_started, App}} ->
+      ok
+  end.

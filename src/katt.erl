@@ -32,10 +32,11 @@
         , run/1
         , run/2
         , run/3
+        , run/4
         ]).
 
 %% Internal exports
--export([ run/4
+-export([ run/5
         , make_callbacks/1
         ]).
 
@@ -70,6 +71,11 @@ run(ScenarioFilename, Params) -> run(ScenarioFilename, Params, []).
 %% @end
 -spec run(scenario_filename(), params(), callbacks()) -> run_result().
 run(Scenario, ScenarioParams, ScenarioCallbacks) ->
+  run(Scenario, ScenarioParams, ScenarioCallbacks, []).
+
+
+run(Scenario, ScenarioParams, ScenarioCallbacks, ScenarioOptions) ->
+  Options = make_options(ScenarioOptions),
   Params = ordsets:from_list(make_params(ScenarioParams)),
   Callbacks = make_callbacks(ScenarioCallbacks),
   ScenarioTimeout = proplists:get_value( "scenario_timeout"
@@ -78,13 +84,15 @@ run(Scenario, ScenarioParams, ScenarioCallbacks) ->
   ProgressFun = proplists:get_value( progress
                                    , Callbacks
                                    ),
-  spawn_link(?MODULE, run, [self(), Scenario, Params, Callbacks]),
+  HttpClient = proplists:get_value(http_client, Options),
+  ok = HttpClient:init([]),
+  spawn_link(?MODULE, run, [self(), Scenario, Params, Callbacks, Options]),
   run_loop(ScenarioTimeout, ProgressFun).
 
 %%%_* Internal exports =========================================================
 
 %% @private
-run(From, Scenario, Params, Callbacks) ->
+run(From, Scenario, Params, Callbacks, Options) ->
   From ! {progress, parsing, Scenario},
   {ok, Blueprint} = katt_blueprint_parse:file(Scenario),
   From ! {progress, parsed, Scenario},
@@ -92,7 +100,8 @@ run(From, Scenario, Params, Callbacks) ->
                                                   , Scenario
                                                   , Blueprint
                                                   , Params
-                                                  , Callbacks),
+                                                  , Callbacks
+                                                  , Options),
   FailureFilter = fun({ _Transaction
                       , _Params
                       , _Request
@@ -121,6 +130,10 @@ make_callbacks(Callbacks) ->
                             ], Callbacks).
 
 %%%_* Internal =================================================================
+
+make_options(ScenarioOptions) ->
+  katt_util:merge_proplists([{http_client, ?DEFAULT_HTTP_CLIENT_MOD}],
+                            ScenarioOptions).
 
 run_loop(ScenarioTimeout, ProgressFun) ->
   receive
@@ -151,12 +164,13 @@ make_params(ScenarioParams0) ->
                   ],
   katt_util:merge_proplists(DefaultParams, ScenarioParams).
 
-run_scenario(From, Scenario, Blueprint, Params, Callbacks) ->
+run_scenario(From, Scenario, Blueprint, Params, Callbacks, Options) ->
   Result = run_transactions( From
                            , Scenario
                            , Blueprint#katt_blueprint.transactions
                            , Params
                            , Callbacks
+                           , Options
                            , {0, []}
                            ),
   {FinalParams, {_Count, TransactionResults}} = Result,
@@ -167,6 +181,7 @@ run_transactions( _From
                 , []
                 , FinalParams
                 , _Callbacks
+                , _Options
                 , {Count, Results}
                 ) ->
   {FinalParams, {Count, Results}};
@@ -178,6 +193,7 @@ run_transactions( From
                                     }|T]
                 , Params
                 , Callbacks
+                , Options
                 , {Count, Results}
                 ) ->
   Hdrs0 = Req0#katt_request.headers,
@@ -199,7 +215,10 @@ run_transactions( From
   ExpectedResponse = make_katt_response(Res, Params, Callbacks),
   RequestFun = proplists:get_value(request, Callbacks),
   ValidateFun = proplists:get_value(validate, Callbacks),
-  ActualResponse = RequestFun(Request, Params, Callbacks),
+  ActualResponse = case is_function(RequestFun, 4) of
+                     true  -> RequestFun(Request, Params, Callbacks, Options);
+                     false -> RequestFun(Request, Params, Callbacks)
+                   end,
   ValidationResult = ValidateFun( ExpectedResponse
                                 , ActualResponse
                                 , Params
@@ -220,6 +239,7 @@ run_transactions( From
                       , T
                       , NextParams
                       , Callbacks
+                      , Options
                       , {Count + 1, [Result|Results]}
                       );
     _                 ->
