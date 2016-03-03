@@ -85,7 +85,7 @@ run(Scenario, ScenarioParams, ScenarioCallbacks, ScenarioOptions) ->
                                    , Callbacks
                                    ),
   HttpClient = proplists:get_value(http_client, Options),
-  ok = HttpClient:init([]),
+  ok = katt_http_client:init(HttpClient, []),
   spawn_link(?MODULE, run, [self(), Scenario, Params, Callbacks, Options]),
   run_loop(ScenarioTimeout, ProgressFun).
 
