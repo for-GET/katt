@@ -29,19 +29,17 @@ FileMarker = fun(RelPath) ->
 
 DevOnlyConfig = (
   fun(true) ->
-      ErlOpts = {erl_opts, [ {d, 'DEV_ONLY'}
-                           , debug_info
-                           ]},
-
       DevOnlyDeps = case lists:keyfind(dev_only_deps, 1, CONFIG) of
                       false ->
                         [];
                       {dev_only_deps, DOD} ->
                         DOD
                     end,
-      Deps = {deps, DevOnlyDeps},
-
-      [Deps, ErlOpts];
+      [ {deps, DevOnlyDeps}
+      , {erl_opts, [ {d, 'DEV_ONLY'}
+                   , debug_info
+                   ]}
+      ];
      (false) ->
       []
   end
