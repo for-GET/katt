@@ -109,8 +109,11 @@ xref:
 	$(REBAR) xref skip_deps=true
 
 .PHONY: test
-test: .rebar/DEV_MODE deps eunit dialyzer
+test: .rebar/DEV_MODE deps test_cli eunit dialyzer
 
+.PHONY: test_cli
+test_cli: .rebar/DEV_MODE deps
+	bin/katt hostname=httpbin.org my_name=Joe your_name=Mike -- ./doc/example-httpbin.apib >test/cli 2>/dev/null || { cat test/cli && exit 1; }
 
 .PHONY: eunit
 eunit:
