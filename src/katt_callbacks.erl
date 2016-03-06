@@ -157,12 +157,12 @@ request(R = #katt_request{}, Params, Callbacks) ->
   ParseFun = proplists:get_value(parse, Callbacks),
   case http_request(R, Params) of
     {ok, {{Code, _}, Hdrs, Body}} ->
-      #katt_response{ status      = Code
-                    , headers     = Hdrs
-                    , body        = Body
+      #katt_response{ status = Code
+                    , headers = Hdrs
+                    , body = Body
                     , parsed_body = ParseFun(Hdrs, Body, Params, Callbacks)
                     };
-    Error = {error, _}               ->
+    Error = {error, _} ->
       Error
   end.
 
@@ -176,7 +176,7 @@ request(R = #katt_request{}, Params, Callbacks) ->
 validate( Expected = #katt_response{}
         , Actual = #katt_response{}
         , _Params
-        , Callbacks)                                     ->
+        , Callbacks) ->
   {AddParams0, Failures0} = get_params_and_failures(
                               validate_status(Expected, Actual, Callbacks)),
   {AddParams1, Failures1} = get_params_and_failures(
@@ -188,10 +188,10 @@ validate( Expected = #katt_response{}
   Failures = Failures0 ++ Failures1 ++ Failures2,
   case Failures of
     [] -> {pass, AddParams};
-    _  -> {fail, Failures}
+    _ -> {fail, Failures}
   end;
 validate(Expected, #katt_response{}, _Params, _Callbacks) -> {fail, Expected};
-validate(#katt_response{}, Actual, _Params, _Callbacks)   -> {fail, Actual}.
+validate(#katt_response{}, Actual, _Params, _Callbacks) -> {fail, Actual}.
 
 %% @doc Notify of scenario progress
 %% @end
@@ -233,7 +233,7 @@ http_request( #katt_request{ method = Method
             , Params) ->
   Body = case Body0 of
     null -> <<>>;
-    Bin  -> Bin
+    Bin -> Bin
   end,
   Sleep = case proplists:get_value("x-katt-request-sleep", Hdrs0) of
             undefined ->

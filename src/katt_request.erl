@@ -62,4 +62,4 @@ set_method(Method, #katt_request{} = Req) -> Req#katt_request{method = Method}.
 get_url(#katt_request{url = Url}) -> Url.
 
 -spec set_url(string(), request()) -> request().
-set_url(Url, #katt_request{} =  Req) -> Req#katt_request{url = Url}.
+set_url(Url, #katt_request{} = Req) -> Req#katt_request{url = Url}.

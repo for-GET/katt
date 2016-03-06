@@ -103,7 +103,7 @@ run(From, Scenario, Params, Callbacks) ->
   Failures = lists:filter(FailureFilter, TransactionResults),
   Status = case Failures of
              [] -> pass;
-             _  -> fail
+             _ -> fail
            end,
   Result = {Status, Scenario, Params, FinalParams, TransactionResults},
   From ! {progress, status, Status},
@@ -140,7 +140,7 @@ make_params(ScenarioParams0) ->
   ScenarioParams = [ {katt_util:to_list(K), V} || {K, V} <- ScenarioParams0],
   Protocol = proplists:get_value("protocol", ScenarioParams, ?DEFAULT_PROTOCOL),
   DefaultPort = case Protocol of
-                  ?PROTOCOL_HTTP  -> ?DEFAULT_PORT_HTTP;
+                  ?PROTOCOL_HTTP -> ?DEFAULT_PORT_HTTP;
                   ?PROTOCOL_HTTPS -> ?DEFAULT_PORT_HTTPS
                 end,
   DefaultParams = [ {"protocol", Protocol}
@@ -247,9 +247,9 @@ make_katt_request( #katt_request{headers=Hdrs0, url=Url0, body=Body0} = Req
   Url = make_request_url(Url1, Params),
   Hdrs = RecallFun(headers, Hdrs0, Params, Callbacks),
   [Hdrs, Body] = RecallFun(body, [Hdrs, Body0], Params, Callbacks),
-  Req#katt_request{ url     = Url
+  Req#katt_request{ url = Url
                   , headers = Hdrs
-                  , body    = Body
+                  , body = Body
                   }.
 
 make_katt_response( #katt_response{headers=Hdrs0, body=Body0} = Res
@@ -261,15 +261,15 @@ make_katt_response( #katt_response{headers=Hdrs0, body=Body0} = Res
   Hdrs = RecallFun(headers, Hdrs0, Params, Callbacks),
   [Hdrs, Body] = RecallFun(body, [Hdrs, Body0], Params, Callbacks),
   ParsedBody = ParseFun(Hdrs, Body, Params, Callbacks),
-  Res#katt_response{ headers     = Hdrs
-                   , body        = Body
+  Res#katt_response{ headers = Hdrs
+                   , body = Body
                    , parsed_body = ParsedBody
                    }.
 
 -spec make_request_url( string()
                       , params()
                       ) -> nonempty_string().
-make_request_url(Url = ?PROTOCOL_HTTP "//" ++ _, _Params)  -> Url;
+make_request_url(Url = ?PROTOCOL_HTTP "//" ++ _, _Params) -> Url;
 make_request_url(Url = ?PROTOCOL_HTTPS "//" ++ _, _Params) -> Url;
 make_request_url(Path, Params) ->
   Protocol = proplists:get_value("protocol", Params),
@@ -282,7 +282,7 @@ make_request_url(Path, Params) ->
               ], "").
 
 
-make_host(?PROTOCOL_HTTP,  Hostname, 80)   -> Hostname;
-make_host(?PROTOCOL_HTTPS, Hostname, 443)  -> Hostname;
-make_host(_Proto,          Hostname, Port) ->
+make_host(?PROTOCOL_HTTP, Hostname, 80) -> Hostname;
+make_host(?PROTOCOL_HTTPS, Hostname, 443) -> Hostname;
+make_host(_Proto, Hostname, Port) ->
   Hostname ++ ":" ++ katt_util:to_list(Port).

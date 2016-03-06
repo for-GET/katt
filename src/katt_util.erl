@@ -55,17 +55,17 @@ merge_proplists(List1, List2) ->
                , orddict:from_list(List2)
                ).
 
-to_list(X) when is_atom(X)    -> atom_to_list(X);
+to_list(X) when is_atom(X) -> atom_to_list(X);
 to_list(X) when is_integer(X) -> integer_to_list(X);
-to_list(X) when is_float(X)   -> my_float_to_list(X);
-to_list(X) when is_binary(X)  -> binary_to_list(X);
-to_list(X) when is_list(X)    -> X.
+to_list(X) when is_float(X) -> my_float_to_list(X);
+to_list(X) when is_binary(X) -> binary_to_list(X);
+to_list(X) when is_list(X) -> X.
 
 %% Transform (possibly utf8 encoded) binary to list, ignore everything else.
 from_utf8(X) when is_binary(X) ->
   case unicode:characters_to_list(X, utf8) of
-    R when is_list(R)  -> R;
-    {error, _, _}      -> binary_to_list(X);
+    R when is_list(R) -> R;
+    {error, _, _} -> binary_to_list(X);
     {incomplete, _, _} -> binary_to_list(X)
   end.
 
