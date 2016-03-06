@@ -117,26 +117,32 @@ run_result_to_jsx({ PassOrFail
   , {transaction_results, TransactionResults}
   ].
 
-external_http_request(Url, Method, Hdrs, Body, Timeout, []) ->
-  BUrl = list_to_binary(Url),
-  BHdrs = lists:map( fun({Name, Value})->
-                         {list_to_binary(Name), list_to_binary(Value)}
-                     end
-                   , Hdrs
-                   ),
-  Options = [{recv_timeout, Timeout}],
-  case hackney:request(Method, BUrl, BHdrs, Body, Options) of
-    {ok, Status, BResHdrs, Client} ->
-      %% lhttpc was the predecesor of hackney
-      %% and we're maintaining a backwards compatible return value
-      {ok, ResBody} = hackney:body(Client),
-      ResHdrs0 = lists:map( fun({Name, Value})->
-                                {binary_to_list(Name), binary_to_list(Value)}
-                            end
-                          , BResHdrs
-                          ),
-      ResHdrs = lists:reverse(ResHdrs0),
-      {ok, {{Status, ""}, ResHdrs, ResBody}};
+external_http_request(Url, Method0, Hdrs, Body, Timeout, []) ->
+  Method = list_to_atom(string:to_lower(Method0)),
+  Request = case Body of
+              null ->
+                {Url, Hdrs};
+              _ ->
+                CT = case lists:dropwhile( fun({Name0, _Value}) ->
+                                               Name = string:to_lower(Name0),
+                                               Name =/= "content-type"
+                                           end
+                                         , Hdrs
+                                         ) of
+                       [] ->
+                         "";
+                       [{_, CT0}|_] ->
+                         CT0
+                     end,
+                {Url, Hdrs, CT, Body}
+            end,
+  HttpOptions = [ {timeout, Timeout}
+                , {autoredirect, false}
+                ],
+  Options = [{headers_as_is, true}],
+  case httpc:request(Method, Request, HttpOptions, Options) of
+    {ok, {{_, Status, Reason}, ResHdrs, Body}} ->
+      {ok, {{Status, Reason}, ResHdrs, Body}};
     Error ->
       Error
   end.
