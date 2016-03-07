@@ -117,12 +117,9 @@ convert_request(Request, Options) ->
   Headers = convert_headers( proplists:get_value(<<"headers">>, Request)
                            , Options
                            ),
-  Body = case proplists:get_value(<<"content">>, Request) of
-           undefined ->
-             null;
-           Content ->
-             proplists:get_value(<<"text">>, Content)
-         end,
+  Body = convert_body( proplists:get_value(<<"content">>, Request)
+                     , Options
+                     ),
   #katt_request{ method = Method
                , url = Url
                , headers = Headers
@@ -134,12 +131,9 @@ convert_response(Response, Options) ->
   Headers = convert_headers( proplists:get_value(<<"headers">>, Response)
                            , Options
                            ),
-  Body = case proplists:get_value(<<"content">>, Response) of
-           undefined ->
-             null;
-           Content ->
-             proplists:get_value(<<"text">>, Content)
-         end,
+  Body = convert_body( proplists:get_value(<<"content">>, Response)
+                     , Options
+                     ),
   #katt_response{ status = Status
                 , headers = Headers
                 , body = Body
@@ -166,6 +160,20 @@ convert_header(Header) ->
   Name = binary_to_list(proplists:get_value(<<"name">>, Header)),
   Value = binary_to_list(proplists:get_value(<<"value">>, Header)),
   {Name, Value}.
+
+convert_body(Content, _Options) ->
+  case Content of
+    undefined ->
+      null;
+    Content ->
+      Text = proplists:get_value(<<"text">>, Content),
+      case proplists:get_value(<<"encoding">>, Content) of
+        "base64" ->
+          base64:decode_to_string(Text);
+        _ ->
+          Text
+      end
+  end.
 
 ensure_started(App) ->
   case application:start(App) of
