@@ -247,8 +247,8 @@ http_request( #katt_request{ method = Method
               TimeoutStr ->
                 list_to_integer(TimeoutStr)
             end,
-  Hdrs1 = proplists:delete("x-katt-sleep", Hdrs0),
-  Hdrs = proplists:delete("x-katt-timeout", Hdrs1),
+  Hdrs1 = proplists:delete("x-katt-request-sleep", Hdrs0),
+  Hdrs = proplists:delete("x-katt-request-timeout", Hdrs1),
   timer:sleep(Sleep),
   katt_util:external_http_request(Url, Method, Hdrs, Body, Timeout, []).
 
