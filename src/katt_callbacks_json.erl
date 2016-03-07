@@ -29,6 +29,7 @@
         , parse/5
         , validate_body/4
         , validate_type/7
+        , parse_json/1
         ]).
 
 %%%_* Includes =================================================================
@@ -96,13 +97,15 @@ validate_body( false = _Justcheck
 
 
 validate_type( true = _JustCheck
-             , "set"
+             , Type
              , _ParentKey
              , _Options
              , _Actual
              , _Unexpected
              , _Callbacks
-             ) ->
+             ) when Type =:= "set" orelse
+                    Type =:= "runtime_value" orelse
+                    Type =:= "runtime_validation" ->
   true;
 validate_type( true = _JustCheck
              , _Type
@@ -127,6 +130,34 @@ validate_type( false = _JustCheck
                                       , Unexpected
                                       , Callbacks
                                       );
+validate_type( false = _JustCheck
+             , "runtime_value"
+             , ParentKey
+             , Options
+             , Actual
+             , Unexpected
+             , Callbacks
+             ) ->
+  katt_validate_type:validate_type_runtime_value( ParentKey
+                                                , Options
+                                                , Actual
+                                                , Unexpected
+                                                , Callbacks
+                                                );
+validate_type( false = _JustCheck
+             , "runtime_validation"
+             , ParentKey
+             , Options
+             , Actual
+             , Unexpected
+             , Callbacks
+             ) ->
+  katt_validate_type:validate_type_runtime_validation( ParentKey
+                                                     , Options
+                                                     , Actual
+                                                     , Unexpected
+                                                     , Callbacks
+                                                     );
 validate_type( false = _JustCheck
              , _Type
              , _ParentKey
@@ -160,7 +191,12 @@ normalize_jsx([{_, _}|_] = Items0) ->
                         || {Key, Value} <- Items0
                       ]),
   Type = proplists:get_value(?TYPE, Items1, struct),
-  Items = proplists:delete(?TYPE, Items1),
+  Items = case Type of
+            struct ->
+              Items1;
+            _ ->
+              proplists:delete(?TYPE, Items1)
+          end,
   {Type, Items};
 normalize_jsx([{}] = _Items) ->
   {struct, []};
