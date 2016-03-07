@@ -45,4 +45,24 @@ DevOnlyConfig = (
   end
  )(FileMarker([".rebar", "DEV_MODE"])).
 
-lists:foldl(MergeConfig, CONFIG, DevOnlyConfig).
+%% -- Add optional options unless `./.rebar/BARE_MODE' exists --
+%% * add the deps from optional_deps defined in rebar.config
+
+OptionalConfig = (
+  fun(false) ->
+      OptionalDeps = case lists:keyfind(optional_deps, 1, CONFIG) of
+                       false ->
+                         [];
+                       {optional_deps, DOD} ->
+                         DOD
+                     end,
+      [{deps, OptionalDeps}];
+     (true) ->
+      [{erl_opts, [ {d, 'BARE_MODE'}
+                  , debug_info
+                  ]}
+      ]
+  end
+ )(FileMarker([".rebar", "BARE_MODE"])).
+
+lists:foldl(MergeConfig, CONFIG, DevOnlyConfig ++ OptionalConfig).

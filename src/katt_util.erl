@@ -122,6 +122,10 @@ run_result_to_jsx({ PassOrFail
   , {transaction_results, TransactionResults}
   ].
 
+-ifdef(BARE_MODE).
+external_http_request(_Url, _Method, _Hdrs, _Body, _Timeout, []) ->
+  throw(bare_mode).
+-else.
 external_http_request(Url, Method, Hdrs, Body, Timeout, []) ->
   BUrl = list_to_binary(Url),
   BHdrs = lists:map( fun({Name, Value})->
@@ -145,6 +149,7 @@ external_http_request(Url, Method, Hdrs, Body, Timeout, []) ->
     Error ->
       Error
   end.
+-endif.
 
 erl_to_list(Term) ->
   io_lib:format("~p", [Term]).
