@@ -46,7 +46,6 @@
 -define(DEFAULT_PROGRESS_FUN,       fun katt_callbacks:progress/2).
 -define(DEFAULT_TEXT_DIFF_FUN,      fun katt_callbacks:text_diff/2).
 
--type scenario_filename()   :: nonempty_string().
 -type params()              :: [{param_name(), param()}].
 -type param_name()          :: string()
                              | atom().
@@ -63,7 +62,7 @@
 -type reason()              :: atom().
 -type details()             :: any().
 -type scenario_result()     :: { pass | fail
-                               , scenario_filename()
+                               , file:filename()
                                , params()
                                , params()
                                , [transaction_result()]

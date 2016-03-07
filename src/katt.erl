@@ -42,6 +42,10 @@
 %%%_* Includes =================================================================
 -include("katt.hrl").
 
+%%%_* Types ====================================================================
+-type katt_blueprint() :: #katt_blueprint{}.
+-type scenario() :: file:filename() | katt_blueprint().
+
 %%%_* API ======================================================================
 
 %% @doc Run from CLI with arguments.
@@ -50,25 +54,26 @@
 main(Args) ->
   katt_cli:main(Args).
 
-%% @doc Run test scenario. Argument is the full path to the scenario file.
-%% The scenario filename should be a KATT Blueprint file.
+%% @doc Run test scenario. Argument is the full path to the scenario file,
+%% a KATT Blueprint file, or the KATT Blueprint itself.
 %% @end
--spec run(scenario_filename()) -> run_result().
-run(ScenarioFilename) -> run(ScenarioFilename, []).
+-spec run(scenario()) -> run_result().
+run(Scenario) -> run(Scenario, []).
 
-%% @doc Run test scenario. Argument is the full path to the scenario file.
-%% The scenario file should be a KATT Blueprint file.
+%% @doc Run test scenario. Argument is the full path to the scenario file,
+%% a KATT Blueprint file, or the KATT Blueprint itself.
 %% @end
--spec run(scenario_filename(), params()) -> run_result().
-run(ScenarioFilename, Params) -> run(ScenarioFilename, Params, []).
+-spec run(scenario(), params()) -> run_result().
+run(Scenario, Params) -> run(Scenario, Params, []).
 
-%% @doc Run test scenario. First argument is the full path to the scenario file.
+%% @doc Run test scenario. First argument is the full path to the scenario file,
+%% a KATT Blueprint file, or the KATT Blueprint itself.
 %% Second argument is a key-value list of parameters, such as hostname, port.
 %% You can also pass custom variable names (atoms) and values (strings).
 %% Third argument is a key-value list of custom callbacks such as a custom
 %% parser to use instead of the built-in default parser (maybe_parse_body).
 %% @end
--spec run(scenario_filename(), params(), callbacks()) -> run_result().
+-spec run(scenario(), params(), callbacks()) -> run_result().
 run(Scenario, ScenarioParams, ScenarioCallbacks) ->
   Params = ordsets:from_list(make_params(ScenarioParams)),
   Callbacks = make_callbacks(ScenarioCallbacks),
@@ -84,15 +89,12 @@ run(Scenario, ScenarioParams, ScenarioCallbacks) ->
 %%%_* Internal exports =========================================================
 
 %% @private
-run(From, Scenario, Params, Callbacks) ->
-  From ! {progress, parsing, Scenario},
-  {ok, Blueprint} = katt_blueprint_parse:file(Scenario),
-  From ! {progress, parsed, Scenario},
-  {FinalParams, TransactionResults} = run_scenario( From
-                                                  , Scenario
-                                                  , Blueprint
-                                                  , Params
-                                                  , Callbacks),
+run(From, Blueprint, Params, Callbacks)
+  when is_record(Blueprint, katt_blueprint) ->
+  {FinalParams, TransactionResults} = run_blueprint( From
+                                                   , Blueprint
+                                                   , Params
+                                                   , Callbacks),
   FailureFilter = fun({ _Transaction
                       , _Params
                       , _Request
@@ -105,9 +107,19 @@ run(From, Scenario, Params, Callbacks) ->
              [] -> pass;
              _ -> fail
            end,
-  Result = {Status, Scenario, Params, FinalParams, TransactionResults},
+  Result = { Status
+           , Blueprint#katt_blueprint.filename
+           , Params
+           , FinalParams
+           , TransactionResults
+           },
   From ! {progress, status, Status},
-  From ! {done, Result}.
+  From ! {done, Result};
+run(From, Filename, Params, Callbacks) ->
+  From ! {progress, parsing, Filename},
+  {ok, Blueprint} = katt_blueprint_parse:file(Filename),
+  From ! {progress, parsed, Filename},
+  run(From, Blueprint#katt_blueprint{filename = Filename}, Params, Callbacks).
 
 %% @private
 make_callbacks(Callbacks) ->
@@ -151,9 +163,8 @@ make_params(ScenarioParams0) ->
                   ],
   katt_util:merge_proplists(DefaultParams, ScenarioParams).
 
-run_scenario(From, Scenario, Blueprint, Params, Callbacks) ->
+run_blueprint(From, Blueprint, Params, Callbacks) ->
   Result = run_transactions( From
-                           , Scenario
                            , Blueprint#katt_blueprint.transactions
                            , Params
                            , Callbacks
@@ -163,7 +174,6 @@ run_scenario(From, Scenario, Blueprint, Params, Callbacks) ->
   {FinalParams, lists:reverse(TransactionResults)}.
 
 run_transactions( _From
-                , _Scenario
                 , []
                 , FinalParams
                 , _Callbacks
@@ -171,7 +181,6 @@ run_transactions( _From
                 ) ->
   {FinalParams, {Count, Results}};
 run_transactions( From
-                , Scenario
                 , [#katt_transaction{ description = Description0
                                     , request = Req0
                                     , response = Res
@@ -216,7 +225,6 @@ run_transactions( From
       From ! {progress, transaction_result, Result},
       NextParams = katt_util:merge_proplists(Params, AddParams),
       run_transactions( From
-                      , Scenario
                       , T
                       , NextParams
                       , Callbacks
