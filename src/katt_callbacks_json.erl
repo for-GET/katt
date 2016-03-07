@@ -45,7 +45,7 @@
                  , callbacks()
                  ) -> any().
 recall_body(true = _JustCheck, [Hdrs, _Bin], _Params, _Callbacks) ->
-  is_json_content_type(Hdrs);
+  katt_util:is_json_content_type(Hdrs);
 recall_body(false = _JustCheck, [_Hdrs, Bin], [], _Callbacks) ->
   Bin;
 recall_body(false = _JustCheck, [Hdrs, Bin0], [{K0, V0} | Next], Callbacks) ->
@@ -70,11 +70,11 @@ recall_body(false = _JustCheck, [Hdrs, Bin0], [{K0, V0} | Next], Callbacks) ->
            , callbacks()
            ) -> any().
 parse(true = _JustCheck, Hdrs, _Body, _Params, _Callbacks) ->
-  is_json_content_type(Hdrs);
+  katt_util:is_json_content_type(Hdrs);
 parse(false = _JustCheck, _Hdrs, null, _Params, _Callbacks) ->
   [];
 parse(false = _JustCheck, Hdrs, Body, _Params, _Callbacks) ->
-  case is_json_content_type(Hdrs) of
+  case katt_util:is_json_content_type(Hdrs) of
     true ->
       parse_json(Body);
     false ->
@@ -87,7 +87,8 @@ validate_body( true = _Justcheck
              , #katt_response{headers=AHdrs}
              , _Callbacks
              ) ->
-  is_json_content_type(EHdrs) andalso is_json_content_type(AHdrs);
+  katt_util:is_json_content_type(EHdrs) andalso
+    katt_util:is_json_content_type(AHdrs);
 validate_body( false = _Justcheck
              , #katt_response{parsed_body=E}
              , #katt_response{parsed_body=A}
@@ -169,14 +170,6 @@ validate_type( false = _JustCheck
   fail.
 
 %%%_* Internal =================================================================
-
-is_json_content_type(Hdrs0) ->
-  Hdrs = [{katt_util:to_lower(K), V} || {K, V} <- Hdrs0],
-  ContentType = proplists:get_value("content-type", Hdrs, ""),
-  case string:str(ContentType, "json") of
-    0 -> false;
-    _ -> true
-  end.
 
 parse_json(Bin) when is_binary(Bin) andalso size(Bin) =:= 0 ->
   [];

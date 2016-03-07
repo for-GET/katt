@@ -55,6 +55,9 @@ help() ->
 main(["--apib"|Rest], Options, []) ->
   main(Rest, [{apib, true}|Options], []);
 
+main(["--pretty-print"|Rest], Options, []) ->
+  main(Rest, [{pretty_print, true}|Options], []);
+
 main(["--header=" ++ Name|Rest], Options, []) ->
   main(Rest, [{header, string:to_lower(Name)}|Options], []);
 
@@ -118,6 +121,7 @@ convert_request(Request, Options) ->
                            , Options
                            ),
   Body = convert_body( proplists:get_value(<<"content">>, Request)
+                     , Headers
                      , Options
                      ),
   #katt_request{ method = Method
@@ -132,6 +136,7 @@ convert_response(Response, Options) ->
                            , Options
                            ),
   Body = convert_body( proplists:get_value(<<"content">>, Response)
+                     , Headers
                      , Options
                      ),
   #katt_response{ status = Status
@@ -161,17 +166,29 @@ convert_header(Header) ->
   Value = binary_to_list(proplists:get_value(<<"value">>, Header)),
   {Name, Value}.
 
-convert_body(Content, _Options) ->
+convert_body(Content, Headers, Options) ->
+  PrettyPrint = proplists:get_value(pretty_print, Options, false),
   case Content of
     undefined ->
       null;
     Content ->
       Text = proplists:get_value(<<"text">>, Content),
-      case proplists:get_value(<<"encoding">>, Content) of
-        "base64" ->
-          base64:decode_to_string(Text);
-        _ ->
-          Text
+      Body = case proplists:get_value(<<"encoding">>, Content) of
+                "base64" ->
+                  base64:decode_to_string(Text);
+                _ ->
+                  Text
+              end,
+      case PrettyPrint of
+        false ->
+          Body;
+        true ->
+          case katt_util:is_json_content_type(Headers) of
+            true ->
+              jsx:encode(jsx:decode(Body), [space, {indent, 2}]);
+            false ->
+              Body
+          end
       end
   end.
 

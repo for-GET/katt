@@ -43,6 +43,7 @@
         , erl_to_list/1
         , os_cmd/2
         , blueprint_to_apib/1
+        , is_json_content_type/1
         ]).
 
 %%%_* Includes =================================================================
@@ -195,6 +196,14 @@ blueprint_to_apib(Blueprint) ->
                      io:fwrite("~n", [])
                  end
                , Blueprint#katt_blueprint.transactions).
+
+is_json_content_type(Hdrs0) ->
+  Hdrs = [{to_lower(K), V} || {K, V} <- Hdrs0],
+  ContentType = proplists:get_value("content-type", Hdrs, ""),
+  case string:str(ContentType, "json") of
+    0 -> false;
+    _ -> true
+  end.
 
 %%%_* Internal =================================================================
 
