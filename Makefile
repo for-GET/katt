@@ -132,4 +132,6 @@ dialyzer: $(DEPS_PLT)
 
 .PHONY: elvis
 elvis:
-	$(ELVIS) rock
+	$(ELVIS) rock > test/elvis || true
+	grep "FAIL" test/elvis | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" > test/elvis_warnings
+	diff -U0 test/known_elvis_warnings test/elvis_warnings || cat test/elvis

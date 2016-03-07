@@ -14,5 +14,7 @@
 /src/katt_blueprint.erl
 /test/cli
 /test/dialyzer_warnings
+/test/elvis
+/test/elvis_warnings
 /test/*.beam
 .#*
