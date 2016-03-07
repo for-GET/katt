@@ -41,6 +41,7 @@
            ]
          }
        ).
+
 -define( OBJECT_2
        , { array
          , [ { "0"
@@ -60,6 +61,7 @@
            ]
          }
        ).
+
 -define( OBJECT_3
        , { array
          , [ { "0"
@@ -79,6 +81,7 @@
            ]
          }
        ).
+
 -define( SIMPLE_OBJECT1
        , { array
          , [ {"0", {struct, [{"type", "unknown"}]}}
@@ -86,6 +89,7 @@
            ]
          }
        ).
+
 -define( SIMPLE_OBJECT2
        , { array
          , [ {"0", {struct, [{"type", "known"}]}}
@@ -93,6 +97,7 @@
            ]
          }
        ).
+
 -define( UNEXPECTED_OBJECT
        , {?MATCH_ANY, ?UNEXPECTED}
        ).
@@ -103,6 +108,7 @@ pass_when_there_is_only_one_element_test() ->
                                             , [{"0", ?SIMPLE_OBJECT1}]
                                             ))
               ).
+
 pass_when_lists_reversed_test() ->
   ?assertMatch( []
               , filter_errors(compare_as_set( [ {"0", ?SIMPLE_OBJECT1}
@@ -113,6 +119,7 @@ pass_when_lists_reversed_test() ->
                                               ]
                                             ))
               ).
+
 pass_when_lists_reversed_and_unexpected_test() ->
   ?assertMatch( []
               , filter_errors(compare_as_set( [ {"0", ?OBJECT_1}
@@ -124,6 +131,7 @@ pass_when_lists_reversed_and_unexpected_test() ->
                                               ]
                                             ))
               ).
+
 pass_when_expected_contained_by_actual_test() ->
   ?assertMatch( []
               , filter_errors(compare_as_set( [ {"0", ?OBJECT_1}
@@ -135,6 +143,7 @@ pass_when_expected_contained_by_actual_test() ->
                                               ]
                                             ))
               ).
+
 fail_when_expected_contained_by_actual_and_unexpected_test() ->
   ?assertMatch( [{unexpected, {"/2", undefined, ?OBJECT_3}}]
               , filter_errors(compare_as_set( [ {"0", ?OBJECT_1}
