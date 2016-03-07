@@ -22,6 +22,20 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+-define( FUNCTION
+       , element(2, element(2, process_info(self(), current_function)))
+       ).
+
+-export([ katt_run_set_blueprint/0
+        , katt_run_set_http/6
+        , katt_run_set_fails_blueprint/0
+        , katt_run_set_fails_http/6
+        , katt_run_set_with_unexpected_blueprint/0
+        , katt_run_set_with_unexpected_http/6
+        , katt_run_set_with_unexpected_fails_blueprint/0
+        , katt_run_set_with_unexpected_fails_http/6
+        ]).
+
 %%% Suite
 
 katt_test_() ->
@@ -43,28 +57,62 @@ katt_test_() ->
       meck:unload(katt_blueprint_parse),
       meck:unload(katt_callbacks)
     end
-  , [ katt_run_with_set_comparison_strict()
-    , katt_run_with_set_comparison_strict_fails()
-    , katt_run_with_set_comparison_unlimited()
-    , katt_run_with_set_comparison_unlimited_fails()
+  , [ katt_run_set_with_unexpected()
+    , katt_run_set_with_unexpected_fails()
+    , katt_run_set()
+    , katt_run_set_fails()
     ]
   }.
 
 %%% Tests
 
-katt_run_with_set_comparison_strict() ->
-    Scenario = "/mock/set_comparison_strict.apib",
-    ?_assertMatch( { pass
-                     , Scenario
-                     , _
-                     , _
-                     , [ {_, _, _, _, pass}
-                       ]
-                     }
-                    , katt:run(Scenario)
-                    ).
-katt_run_with_set_comparison_strict_fails() ->
-  Scenario = "/mock/set_comparison_strict_fails.apib",
+%%% Test set with strict (match a finite set of values)
+
+katt_run_set_with_unexpected() ->
+  Scenario = ?FUNCTION,
+  ?_assertMatch( { pass
+                 , Scenario
+                 , _
+                 , _
+                 , [ {_, _, _, _, pass}
+                   ]
+                 }
+               , katt:run(Scenario)
+               ).
+
+katt_run_set_with_unexpected_blueprint() ->
+  katt_blueprint_parse:string(
+    <<"--- Comparison as set ---
+
+GET /katt_run_set_with_unexpected
+< 200
+< Content-Type: application/json
+{
+    \"set_of_objects\": {
+        \"{{type}}\": \"set\",
+        \"value\": [{\"number\":1}, {\"number\":2}, \"{{unexpected}}\"]
+    }
+}
+"/utf8>>).
+
+katt_run_set_with_unexpected_http( _
+                                 , "GET"
+                                 , _
+                                 , _
+                                 , _Timeout
+                                 , _Options
+                                 ) ->
+  { ok, {{200, []}, [
+                     {"content-type", "application/json"}
+                    ], <<"{
+    \"set_of_objects\": [{\"number\":2}, {\"number\":1}]
+}
+"/utf8>>}}.
+
+%%% Test set failure with strict (match any set of value, except the unexpected)
+
+katt_run_set_with_unexpected_fails() ->
+  Scenario = ?FUNCTION,
   ?_assertMatch( { fail
                  , Scenario
                  , _
@@ -77,10 +125,42 @@ katt_run_with_set_comparison_strict_fails() ->
                                          ]}}
                    ]
                  }
-               , katt:run(Scenario) %%  ?debugFmt("~p", [katt:run(Scenario)])
+               , katt:run(Scenario)
                ).
-katt_run_with_set_comparison_unlimited() ->
-  Scenario = "/mock/set_comparison_unlimited.apib",
+
+katt_run_set_with_unexpected_fails_blueprint() ->
+  katt_blueprint_parse:string(
+    <<"--- Comparison as set ---
+
+GET /katt_run_set_with_unexpected_fails
+< 200
+< Content-Type: application/json
+{
+    \"set_of_objects\": {
+        \"{{type}}\": \"set\",
+        \"value\": [{\"number\":1}, \"{{unexpected}}\"]
+    }
+}
+"/utf8>>).
+
+katt_run_set_with_unexpected_fails_http( _
+                                       , "GET"
+                                       , _
+                                       , _
+                                       , _Timeout
+                                       , _Options
+                                       ) ->
+  {ok, {{200, []}, [
+                    {"content-type", "application/json"}
+                   ], <<"{
+    \"set_of_objects\": [{\"number\":2}, {\"number\":1}]
+}
+"/utf8>>}}.
+
+%%% Test set with unlimited
+
+katt_run_set() ->
+  Scenario = ?FUNCTION,
   ?_assertMatch( { pass
     , Scenario
     , _
@@ -90,8 +170,40 @@ katt_run_with_set_comparison_unlimited() ->
   }
     , katt:run(Scenario)
   ).
-katt_run_with_set_comparison_unlimited_fails() ->
-  Scenario = "/mock/set_comparison_unlimited_fails.apib",
+
+katt_run_set_blueprint() ->
+  katt_blueprint_parse:string(
+    <<"--- Comparison as set ---
+
+GET /katt_run_set
+< 200
+< Content-Type: application/json
+{
+    \"set_of_objects\": {
+        \"{{type}}\": \"set\",
+        \"value\": [{\"number\":1}, {\"number\":2}]
+    }
+}
+"/utf8>>).
+
+katt_run_set_http( _
+                 , "GET"
+                 , _
+                 , _
+                 , _Timeout
+                 , _Options
+                 ) ->
+  {ok, {{200, []}, [
+                    {"content-type", "application/json"}
+                   ], <<"{
+    \"set_of_objects\": [{\"number\":2}, {\"number\":1}, {\"another_number\":3}]
+}
+"/utf8>>}}.
+
+%%% Test set failure with unlimited
+
+katt_run_set_fails() ->
+  Scenario = ?FUNCTION,
   ?_assertMatch( { fail
                  , Scenario
                  , _
@@ -107,101 +219,11 @@ katt_run_with_set_comparison_unlimited_fails() ->
                , katt:run(Scenario)
                ).
 
-%%% Helpers
-
-%% Mock response for set_comparison test:
-%% (match a finite set of values)
-mock_lhttpc_request( "http://127.0.0.1/set_comparison_strict"
-    , "GET"
-    , _
-    , _
-    , _Timeout
-    , _Options
-) ->
-  {ok, {{200, []}, [
-    {"content-type", "application/json"}
-  ], <<"{
-    \"set_of_objects\": [{\"number\":2}, {\"number\":1}]
-}
-"/utf8>>}};
-%% Mock response for set_comparison test:
-%% (match a finite set of values):
-mock_lhttpc_request( "http://127.0.0.1/set_comparison_unlimited"
-    , "GET"
-    , _
-    , _
-    , _Timeout
-    , _Options
-) ->
-    {ok, {{200, []}, [
-        {"content-type", "application/json"}
-    ], <<"{
-    \"set_of_objects\": [{\"number\":2}, {\"number\":1}, {\"another_number\":3}]
-}
-"/utf8>>}};
-%% Mock response for set_comparison_unexpected test:
-%% (match any set of value, except the unexpected)
-mock_lhttpc_request( "http://127.0.0.1/set_comparison_unexpected"
-    , "GET"
-    , _
-    , _
-    , _Timeout
-    , _Options
-) ->
-    {ok, {{200, []}, [
-        {"content-type", "application/json"}
-    ], <<"{
-    \"set_of_objects\": [{\"number\":2}, {\"number\":1}, {\"number\":0}]
-}
-"/utf8>>}}.
-
-mock_katt_blueprint_parse_file("/mock/set_comparison_strict.apib") ->
-    katt_blueprint_parse:string(
-        <<"--- Comparison as set ---
-
-GET /set_comparison_strict
-< 200
-< Content-Type: application/json
-{
-    \"set_of_objects\": {
-        \"{{type}}\": \"set\",
-        \"value\": [{\"number\":1}, {\"number\":2}, \"{{unexpected}}\"]
-    }
-}
-"/utf8>>);
-mock_katt_blueprint_parse_file("/mock/set_comparison_strict_fails.apib") ->
+katt_run_set_fails_blueprint() ->
   katt_blueprint_parse:string(
     <<"--- Comparison as set ---
 
-GET /set_comparison_strict
-< 200
-< Content-Type: application/json
-{
-    \"set_of_objects\": {
-        \"{{type}}\": \"set\",
-        \"value\": [{\"number\":1}, \"{{unexpected}}\"]
-    }
-}
-"/utf8>>);
-mock_katt_blueprint_parse_file("/mock/set_comparison_unlimited.apib") ->
-  katt_blueprint_parse:string(
-    <<"--- Comparison as set ---
-
-GET /set_comparison_unlimited
-< 200
-< Content-Type: application/json
-{
-    \"set_of_objects\": {
-        \"{{type}}\": \"set\",
-        \"value\": [{\"number\":1}, {\"number\":2}]
-    }
-}
-"/utf8>>);
-mock_katt_blueprint_parse_file("/mock/set_comparison_unlimited_fails.apib") ->
-  katt_blueprint_parse:string(
-    <<"--- Comparison as set ---
-
-GET /set_comparison_unlimited
+GET /katt_run_set_fails
 < 200
 < Content-Type: application/json
 {
@@ -211,3 +233,27 @@ GET /set_comparison_unlimited
     }
 }
 "/utf8>>).
+
+katt_run_set_fails_http( _
+                       , "GET"
+                       , _
+                       , _
+                       , _Timeout
+                       , _Options
+                       ) ->
+  {ok, {{200, []}, [
+                    {"content-type", "application/json"}
+                   ], <<"{
+    \"set_of_objects\": [{\"number\":2}, {\"number\":1}, {\"another_number\":3}]
+}
+"/utf8>>}}.
+
+%%% Helpers
+
+mock_lhttpc_request(Url, Method, Hdrs, Body, Timeout, Options) ->
+  Fun = list_to_atom(lists:nth(3, string:tokens(Url, "/")) ++ "_http"),
+  Args = [Url, Method, Hdrs, Body, Timeout, Options],
+  erlang:apply(?MODULE, Fun, Args).
+
+mock_katt_blueprint_parse_file(Test) ->
+  erlang:apply(?MODULE, list_to_atom(atom_to_list(Test) ++ "_blueprint"), []).

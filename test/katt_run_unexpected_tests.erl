@@ -23,6 +23,18 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+-define( FUNCTION
+       , element(2, element(2, process_info(self(), current_function)))
+       ).
+
+-export([ katt_run_with_unexpected_disallow_blueprint/0
+        , katt_run_with_unexpected_disallow_http/6
+        , katt_run_with_expected_but_undefined_blueprint/0
+        , katt_run_with_expected_but_undefined_http/6
+        , katt_run_with_unexpected_and_undefined_blueprint/0
+        , katt_run_with_unexpected_and_undefined_http/6
+        ]).
+
 %%% Suite
 
 katt_test_() ->
@@ -53,8 +65,10 @@ katt_test_() ->
 
 %%% Tests
 
+%%% Test with unexpected disallow
+
 katt_run_with_unexpected_disallow() ->
-  Scenario = "/mock/unexpected-disallow.apib",
+  Scenario = ?FUNCTION,
   ?_assertMatch( { fail
                  , Scenario
                  , _
@@ -71,8 +85,44 @@ katt_run_with_unexpected_disallow() ->
                , katt:run(Scenario)
                ).
 
+katt_run_with_unexpected_disallow_blueprint() ->
+  katt_blueprint_parse:string(
+    <<"--- Test 4 ---
+
+GET /katt_run_with_unexpected_disallow
+< 200
+< Content-Type: application/json
+{
+    \"ok\": true,
+    \"extra_object\": {
+        \"{{_}}\": \"{{unexpected}}\"
+    },
+    \"extra_array\": [\"{{unexpected}}\"],
+    \"extra_array_2\": [\"{{unexpected}}\"]
+}
+"/utf8>>).
+
+katt_run_with_unexpected_disallow_http( _
+                                      , "GET"
+                                      , _
+                                      , _
+                                      , _Timeout
+                                      , _Options
+                                      ) ->
+  {ok, {{200, []}, [{"Content-Type", "application/json"}], <<"{
+    \"ok\": true,
+    \"extra_object\": {
+        \"key\": \"test\"
+    },
+    \"extra_array\": [\"test\"],
+    \"extra_array_2\": []
+}
+"/utf8>>}}.
+
+%%% Test with expected but undefined
+
 katt_run_with_expected_but_undefined() ->
-  Scenario = "/mock/expected-but-undefined.apib",
+  Scenario = ?FUNCTION,
   ?_assertMatch( { fail
                  , Scenario
                  , _
@@ -86,8 +136,33 @@ katt_run_with_expected_but_undefined() ->
                , katt:run(Scenario)
                ).
 
+katt_run_with_expected_but_undefined_blueprint() ->
+  katt_blueprint_parse:string(
+    <<"--- Test 5 ---
+
+GET /katt_run_with_expected_but_undefined
+< 200
+< Content-Type: application/json
+{
+    \"expected\": \"{{>defined_value}}\"
+}
+"/utf8>>).
+
+katt_run_with_expected_but_undefined_http( _
+                                         , "GET"
+                                         , _
+                                         , _
+                                         , _Timeout
+                                         , _Options
+                                         ) ->
+  {ok, {{200, []}, [{"Content-Type", "application/json"}], <<"{
+}
+"/utf8>>}}.
+
+%%% Test with unexpected and undefined
+
 katt_run_with_unexpected_and_undefined() ->
-  Scenario = "/mock/unexpected-and-undefined.apib",
+  Scenario = ?FUNCTION,
   ?_assertMatch( { pass
                  , Scenario
                  , _
@@ -98,87 +173,36 @@ katt_run_with_unexpected_and_undefined() ->
                , katt:run(Scenario)
                ).
 
-%%% Helpers
 
-%% Mock response for unexpected disallow test:
-mock_lhttpc_request( "http://127.0.0.1/unexpected-disallow"
-                   , "GET"
-                   , _
-                   , _
-                   , _Timeout
-                   , _Options
-                   ) ->
-  {ok, {{200, []}, [{"Content-Type", "application/json"}], <<"{
-    \"ok\": true,
-    \"extra_object\": {
-        \"key\": \"test\"
-    },
-    \"extra_array\": [\"test\"],
-    \"extra_array_2\": []
-}
-"/utf8>>}};
-
-%% Mock response for expected but undefined test:
-mock_lhttpc_request( "http://127.0.0.1/expected-but-undefined"
-                   , "GET"
-                   , _
-                   , _
-                   , _Timeout
-                   , _Options
-                   ) ->
-  {ok, {{200, []}, [{"Content-Type", "application/json"}], <<"{
-}
-"/utf8>>}};
-
-%% Mock response for unexpected and undefined test:
-mock_lhttpc_request( "http://127.0.0.1/unexpected-and-undefined"
-                   , "GET"
-                   , _
-                   , _
-                   , _Timeout
-                   , _Options
-                   ) ->
-  {ok, {{200, []}, [{"Content-Type", "application/json"}], <<"{
-}
-"/utf8>>}}.
-
-mock_katt_blueprint_parse_file("/mock/unexpected-disallow.apib") ->
-  katt_blueprint_parse:string(
-    <<"--- Test 4 ---
-
-GET /unexpected-disallow
-< 200
-< Content-Type: application/json
-{
-    \"ok\": true,
-    \"extra_object\": {
-        \"{{_}}\": \"{{unexpected}}\"
-    },
-    \"extra_array\": [\"{{unexpected}}\"],
-    \"extra_array_2\": [\"{{unexpected}}\"]
-}
-"/utf8>>);
-
-mock_katt_blueprint_parse_file("/mock/expected-but-undefined.apib") ->
-  katt_blueprint_parse:string(
-    <<"--- Test 5 ---
-
-GET /expected-but-undefined
-< 200
-< Content-Type: application/json
-{
-    \"expected\": \"{{>defined_value}}\"
-}
-"/utf8>>);
-
-mock_katt_blueprint_parse_file("/mock/unexpected-and-undefined.apib") ->
+katt_run_with_unexpected_and_undefined_blueprint() ->
   katt_blueprint_parse:string(
     <<"--- Test 6 ---
 
-GET /unexpected-and-undefined
+GET /katt_run_with_unexpected_and_undefined
 < 200
 < Content-Type: application/json
 {
     \"expected\": \"{{unexpected}}\"
 }
 "/utf8>>).
+
+katt_run_with_unexpected_and_undefined_http( _
+                                           , "GET"
+                                           , _
+                                           , _
+                                           , _Timeout
+                                           , _Options
+                                           ) ->
+  {ok, {{200, []}, [{"Content-Type", "application/json"}], <<"{
+}
+"/utf8>>}}.
+
+%%% Helpers
+
+mock_lhttpc_request(Url, Method, Hdrs, Body, Timeout, Options) ->
+  Fun = list_to_atom(lists:nth(3, string:tokens(Url, "/")) ++ "_http"),
+  Args = [Url, Method, Hdrs, Body, Timeout, Options],
+  erlang:apply(?MODULE, Fun, Args).
+
+mock_katt_blueprint_parse_file(Test) ->
+  erlang:apply(?MODULE, list_to_atom(atom_to_list(Test) ++ "_blueprint"), []).

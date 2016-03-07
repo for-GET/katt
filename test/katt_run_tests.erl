@@ -23,6 +23,22 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+-define( FUNCTION
+       , element(2, element(2, process_info(self(), current_function)))
+       ).
+
+-export([ katt_run_basic_blueprint/0
+        , katt_run_basic_http/6
+        , katt_run_with_params_blueprint/0
+        , katt_run_with_params_http/6
+        , katt_run_with_api_mismatch_blueprint/0
+        , katt_run_with_api_mismatch_http/6
+        , katt_run_with_store_blueprint/0
+        , katt_run_with_store_http/6
+        , katt_run_with_struct_blueprint/0
+        , katt_run_with_struct_http/6
+        ]).
+
 %%% Suite
 
 katt_test_() ->
@@ -55,8 +71,10 @@ katt_test_() ->
 
 %%% Tests
 
+%%% Basic test
+
 katt_run_basic() ->
-  Scenario = "/mock/basic.apib",
+  Scenario = ?FUNCTION,
   ?_assertMatch( { pass
                  , Scenario
                  , _
@@ -71,231 +89,7 @@ katt_run_basic() ->
                , katt:run(Scenario)
                ).
 
-katt_run_with_params() ->
-  Scenario = "/mock/test-params.apib",
-  ?_assertMatch( { pass
-                 , Scenario
-                 , _
-                 , _
-                 , [ {_, _, _, _, pass}
-                   ]
-                 }
-               , katt:run( Scenario
-                         , [ {hostname, "example.com"}
-                           , {some_var, "hi"}
-                           , {version, "1"}
-                           , {syntax, json}
-                           , {test_null, null}
-                           , {test_boolean, true}
-                           , {test_integer, 1}
-                           , {test_float, 1.1}
-                           , {test_string, "string"}
-                           , {test_binary, <<"binary"/utf8>>}
-                           ]
-                         )
-               ).
-
-katt_run_with_api_mismatch() ->
-  Scenario = "/mock/api-mismatch.apib",
-  ?_assertMatch( { fail
-                 , Scenario
-                 , _
-                 , _
-                 , [ {_, _, _, _, {fail, [ {not_equal, {"/status", _, _}}
-                                         , {not_equal, {"/body/ok", _, _}}
-                                         ]}}
-                   ]
-                 }
-               , katt:run(Scenario)
-               ).
-
-katt_run_with_store() ->
-  Scenario = "/mock/store.apib",
-  ?_assertMatch( { pass
-                 , Scenario
-                 , _
-                 , [ _
-                   , {"param1", "param1"}
-                   , {"param2", "param2"}
-                   , {"param3", "param3"}
-                   , {"param4", "param4"}
-                   , {"param5", "param5"}
-                   , _
-                   , _
-                   , _
-                   , _
-                   ]
-                 , [ {_, _, _, _, pass}
-                   ]
-                 }
-               , katt:run(Scenario)
-               ).
-
-katt_run_with_struct() ->
-  Scenario = "/mock/struct.apib",
-  ?_assertMatch( { fail
-                 , Scenario
-                 , _
-                 , _
-                 , [ {_, _, _, _, { fail
-                                  , [ {not_equal, {"/body/not_object", _, _}}
-                                    , {not_equal, {"/body/not_array", _, _}}
-                                    ]
-                                  }}
-                   ]
-                 }
-               , katt:run(Scenario)
-               ).
-
-%%% Helpers
-
-%% Mock response for Step 2:
-%% (default hostname is 127.0.0.1, default port is 80, default protocol is http)
-mock_lhttpc_request( "http://127.0.0.1/step1" = _Url
-                   , "POST" = _Method
-                   , _Headers
-                   , _Body
-                   , _Timeout
-                   , _Options
-                   ) ->
-  {ok, { {201, []}
-       , [ {"Location", "http://127.0.0.1/step2"}
-         , {"Cache-Control", "no-cache"}
-         , {"Cache-Control", "no-store"}
-         , {"Cache-Control", "must-revalidate"}
-         , {"X-Another-Duplicate-Header", "foo"}
-         , {"X-Another-Duplicate-Header", "bar"}
-         ]
-       , <<>>}};
-%% Mock response for Step 2:
-mock_lhttpc_request( "http://127.0.0.1/step2"
-                   , "GET"
-                   , [{"Accept", "application/json"}]
-                   , <<>>
-                   , _Timeout
-                   , _Options
-                   ) ->
-  {ok, {{200, []}, [{"Content-Type", "application/json"}], <<"{
-    \"required_fields\": [
-        \"email\"
-    ],
-    \"cart\": \"{{_}}\",
-    \"extra_object\": {
-      \"key\": \"test\"
-    },
-    \"extra_array\": [\"test\"]
-}
-
-"/utf8>>}};
-%% Mock response for Step 3:
-mock_lhttpc_request( "http://127.0.0.1/step2/step3"
-                   , "POST"
-                   , _
-                   , _
-                   , _Timeout
-                   , _Options
-                   ) ->
-  {ok, {{200, []}, [{"Content-Type", "application/json"}], <<"{
-    \"required_fields\": [
-        \"password\"
-    ],
-    \"cart\": {\"item1\": true}
-}
-"/utf8>>}};
-%% Mock response for Step 4:
-mock_lhttpc_request( "http://127.0.0.1/step2/step4"
-                   , "POST"
-                   , _
-                   , _
-                   , _Timeout
-                   , _Options
-                   ) ->
-  {ok, {{402, []}, [{"Content-Type", "application/json"}], <<"{
-    \"error\": \"payment required\"
-}
-"/utf8>>}};
-%% Mock response for Step 5:
-mock_lhttpc_request( "http://127.0.0.1/step5"
-                   , "HEAD"
-                   , _
-                   , _
-                   , _Timeout
-                   , _Options
-                   ) ->
-  {ok, {{404, []}, [{"Content-Type", "text/html"}], <<>>}};
-
-%% Mock response for test-params:
-mock_lhttpc_request( "http://example.com/test-params"
-                   , "POST"
-                   , _
-                   , _
-                   , _Timeout
-                   , _Options
-                   ) ->
-  {ok, {{200, []}, [{"Content-Type", "application/vnd.katt.test-v1+json"}], <<"{
-    \"protocol\": \"http:\",
-    \"hostname\": \"example.com\",
-    \"port\": 80,
-    \"some_var\": \"hi\",
-    \"some_var3\": \"hihihi\",
-    \"null\": null,
-    \"boolean\": true,
-    \"integer\": 1,
-    \"float\": 1.1,
-    \"string\": \"string\",
-    \"binary\": \"binary\"
-}
-"/utf8>>}};
-
-%% Mock response for api mismatch test:
-mock_lhttpc_request( "http://127.0.0.1/api-mismatch"
-                   , "POST"
-                   , [ {"Accept", "application/json"}
-                     , {"Content-Type", "application/json"}
-                     ]
-                   , _
-                   , _Timeout
-                   , _Options
-                   ) ->
-  {ok, {{401, []}, [{"Content-Type", "application/json"}], <<"{
-    \"error\": \"unauthorized\"
-}
-"/utf8>>}};
-
-%% Mock response for store (and case-insensitive http headers) test:
-mock_lhttpc_request( "http://127.0.0.1/store"
-                   , "GET"
-                   , _
-                   , _
-                   , _Timeout
-                   , _Options
-                   ) ->
-  {ok, {{200, []}, [{"content-type", "application/json"},
-                    {"set-cookie", "mycookie=param1; path=param2;"},
-                    {"x-foo", "param3"},
-                    {"x-bar", "bazparam4"},
-                    {"x-qux", "quxnorf"}], <<"{
-    \"param5\": \"param5\"
-}
-"/utf8>>}};
-
-%% Mock response for struct test:
-mock_lhttpc_request( "http://127.0.0.1/struct"
-                   , "GET"
-                   , _
-                   , _
-                   , _Timeout
-                   , _Options
-                   ) ->
-  {ok, {{200, []}, [{"content-type", "application/json"}], <<"{
-    \"array\": [],
-    \"object\": {},
-    \"not_array\": [],
-    \"not_object\": {}
-}
-"/utf8>>}}.
-
-mock_katt_blueprint_parse_file("/mock/basic.apib") ->
+katt_run_basic_blueprint() ->
   katt_blueprint_parse:string(
     <<"--- Test 1 ---
 
@@ -308,7 +102,7 @@ Some description
 The merchant creates a new example object on our server, and we respond with
 the location of the created example.
 
-POST /step1
+POST /katt_run_basic/step1
 > Accept: application/json
 > Content-Type: application/json
 {
@@ -397,18 +191,114 @@ POST {{<example_uri}}/step4
 
 # Step 5
 
-HEAD /step5
+HEAD /katt_run_basic/step5
 < 404
 < Content-Type: text/html
 <<<
 >>>
-"/utf8>>);
+"/utf8>>).
 
-mock_katt_blueprint_parse_file("/mock/test-params.apib") ->
+%% (default hostname is 127.0.0.1, default port is 80, default protocol is http)
+katt_run_basic_http( "http://127.0.0.1/katt_run_basic/step1"
+                   , "POST" = _Method
+                   , _Headers
+                   , _Body
+                   , _Timeout
+                   , _Options
+                   ) ->
+  {ok, { {201, []}
+       , [ {"Location", "http://127.0.0.1/katt_run_basic/step2"}
+         , {"Cache-Control", "no-cache"}
+         , {"Cache-Control", "no-store"}
+         , {"Cache-Control", "must-revalidate"}
+         , {"X-Another-Duplicate-Header", "foo"}
+         , {"X-Another-Duplicate-Header", "bar"}
+         ]
+       , <<>>}};
+katt_run_basic_http( "http://127.0.0.1/katt_run_basic/step2"
+                   , "GET"
+                   , [{"Accept", "application/json"}]
+                   , <<>>
+                   , _Timeout
+                   , _Options
+                   ) ->
+  {ok, {{200, []}, [{"Content-Type", "application/json"}], <<"{
+    \"required_fields\": [
+        \"email\"
+    ],
+    \"cart\": \"{{_}}\",
+    \"extra_object\": {
+      \"key\": \"test\"
+    },
+    \"extra_array\": [\"test\"]
+}
+
+"/utf8>>}};
+katt_run_basic_http( "http://127.0.0.1/katt_run_basic/step2/step3"
+                   , "POST"
+                   , _
+                   , _
+                   , _Timeout
+                   , _Options
+                   ) ->
+  {ok, {{200, []}, [{"Content-Type", "application/json"}], <<"{
+    \"required_fields\": [
+        \"password\"
+    ],
+    \"cart\": {\"item1\": true}
+}
+"/utf8>>}};
+katt_run_basic_http( "http://127.0.0.1/katt_run_basic/step2/step4"
+                   , "POST"
+                   , _
+                   , _
+                   , _Timeout
+                   , _Options
+                   ) ->
+  {ok, {{402, []}, [{"Content-Type", "application/json"}], <<"{
+    \"error\": \"payment required\"
+}
+"/utf8>>}};
+katt_run_basic_http( "http://127.0.0.1/katt_run_basic/step5"
+                   , "HEAD"
+                   , _
+                   , _
+                   , _Timeout
+                   , _Options
+                   ) ->
+  {ok, {{404, []}, [{"Content-Type", "text/html"}], <<>>}}.
+
+%%% Test with params
+
+katt_run_with_params() ->
+  Scenario = ?FUNCTION,
+  ?_assertMatch( { pass
+                 , Scenario
+                 , _
+                 , _
+                 , [ {_, _, _, _, pass}
+                   ]
+                 }
+               , katt:run( Scenario
+                         , [ {hostname, "example.com"}
+                           , {some_var, "hi"}
+                           , {version, "1"}
+                           , {syntax, json}
+                           , {test_null, null}
+                           , {test_boolean, true}
+                           , {test_integer, 1}
+                           , {test_float, 1.1}
+                           , {test_string, "string"}
+                           , {test_binary, <<"binary"/utf8>>}
+                           ]
+                         )
+               ).
+
+katt_run_with_params_blueprint() ->
   katt_blueprint_parse:string(
     <<"--- Test 2 ---
 
-POST /test-params
+POST /katt_run_with_params
 < 200
 < Content-Type: application/vnd.katt.test-v{{<version}}+{{<syntax}}
 {
@@ -424,26 +314,102 @@ POST /test-params
     \"string\": \"{{<test_string}}\",
     \"binary\": \"{{<test_binary}}\"
 }
-"/utf8>>);
+"/utf8>>).
 
-mock_katt_blueprint_parse_file("/mock/api-mismatch.apib") ->
+katt_run_with_params_http( _
+                         , "POST"
+                         , _
+                         , _
+                         , _Timeout
+                         , _Options
+                         ) ->
+  {ok, {{200, []}, [{"Content-Type", "application/vnd.katt.test-v1+json"}], <<"{
+    \"protocol\": \"http:\",
+    \"hostname\": \"example.com\",
+    \"port\": 80,
+    \"some_var\": \"hi\",
+    \"some_var3\": \"hihihi\",
+    \"null\": null,
+    \"boolean\": true,
+    \"integer\": 1,
+    \"float\": 1.1,
+    \"string\": \"string\",
+    \"binary\": \"binary\"
+}
+"/utf8>>}}.
+
+%%% Test with API mismatch
+
+katt_run_with_api_mismatch() ->
+  Scenario = ?FUNCTION,
+  ?_assertMatch( { fail
+                 , Scenario
+                 , _
+                 , _
+                 , [ {_, _, _, _, {fail, [ {not_equal, {"/status", _, _}}
+                                         , {not_equal, {"/body/ok", _, _}}
+                                         ]}}
+                   ]
+                 }
+               , katt:run(Scenario)
+               ).
+
+katt_run_with_api_mismatch_blueprint() ->
   katt_blueprint_parse:string(
     <<"--- Test 3 ---
 
-POST /api-mismatch
+POST /katt_run_with_api_mismatch
 > Accept: application/json
 > Content-Type: application/json
 {}
 < 200
 < Content-Type: application/json
 { \"ok\": true }
-"/utf8>>);
+"/utf8>>).
 
-mock_katt_blueprint_parse_file("/mock/store.apib") ->
+katt_run_with_api_mismatch_http( _
+                               , "POST"
+                               , [ {"Accept", "application/json"}
+                                 , {"Content-Type", "application/json"}
+                                 ]
+                               , _
+                               , _Timeout
+                               , _Options
+                               ) ->
+  {ok, {{401, []}, [{"Content-Type", "application/json"}], <<"{
+    \"error\": \"unauthorized\"
+}
+"/utf8>>}}.
+
+%%% Test with store (and case-insensitive http headers)
+
+katt_run_with_store() ->
+  Scenario = ?FUNCTION,
+  ?_assertMatch( { pass
+                 , Scenario
+                 , _
+                 , [ _
+                   , {"param1", "param1"}
+                   , {"param2", "param2"}
+                   , {"param3", "param3"}
+                   , {"param4", "param4"}
+                   , {"param5", "param5"}
+                   , _
+                   , _
+                   , _
+                   , _
+                   ]
+                 , [ {_, _, _, _, pass}
+                   ]
+                 }
+               , katt:run(Scenario)
+               ).
+
+katt_run_with_store_blueprint() ->
   katt_blueprint_parse:string(
     <<"--- Test 7 ---
 
-GET /store
+GET /katt_run_with_store
 < 200
 < Content-Type: application/json
 < Set-Cookie: mycookie={{>param1}}; path={{>param2}};
@@ -453,13 +419,47 @@ GET /store
 {
     \"param5\": \"{{>param5}}\"
 }
-"/utf8>>);
+"/utf8>>).
 
-mock_katt_blueprint_parse_file("/mock/struct.apib") ->
+katt_run_with_store_http( _
+                        , "GET"
+                        , _
+                        , _
+                        , _Timeout
+                        , _Options
+                        ) ->
+  {ok, {{200, []}, [{"content-type", "application/json"},
+                    {"set-cookie", "mycookie=param1; path=param2;"},
+                    {"x-foo", "param3"},
+                    {"x-bar", "bazparam4"},
+                    {"x-qux", "quxnorf"}], <<"{
+    \"param5\": \"param5\"
+}
+"/utf8>>}}.
+
+%%% Test with struct
+
+katt_run_with_struct() ->
+  Scenario = ?FUNCTION,
+  ?_assertMatch( { fail
+                 , Scenario
+                 , _
+                 , _
+                 , [ {_, _, _, _, { fail
+                                  , [ {not_equal, {"/body/not_object", _, _}}
+                                    , {not_equal, {"/body/not_array", _, _}}
+                                    ]
+                                  }}
+                   ]
+                 }
+               , katt:run(Scenario)
+               ).
+
+katt_run_with_struct_blueprint() ->
   katt_blueprint_parse:string(
     <<"--- Test 8 ---
 
-GET /struct
+GET /katt_run_with_struct
 > x-katt-request-sleep: 500
 > x-katt-request-timeout: 50000
 < 200
@@ -471,3 +471,28 @@ GET /struct
     \"not_object\": []
 }
 "/utf8>>).
+
+katt_run_with_struct_http( _
+                         , "GET"
+                         , _
+                         , _
+                         , _Timeout
+                         , _Options
+                         ) ->
+  {ok, {{200, []}, [{"content-type", "application/json"}], <<"{
+    \"array\": [],
+    \"object\": {},
+    \"not_array\": [],
+    \"not_object\": {}
+}
+"/utf8>>}}.
+
+%%% Helpers
+
+mock_lhttpc_request(Url, Method, Hdrs, Body, Timeout, Options) ->
+  Fun = list_to_atom(lists:nth(3, string:tokens(Url, "/")) ++ "_http"),
+  Args = [Url, Method, Hdrs, Body, Timeout, Options],
+  erlang:apply(?MODULE, Fun, Args).
+
+mock_katt_blueprint_parse_file(Test) ->
+  erlang:apply(?MODULE, list_to_atom(atom_to_list(Test) ++ "_blueprint"), []).
