@@ -42,6 +42,7 @@
         , external_http_request/6
         , erl_to_list/1
         , os_cmd/2
+        , blueprint_to_apib/1
         ]).
 
 %%%_* Includes =================================================================
@@ -158,6 +159,42 @@ os_cmd(Cmd, Env) ->
         ],
   Port = open_port({spawn, Cmd}, Opt),
   os_cmd_result(Port, []).
+
+blueprint_to_apib(Blueprint) ->
+  io:fwrite( "---- ~s ----~n"
+             "~n"
+             "---~n"
+             "---~n"
+             "~n"
+           , [Blueprint#katt_blueprint.name]
+           ),
+  lists:foreach( fun(#katt_transaction{ description = Description
+                                      , request = Req
+                                      , response = Res
+                                      }) ->
+                     io:fwrite("# ~s~n~n", [Description]),
+                     io:fwrite( "~s ~s~n"
+                                "~s"
+                                "~s"
+                              , [ Req#katt_request.method
+                                , Req#katt_request.url
+                                , headers_to_apib( Req#katt_request.headers
+                                                 , "> "
+                                                 )
+                                , body_to_apib(Req#katt_request.body)
+                                ]),
+                     io:fwrite( "< ~B~n"
+                                "~s"
+                                "~s"
+                              , [ Res#katt_response.status
+                                , headers_to_apib( Res#katt_response.headers
+                                                 , "< "
+                                                 )
+                                , body_to_apib(Res#katt_response.body)
+                                ]),
+                     io:fwrite("~n", [])
+                 end
+               , Blueprint#katt_blueprint.transactions).
 
 %%%_* Internal =================================================================
 
@@ -519,3 +556,18 @@ os_cmd_result(Port, Output) ->
           {ExitStatus, lists:flatten(Output)}
       end
   end.
+
+headers_to_apib(Headers, Prefix) ->
+  headers_to_apib(Headers, Prefix, []).
+
+headers_to_apib([], _Prefix, []) ->
+  "";
+headers_to_apib([], _Prefix, Acc) ->
+  string:join(lists:reverse(Acc), "\n") ++ "\n";
+headers_to_apib([{Name, Value}|Headers], Prefix, Acc) ->
+  headers_to_apib(Headers, Prefix, [Prefix ++ Name ++ ": " ++ Value|Acc]).
+
+body_to_apib(null) ->
+  <<"">>;
+body_to_apib(Body) ->
+  <<"<<<\n",Body/binary,"\n>>>\n">>.
