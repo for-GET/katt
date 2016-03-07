@@ -20,5 +20,5 @@ otp_release:
 script:
   - "[[ ${TRAVIS_OTP_RELEASE} == 18.1 ]] && make elvis || true"
   - make
-  - make .rebar/DEV_MODE deps test_cli eunit
+  - make .rebar/DEV_MODE deps test_cli xref eunit
   - "[[ ${TRAVIS_OTP_RELEASE} == 18.1 ]] && make dialyzer || true"

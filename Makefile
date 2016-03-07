@@ -109,7 +109,7 @@ xref:
 	$(REBAR) xref skip_deps=true
 
 .PHONY: test
-test: .rebar/DEV_MODE deps test_cli eunit dialyzer
+test: .rebar/DEV_MODE deps test_cli eunit xref dialyzer
 
 .PHONY: test_cli
 test_cli: .rebar/DEV_MODE deps
