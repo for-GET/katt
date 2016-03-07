@@ -22,6 +22,22 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+-define( FUNCTION
+       , element(2, element(2, process_info(self(), current_function)))
+       ).
+
+-export([ katt_run_with_runtime_value_blueprint/0
+        , katt_run_with_runtime_value_http/6
+        , katt_run_with_runtime_value_array_blueprint/0
+        , katt_run_with_runtime_value_array_http/6
+        , katt_run_with_runtime_value_shell_blueprint/0
+        , katt_run_with_runtime_value_shell_http/6
+        , katt_run_with_runtime_validation_pass_blueprint/0
+        , katt_run_with_runtime_validation_pass_http/6
+        , katt_run_with_runtime_validation_fail_blueprint/0
+        , katt_run_with_runtime_validation_fail_http/6
+        ]).
+
 %%% Suite
 
 katt_test_() ->
@@ -53,8 +69,10 @@ katt_test_() ->
 
 %%% Tests
 
+%%% Test with runtime_value
+
 katt_run_with_runtime_value() ->
-  Scenario = "/mock/runtime_value.apib",
+  Scenario = ?FUNCTION,
   ?_assertMatch( { pass
                  , Scenario
                  , _
@@ -64,9 +82,39 @@ katt_run_with_runtime_value() ->
                  }
                , katt:run(Scenario)
                ).
+
+katt_run_with_runtime_value_blueprint() ->
+  katt_blueprint_parse:string(
+    <<"--- Comparison as runtime_value ---
+
+GET /katt_run_with_runtime_value
+< 200
+< Content-Type: application/json
+{
+    \"{{type}}\": \"runtime_value\",
+    \"erlang\": \"{array, [ParentKey, 1]}\"
+}
+"/utf8>>).
+
+katt_run_with_runtime_value_http( _
+                                , "GET"
+                                , _
+                                , _
+                                , _Timeout
+                                , _Options
+                                ) ->
+  {ok, {{200, []}, [
+                    {"content-type", "application/json"}
+                   ], <<"[
+    \"/\",
+    1
+]
+"/utf8>>}}.
+
+%%% Test with runtime_value array
 
 katt_run_with_runtime_value_array() ->
-  Scenario = "/mock/runtime_value_array.apib",
+  Scenario = ?FUNCTION,
   ?_assertMatch( { pass
                  , Scenario
                  , _
@@ -76,9 +124,42 @@ katt_run_with_runtime_value_array() ->
                  }
                , katt:run(Scenario)
                ).
+
+katt_run_with_runtime_value_array_blueprint() ->
+  katt_blueprint_parse:string(
+    <<"--- Comparison as runtime_value (array) ---
+
+GET /katt_run_with_runtime_value_array
+< 200
+< Content-Type: application/json
+{
+    \"{{type}}\": \"runtime_value\",
+    \"erlang\": [\"{ array\",
+                 \", [ParentKey, 1]}\"
+                ]
+}
+"/utf8>>).
+
+%% Mock response for runtime_value_array test:
+katt_run_with_runtime_value_array_http( _
+                                      , "GET"
+                                      , _
+                                      , _
+                                      , _Timeout
+                                      , _Options
+                                      ) ->
+  {ok, {{200, []}, [
+                    {"content-type", "application/json"}
+                   ], <<"[
+    \"/\",
+    1
+]
+"/utf8>>}}.
+
+%%% Test with runtime_value shell
 
 katt_run_with_runtime_value_shell() ->
-  Scenario = "/mock/runtime_value_shell.apib",
+  Scenario = ?FUNCTION,
   ?_assertMatch( { pass
                  , Scenario
                  , _
@@ -88,9 +169,40 @@ katt_run_with_runtime_value_shell() ->
                  }
                , katt:run(Scenario)
                ).
+
+katt_run_with_runtime_value_shell_blueprint() ->
+  katt_blueprint_parse:string(
+    <<"--- Comparison as runtime_value (shell) ---
+
+GET /katt_run_with_runtime_value_shell
+< 200
+< Content-Type: application/json
+{
+    \"{{type}}\": \"runtime_value\",
+    \"shell\": \"sh -c \\\"echo '{array, [ParentKey, 1]}'\\\"\"
+}
+"/utf8>>).
+
+%% Mock response for runtime_value_shell test:
+katt_run_with_runtime_value_shell_http( _
+                                      , "GET"
+                                      , _
+                                      , _
+                                      , _Timeout
+                                      , _Options
+                                      ) ->
+  {ok, {{200, []}, [
+                    {"content-type", "application/json"}
+                   ], <<"[
+    \"/\",
+    1
+]
+"/utf8>>}}.
+
+%%% Test with runtime_validation
 
 katt_run_with_runtime_validation_pass() ->
-  Scenario = "/mock/runtime_validation_pass.apib",
+  Scenario = ?FUNCTION,
   ?_assertMatch( { pass
                  , Scenario
                  , _
@@ -101,8 +213,37 @@ katt_run_with_runtime_validation_pass() ->
                , katt:run(Scenario)
                ).
 
+katt_run_with_runtime_validation_pass_blueprint() ->
+  katt_blueprint_parse:string(
+    <<"--- Comparison as runtime_validation_pass ---
+
+GET /katt_run_with_runtime_validation_pass
+< 200
+< Content-Type: application/json
+{
+    \"{{type}}\": \"runtime_validation\",
+    \"erlang\": \"{pass, [{\\\"Param\\\", \\\"Value\\\"}]}\"
+}
+"/utf8>>).
+
+katt_run_with_runtime_validation_pass_http( _
+                                          , "GET"
+                                          , _
+                                          , _
+                                          , _Timeout
+                                          , _Options
+                                          ) ->
+  {ok, {{200, []}, [
+                    {"content-type", "application/json"}
+                   ], <<"{
+    \"any\": \"value\"
+}
+"/utf8>>}}.
+
+%%% Test failure with runtime_validation
+
 katt_run_with_runtime_validation_fail() ->
-  Scenario = "/mock/runtime_validation_fail.apib",
+  Scenario = ?FUNCTION,
   ?_assertMatch( { fail
                  , Scenario
                  , _
@@ -118,144 +259,11 @@ katt_run_with_runtime_validation_fail() ->
                , katt:run(Scenario)
                ).
 
-%%% Helpers
-
-%% Mock response for runtime_value test:
-mock_lhttpc_request( "http://127.0.0.1/runtime_value"
-                   , "GET"
-                   , _
-                   , _
-                   , _Timeout
-                   , _Options
-) ->
-  {ok, {{200, []}, [
-    {"content-type", "application/json"}
-  ], <<"[
-    \"/\",
-    1
-]
-"/utf8>>}};
-
-%% Mock response for runtime_value_array test:
-mock_lhttpc_request( "http://127.0.0.1/runtime_value_array"
-                   , "GET"
-                   , _
-                   , _
-                   , _Timeout
-                   , _Options
-) ->
-  {ok, {{200, []}, [
-    {"content-type", "application/json"}
-  ], <<"[
-    \"/\",
-    1
-]
-"/utf8>>}};
-
-%% Mock response for runtime_value_shell test:
-mock_lhttpc_request( "http://127.0.0.1/runtime_value_shell"
-                   , "GET"
-                   , _
-                   , _
-                   , _Timeout
-                   , _Options
-) ->
-  {ok, {{200, []}, [
-    {"content-type", "application/json"}
-  ], <<"[
-    \"/\",
-    1
-]
-"/utf8>>}};
-
-%% Mock response for runtime_validation_pass test:
-mock_lhttpc_request( "http://127.0.0.1/runtime_validation_pass"
-                   , "GET"
-                   , _
-                   , _
-                   , _Timeout
-                   , _Options
-) ->
-  {ok, {{200, []}, [
-    {"content-type", "application/json"}
-  ], <<"{
-    \"any\": \"value\"
-}
-"/utf8>>}};
-
-%% Mock response for runtime_validation_fail test:
-mock_lhttpc_request( "http://127.0.0.1/runtime_validation_fail"
-                   , "GET"
-                   , _
-                   , _
-                   , _Timeout
-                   , _Options
-) ->
-  {ok, {{200, []}, [
-    {"content-type", "application/json"}
-  ], <<"
-true
-"/utf8>>}}.
-
-mock_katt_blueprint_parse_file("/mock/runtime_value.apib") ->
-  katt_blueprint_parse:string(
-    <<"--- Comparison as runtime_value ---
-
-GET /runtime_value
-< 200
-< Content-Type: application/json
-{
-    \"{{type}}\": \"runtime_value\",
-    \"erlang\": \"{array, [ParentKey, 1]}\"
-}
-"/utf8>>);
-
-mock_katt_blueprint_parse_file("/mock/runtime_value_array.apib") ->
-  katt_blueprint_parse:string(
-    <<"--- Comparison as runtime_value (array) ---
-
-GET /runtime_value_array
-< 200
-< Content-Type: application/json
-{
-    \"{{type}}\": \"runtime_value\",
-    \"erlang\": [\"{ array\",
-                 \", [ParentKey, 1]}\"
-                ]
-}
-"/utf8>>);
-
-mock_katt_blueprint_parse_file("/mock/runtime_value_shell.apib") ->
-  katt_blueprint_parse:string(
-    <<"--- Comparison as runtime_value (shell) ---
-
-GET /runtime_value_shell
-< 200
-< Content-Type: application/json
-{
-    \"{{type}}\": \"runtime_value\",
-    \"shell\": \"sh -c \\\"echo '{array, [ParentKey, 1]}'\\\"\"
-}
-"/utf8>>);
-
-mock_katt_blueprint_parse_file("/mock/runtime_validation_pass.apib") ->
-  katt_blueprint_parse:string(
-    <<"--- Comparison as runtime_validation_pass ---
-
-GET /runtime_validation_pass
-< 200
-< Content-Type: application/json
-{
-    \"{{type}}\": \"runtime_validation\",
-    \"erlang\": \"{pass, [{\\\"Param\\\", \\\"Value\\\"}]}\"
-}
-"/utf8>>);
-
-mock_katt_blueprint_parse_file("/mock/runtime_validation_fail.apib") ->
+katt_run_with_runtime_validation_fail_blueprint() ->
   katt_blueprint_parse:string(
     <<"--- Comparison as runtime_validation_fail ---
 
-GET /runtime_validation_fail
+GET /katt_run_with_runtime_validation_fail
 < 200
 < Content-Type: application/json
 {
@@ -265,3 +273,26 @@ GET /runtime_validation_fail
                   }\"
 }
 "/utf8>>).
+
+katt_run_with_runtime_validation_fail_http( _
+                                          , "GET"
+                                          , _
+                                          , _
+                                          , _Timeout
+                                          , _Options
+                                          ) ->
+  {ok, {{200, []}, [
+                    {"content-type", "application/json"}
+                   ], <<"
+true
+"/utf8>>}}.
+
+%%% Helpers
+
+mock_lhttpc_request(Url, Method, Hdrs, Body, Timeout, Options) ->
+  Fun = list_to_atom(lists:nth(3, string:tokens(Url, "/")) ++ "_http"),
+  Args = [Url, Method, Hdrs, Body, Timeout, Options],
+  erlang:apply(?MODULE, Fun, Args).
+
+mock_katt_blueprint_parse_file(Test) ->
+  erlang:apply(?MODULE, list_to_atom(atom_to_list(Test) ++ "_blueprint"), []).
