@@ -7,9 +7,12 @@ ELVIS ?= $(shell command -v elvis >/dev/null 2>&1 && echo "elvis" || echo "$(CUR
 DEPS_PLT := $(CURDIR)/.deps_plt
 
 ERLANG_DIALYZER_APPS := erts \
-					    kernel \
-					    ssl \
-					    stdlib
+						kernel \
+						stdlib \
+						crypto \
+						asn1 \
+						public_key \
+						ssl
 
 DIALYZER := dialyzer
 
@@ -124,7 +127,8 @@ $(DEPS_PLT):
 
 .PHONY: dialyzer
 dialyzer: $(DEPS_PLT)
-	$(DIALYZER) --plt $(DEPS_PLT) --src $(shell find src -name *.erl -not -name katt_blueprint.erl)
+	$(DIALYZER) -q --plt $(DEPS_PLT) --src $(shell find src -name *.erl -not -name katt_blueprint.erl) > test/dialyzer_warnings || true
+	diff -U0 test/known_dialyzer_warnings test/dialyzer_warnings
 
 .PHONY: elvis
 elvis:

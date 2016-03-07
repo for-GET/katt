@@ -13,5 +13,6 @@
 /logs
 /src/katt_blueprint.erl
 /test/cli
+/test/dialyzer_warnings
 /test/*.beam
 .#*
