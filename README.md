@@ -129,7 +129,7 @@ A simple example that will make requests to a third party server:
 ```bash
 ERL_LIBS=deps erl -pa ebin -noshell -eval '
   application:ensure_all_started(katt),
-  BlueprintFile = "./doc/example-httpbin.apib",
+  BlueprintFile = "doc/example-httpbin.apib",
   Params = [{hostname, "httpbin.org"}, {my_name, "Joe"}, {your_name, "Mike"}],
   io:format("~p~n", [katt:run(BlueprintFile, Params)]).
 ' -s init stop
@@ -143,14 +143,14 @@ erl -pa ebin`).
 
 You can also fire up `katt` from the CLI, with
 ```bash
-bin/katt hostname=httpbin.org my_name=Joe your_name=Mike -- ./doc/example-httpbin.apib
+bin/katt hostname=httpbin.org my_name=Joe your_name=Mike -- doc/example-httpbin.apib
 ```
 
 If you want non-string params, use `:=` as a separator e.g. `my_int:=123`.
 
 You can also output the result in JSON format, with `--json`, and beautify it e.g. with python
 ```bash
-bin/katt --json hostname=httpbin.org my_name=Joe your_name=Mike -- ./doc/example-httpbin.apib | python -m json.tool
+bin/katt --json hostname=httpbin.org my_name=Joe your_name=Mike -- doc/example-httpbin.apib | python -m json.tool
 ```
 
 ## Interface
@@ -177,6 +177,19 @@ A request can also be configured via HTTP request headers:
 * `x-katt-description` would take precedence over the transaction's description
 * `x-katt-request-timeout` would take precedence over the `request_timeout` param
 * `x-katt-request-sleep` would delay the request for a specific amount of milliseconds
+
+### If you would like to convert a HAR file to an APIB file
+
+The HTTP Archive format or HAR, is a JSON-formatted archive file format
+for logging of a web browser's interaction with a site, [standardized by
+the Web Performance Working Group of the World Wide Web Consortium (W3C)](https://dvcs.w3.org/hg/webperf/raw-file/tip/specs/HAR/Overview.html).
+
+For example, to convert [doc/example-teapot.har](doc/example-teapot.har)
+into [doc/example-teapot.apib](doc/example-teapot.apib), run:
+
+``` bash
+bin/katt from-har --apib -- doc/example-teapot.har > doc/example-teapot.apib
+```
 
 ### If you would like to disable JSON support
 

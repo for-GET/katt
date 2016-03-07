@@ -16,5 +16,6 @@
 /test/dialyzer_warnings
 /test/elvis
 /test/elvis_warnings
+/test/example-teapot.apib
 /test/*.beam
 .#*

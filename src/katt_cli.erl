@@ -35,12 +35,16 @@ main([]) ->
 main(["-h"]) ->
   main(["--help"]);
 main(["--help"]) ->
-  io:fwrite( "Usage: ~s [--json] [--all] param=string param:=non_string -- "
+  io:fwrite( "Usage: ~s [--json] [--all] [param=string] [param:=non_string] -- "
              "file.katt [file.katt] ~n"
            , [escript:script_name()]
-           );
+           ),
+  katt_har_cli:help();
 main(Options) ->
   main(Options, [], [], []).
+
+main(["from-har"|Rest], [], [], []) ->
+  katt_har_cli:main(Rest);
 
 %%%_* Internal =================================================================
 
