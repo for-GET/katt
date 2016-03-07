@@ -129,7 +129,7 @@ A simple example that will make requests to a third party server:
 ```bash
 ERL_LIBS=deps erl -pa ebin -noshell -eval '
   application:ensure_all_started(katt),
-  BlueprintFile = "./doc/example-httpbin.apib",
+  BlueprintFile = "doc/example-httpbin.apib",
   Params = [{hostname, "httpbin.org"}, {my_name, "Joe"}, {your_name, "Mike"}],
   io:format("~p~n", [katt:run(BlueprintFile, Params)]).
 ' -s init stop
@@ -143,14 +143,14 @@ erl -pa ebin`).
 
 You can also fire up `katt` from the CLI, with
 ```bash
-bin/katt hostname=httpbin.org my_name=Joe your_name=Mike -- ./doc/example-httpbin.apib
+bin/katt hostname=httpbin.org my_name=Joe your_name=Mike -- doc/example-httpbin.apib
 ```
 
 If you want non-string params, use `:=` as a separator e.g. `my_int:=123`.
 
 You can also output the result in JSON format, with `--json`, and beautify it e.g. with python
 ```bash
-bin/katt --json hostname=httpbin.org my_name=Joe your_name=Mike -- ./doc/example-httpbin.apib | python -m json.tool
+bin/katt --json hostname=httpbin.org my_name=Joe your_name=Mike -- doc/example-httpbin.apib | python -m json.tool
 ```
 
 ## Interface
