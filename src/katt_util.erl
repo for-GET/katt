@@ -271,7 +271,7 @@ transaction_result_to_jsx({ Description
                   [] ->
                     [];
                   _ ->
-                    {errors, Errors}
+                    [{errors, Errors}]
                 end,
   [ {description, Description}
   , {params, proplist_to_jsx(Params)}
