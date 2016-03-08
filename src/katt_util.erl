@@ -488,23 +488,22 @@ validate_primitive(Key, E, A, Callbacks) when is_list(E) ->
     ++ "|"
     ++ ?MATCH_ANY
     ++ ")",
+  {AStringType, AIsString} = if
+                               is_list(A) ->
+                                 {list, true};
+                               is_binary(A) ->
+                                 {binary, true};
+                               true ->
+                                 {undefined, false}
+                             end,
   case re:run(E, RE_HAS_PARAMS, [global, {capture, all_but_first, list}]) of
-    nomatch ->
+    nomatch when AIsString ->
       {not_equal, {Key, E, A, TextDiffFun(E, A)}};
+    {match, [[?MATCH_ANY]]} ->
+      {pass, []};
     {match, [[E]]} ->
-      case E of
-        ?MATCH_ANY ->
-          {pass, []};
-        _ ->
-          {pass, [{store_tag2param(E), A}]}
-      end;
-    {match, Params0} ->
-      Type = if
-               is_list(A) ->
-                 list;
-               is_binary(A) ->
-                 binary
-             end,
+      {pass, [{store_tag2param(E), A}]};
+    {match, Params0} when AIsString ->
       Params = lists:map( fun([?MATCH_ANY]) ->
                               ?MATCH_ANY;
                              ([Match]) ->
@@ -533,7 +532,7 @@ validate_primitive(Key, E, A, Callbacks) when is_list(E) ->
                       , [global]
                       ),
       RE = ["^", RE3, "$"],
-      case re:run(A, RE, [global, {capture, all_but_first, Type}]) of
+      case re:run(A, RE, [global, {capture, all_but_first, AStringType}]) of
         nomatch ->
           {not_equal, {Key, E, A, TextDiffFun(E, A)}};
         {match, [Values]} ->
@@ -545,7 +544,9 @@ validate_primitive(Key, E, A, Callbacks) when is_list(E) ->
                                      , lists:zip(Params, Values)
                                      ),
           {pass, ParamsValues}
-      end
+      end;
+    _ ->
+      {not_equal, {Key, E, A}}
   end;
 validate_primitive(Key, E, A, _Callbacks) ->
   {not_equal, {Key, E, A}}.
