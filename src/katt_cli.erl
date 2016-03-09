@@ -64,7 +64,7 @@ run(_Options, _Params, []) ->
   ok;
 run(Options, Params0, [ScenarioFilename|ScenarioFilenames]) ->
   KattResult0 = katt_run(ScenarioFilename, Params0),
-  KattResult = case {proplists:get_value('all', Options), KattResult0} of
+  KattResult = case {proplists:get_value('all', Options, false), KattResult0} of
                  {false, { PassOrFail
                          , ScenarioFilename
                          , Params
