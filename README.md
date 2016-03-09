@@ -3,8 +3,8 @@
 KATT (Klarna* API Testing Tool) is an HTTP-based API testing tool for Erlang.
 
 \* Albeit the "Klarna" mention, this repository is not affiliated with Klarna AB.
-KATT was born at Klarna, and Klarna maintains copyright for parts of the code,
-but it is now being maintained outside the company, by its authors and new contributors.
+KATT was indeed born at Klarna, and Klarna AB holds copyright for parts of the code,
+but it is now being maintained outside the company, by its original authors and new contributors.
 
 
 ## Quick start
