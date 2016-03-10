@@ -44,6 +44,7 @@
         , os_cmd/2
         , blueprint_to_apib/1
         , is_json_content_type/1
+        , get_params_and_failures/1
         ]).
 
 %%%_* Includes =================================================================
@@ -204,6 +205,20 @@ is_json_content_type(Hdrs0) ->
     0 -> false;
     _ -> true
   end.
+
+get_params_and_failures(Result) when not is_list(Result) ->
+  get_params_and_failures([Result]);
+get_params_and_failures(Result) ->
+  lists:foldl(
+    fun({pass, AddParams1}, {AddParams0, Failures0}) ->
+        AddParams = katt_util:merge_proplists(AddParams0, AddParams1),
+        {AddParams, Failures0};
+       (Failure, {AddParams0, Failures0}) ->
+        {AddParams0, [Failure | Failures0]}
+    end,
+    {[], []},
+    lists:flatten(Result)
+   ).
 
 %%%_* Internal =================================================================
 
@@ -371,8 +386,9 @@ is_valid(ParentKey, E, A) ->
   end.
 
 is_valid(ParentKey, E, A, Unexpected, Callbacks) ->
-  case validate(ParentKey, E, A, Unexpected, Callbacks) of
-    {pass, _} ->
+  Result = validate(ParentKey, E, A, Unexpected, Callbacks),
+  case get_params_and_failures(Result) of
+    {_, []} ->
       true;
     _ ->
       false
