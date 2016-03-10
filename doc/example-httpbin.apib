@@ -103,7 +103,7 @@ POST /post
     }
 }
 
-GET /get?origin={{<origin}}&whoarewe={{<whoarewe}}
+GET /get?whoarewe={{<whoarewe}}&origin={{<origin}}
 > Accept: application/json
 > User-Agent: KATT
 < 200
@@ -111,9 +111,9 @@ GET /get?origin={{<origin}}&whoarewe={{<whoarewe}}
 {
     "args": {
         "whoarewe": "{{<your_name}}_and_{{<my_name}}",
-        "origin": "{{<origin}}"
+        "origin": "{{<origin}}{{_}}"
     },
     "headers": "{{_}}",
     "origin": "{{_}}",
-    "url": "http://httpbin.org/get?origin={{<origin}}&whoarewe={{<whoarewe}}"
+    "url": "http://httpbin.org/get?origin={{<origin}}{{_}}"
 }
