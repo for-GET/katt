@@ -1,5 +1,5 @@
 %%-*- mode: erlang -*-
-{application, katt, [ {description,  "Klarna API Testing Tool"}
+{application, katt, [ {description,  "KATT (Klarna API Testing Tool) is an HTTP-based API testing tool for Erlang."}
                     , {vsn,          git}
                     , {modules,      [ katt
                                      , katt_blueprint
@@ -17,4 +17,10 @@
                                      , hackney
                                      , tdiff
                                      ]}
+                    , {maintainers, [ "for-GET/katt"
+                                    ]}
+                    , {licenses, [ "Apache 2.0"
+                                 ]}
+                    , {links, [ {"Github", "https://github.com/for-GET/katt"}
+                              ]}
                     ]}.
