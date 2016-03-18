@@ -509,12 +509,12 @@ validate_primitive(Key, E, A, Callbacks) when is_list(E) ->
     ++ "|"
     ++ ?MATCH_ANY
     ++ ")",
-  {AStringType, AIsString} = if
-                               is_list(A) ->
+  {AStringType, AIsString} = case {is_list(A), is_binary(A)} of
+                               {true, false} ->
                                  {list, true};
-                               is_binary(A) ->
+                               {false, true} ->
                                  {binary, true};
-                               true ->
+                               _ ->
                                  {undefined, false}
                              end,
   case re:run(E, RE_HAS_PARAMS, [global, {capture, all_but_first, list}]) of
@@ -607,4 +607,4 @@ headers_to_apib([{Name, Value}|Headers], Prefix, Acc) ->
 body_to_apib(null) ->
   <<"">>;
 body_to_apib(Body) ->
-  <<"<<<\n",Body/binary,"\n>>>\n">>.
+  <<"<<<\n", Body/binary, "\n>>>\n">>.

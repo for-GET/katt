@@ -157,7 +157,7 @@ fail_when_expected_contained_by_actual_and_unexpected_test() ->
                                             ))
               ).
 
-fail_with_3_reasons_test() ->
+fail_with_three_reasons_test() ->
   ?assertMatch( [ {unexpected, {"/0", undefined, ?OBJECT_2}}
                 , {unexpected, {"/1", undefined, ?OBJECT_3}}
                 , {not_contains, {"/0", ?OBJECT_1, undefined}}

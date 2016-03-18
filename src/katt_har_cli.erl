@@ -101,7 +101,7 @@ hars_to_transactions([HAR|HARs], Options, Transactions0, Step0) ->
 
 convert_entry(Entry, {Transactions, Step}, Options) ->
   BinStep = list_to_binary(integer_to_list(Step)),
-  Description = <<"Step ",BinStep/binary>>,
+  Description = <<"Step ", BinStep/binary>>,
   Request = convert_request( proplists:get_value(<<"request">>, Entry)
                            , Options
                            ),
