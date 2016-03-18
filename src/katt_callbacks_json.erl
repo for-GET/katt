@@ -171,6 +171,11 @@ validate_type( false = _JustCheck
 
 %%%_* Internal =================================================================
 
+-ifdef(BARE_MODE).
+parse_json(_Bin) ->
+  throw(bare_mode).
+-else.
+
 parse_json(Bin) when is_binary(Bin) andalso size(Bin) =:= 0 ->
   [];
 parse_json(Bin) ->
@@ -213,3 +218,5 @@ normalize_jsx(Str) when is_binary(Str) ->
   katt_util:from_utf8(Str);
 normalize_jsx(Value) ->
   Value.
+
+-endif.

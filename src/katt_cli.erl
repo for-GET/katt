@@ -30,6 +30,11 @@
 
 %%%_* API ======================================================================
 
+-ifdef(BARE_MODE).
+main(_) ->
+  throw(bare_mode).
+-else.
+
 main([]) ->
   main(["--help"]);
 main(["-h"]) ->
@@ -194,3 +199,5 @@ ensure_started(App) ->
     {error, {already_started, App}} ->
       ok
   end.
+
+-endif.

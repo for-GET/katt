@@ -43,6 +43,10 @@
 %% @doc Get a list of available extensions
 %% @end
 -spec ext(any()) -> list().
+
+-ifdef(BARE_MODE).
+ext(_) -> [].
+-else.
 ext(recall_body) ->
   [ fun katt_callbacks_json:recall_body/4
   ];
@@ -55,6 +59,7 @@ ext(validate_body) ->
 ext(validate_type) ->
   [ fun katt_callbacks_json:validate_type/7
   ].
+-endif.
 
 
 %% @doc Recall all params inside url/status/headers/body/text content.
@@ -206,8 +211,13 @@ progress(_Step, _Detail) ->
 -spec text_diff( list()
                , list()
                ) -> proplists:proplist().
+-ifdef(BARE_MODE).
+text_diff(_A, _B) ->
+  [].
+-else.
 text_diff(A, B) ->
   [{text_diff, tdiff:diff(A, B)}].
+-endif.
 
 %%%_* Internal =================================================================
 

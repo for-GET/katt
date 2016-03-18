@@ -93,9 +93,15 @@ docs:
 
 ebin/katt.app: compile
 
+ifeq (,$(wildcard .rebar/BARE_MODE))
 bin/katt: ebin/katt.app $(SRC_BEAMS)
 	$(REBAR) escriptize
 	bin/katt --help
+else
+.PHONY: bin/katt
+bin/katt:
+	: Skipping bin/katt in BARE_MODE
+endif
 
 .PHONY: compile
 compile: $(SRCS)
@@ -107,6 +113,10 @@ compile: $(SRCS)
 	mkdir -p .rebar
 	touch .rebar/DEV_MODE
 
+.rebar/BARE_MODE:
+	mkdir -p .rebar
+	touch .rebar/BARE_MODE
+
 .PHONY: xref
 xref:
 	$(REBAR) xref skip_deps=true
@@ -114,10 +124,16 @@ xref:
 .PHONY: test
 test: .rebar/DEV_MODE deps test_cli eunit xref dialyzer
 
+ifeq (,$(wildcard .rebar/BARE_MODE))
 .PHONY: test_cli
 test_cli: .rebar/DEV_MODE deps
 	bin/katt hostname=httpbin.org my_name=Joe your_name=Mike -- ./doc/example-httpbin.apib >test/cli 2>/dev/null || { cat test/cli && exit 1; }
 	bin/katt from-har --apib -- ./doc/example-teapot.har > test/example-teapot.apib && diff -U0 doc/example-teapot.apib test/example-teapot.apib
+else
+.PHONY: test_cli
+test_cli:
+	: Skipping test_cli in BARE_MODE
+endif
 
 .PHONY: eunit
 eunit:
