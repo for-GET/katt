@@ -17,13 +17,7 @@ MergeConfig = fun({Key, ToAdd}, C) ->
                   end
               end.
 
-FileMarker = fun(RelPath) ->
-                 ConfigPath = filename:dirname(SCRIPT),
-                 Path = filename:join([ConfigPath] ++ RelPath),
-                 filelib:is_file(Path)
-             end.
-
-%% -- Add development only options if `./.rebar/DEV_MODE' exists --
+%% -- Add development only options if `KATT_MODE' =:= "DEV" --
 %% * add the deps from dev_only_deps defined in rebar.config
 %% * define the compiler macro DEV_ONLY
 
@@ -43,9 +37,9 @@ DevOnlyConfig = (
      (false) ->
       []
   end
- )(FileMarker([".rebar", "DEV_MODE"])).
+ )(os:getenv("KATT_MODE") =:= "DEV").
 
-%% -- Add optional options unless `./.rebar/BARE_MODE' exists --
+%% -- Add optional options unless `KATT_MODE' =:= "BARE" --
 %% * add the deps from optional_deps defined in rebar.config
 
 OptionalConfig = (
@@ -63,6 +57,6 @@ OptionalConfig = (
                   ]}
       ]
   end
- )(FileMarker([".rebar", "BARE_MODE"])).
+ )(os:getenv("KATT_MODE") =:= "BARE").
 
 lists:foldl(MergeConfig, CONFIG, DevOnlyConfig ++ OptionalConfig).
