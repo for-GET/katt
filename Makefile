@@ -15,6 +15,19 @@ ERLANG_DIALYZER_APPS := erts \
 						ssl
 
 DIALYZER := dialyzer
+ifdef CI
+export KATT_MODE=DEV
+endif
+
+ifndef KATT_MODE
+  ifeq (,$(wildcard .rebar/BARE_MODE))
+export KATT_MODE=BARE
+  else ifeq (,$(wildcard .rebar/DEV_MODE))
+export KATT_MODE=DEV
+  else
+export KATT_MODE=STANDARD
+  endif
+endif
 
 # Travis CI is slow at building dialyzer PLT
 ifeq ($(TRAVIS), true)
@@ -31,15 +44,7 @@ SRCS := $(wildcard src/* include/* rebar.config)
 SRC_BEAMS := $(patsubst src/%.erl, ebin/%.beam, $(wildcard src/*.erl))
 
 .PHONY: all
-all: maybe_dev deps ebin/katt.app bin/katt
-
-.PHONY: maybe_dev
-maybe_dev:
-ifdef CI
-	$(MAKE) --no-print-directory .rebar/DEV_MODE
-else
-	@:
-endif
+all: deps ebin/katt.app bin/katt
 
 # Clean
 
@@ -93,14 +98,14 @@ docs:
 
 ebin/katt.app: compile
 
-ifeq (,$(wildcard .rebar/BARE_MODE))
+.PHONY: bin/katt
+ifeq (BARE, $(KATT_MODE))
+bin/katt:
+	: Skipping bin/katt in BARE_MODE
+else
 bin/katt: ebin/katt.app $(SRC_BEAMS)
 	$(REBAR) escriptize
 	bin/katt --help
-else
-.PHONY: bin/katt
-bin/katt:
-	: Skipping bin/katt in BARE_MODE
 endif
 
 .PHONY: compile
