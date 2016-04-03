@@ -23,9 +23,13 @@ FileMarker = fun(RelPath) ->
                  filelib:is_file(Path)
              end.
 
-%% -- Add development only options if `./.rebar/DEV_MODE' exists --
+EnvMarker = fun(Var) ->
+                 os:getenv(Var) =/= false
+             end.
+
+%% -- Add development only options if KATT mode is DEV --
 %% * add the deps from dev_only_deps defined in rebar.config
-%% * define the compiler macro DEV_ONLY
+%% * define the compiler macro DEV_MODE
 
 DevOnlyConfig = (
   fun(true) ->
@@ -36,17 +40,18 @@ DevOnlyConfig = (
                         DOD
                     end,
       [ {deps, DevOnlyDeps}
-      , {erl_opts, [ {d, 'DEV_ONLY'}
+      , {erl_opts, [ {d, 'DEV_MODE'}
                    , debug_info
                    ]}
       ];
      (false) ->
       []
   end
- )(FileMarker([".rebar", "DEV_MODE"])).
+ )(FileMarker([".rebar", "DEV_MODE"]) orelse EnvMarker("KATT_DEV_MODE")).
 
-%% -- Add optional options unless `./.rebar/BARE_MODE' exists --
-%% * add the deps from optional_deps defined in rebar.config
+%% -- Remove optional options if KATT mode is BARE --
+%% * remove the deps from optional_deps defined in rebar.config
+%% * add the compiler macro BARE_MODE
 
 OptionalConfig = (
   fun(false) ->
@@ -63,6 +68,6 @@ OptionalConfig = (
                   ]}
       ]
   end
- )(FileMarker([".rebar", "BARE_MODE"])).
+ )(FileMarker([".rebar", "BARE_MODE"]) orelse EnvMarker("KATT_BARE_MODE")).
 
 lists:foldl(MergeConfig, CONFIG, DevOnlyConfig ++ OptionalConfig).

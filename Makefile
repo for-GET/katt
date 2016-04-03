@@ -15,6 +15,17 @@ ERLANG_DIALYZER_APPS := erts \
 						ssl
 
 DIALYZER := dialyzer
+ifdef CI
+export KATT_DEV_MODE=true
+endif
+
+ifneq (,$(wildcard .rebar/DEV_MODE))
+export KATT_DEV_MODE=true
+endif
+
+ifneq (,$(wildcard .rebar/BARE_MODE))
+export KATT_BARE_MODE=true
+endif
 
 # Travis CI is slow at building dialyzer PLT
 ifeq ($(TRAVIS), true)
@@ -31,15 +42,7 @@ SRCS := $(wildcard src/* include/* rebar.config)
 SRC_BEAMS := $(patsubst src/%.erl, ebin/%.beam, $(wildcard src/*.erl))
 
 .PHONY: all
-all: maybe_dev deps ebin/katt.app bin/katt
-
-.PHONY: maybe_dev
-maybe_dev:
-ifdef CI
-	$(MAKE) --no-print-directory .rebar/DEV_MODE
-else
-	@:
-endif
+all: deps ebin/katt.app bin/katt
 
 # Clean
 
@@ -93,14 +96,14 @@ docs:
 
 ebin/katt.app: compile
 
-ifeq (,$(wildcard .rebar/BARE_MODE))
+.PHONY: bin/katt
+ifdef KATT_BARE_MODE
+bin/katt:
+	: Skipping $@ in BARE_MODE
+else
 bin/katt: ebin/katt.app $(SRC_BEAMS)
 	$(REBAR) escriptize
 	bin/katt --help
-else
-.PHONY: bin/katt
-bin/katt:
-	: Skipping bin/katt in BARE_MODE
 endif
 
 .PHONY: compile
@@ -124,15 +127,14 @@ xref:
 .PHONY: test
 test: .rebar/DEV_MODE deps test_cli eunit xref dialyzer
 
-ifeq (,$(wildcard .rebar/BARE_MODE))
+ifdef KATT_BARE_MODE
 .PHONY: test_cli
+test_cli:
+	: Skipping $@ in BARE_MODE
+else
 test_cli: .rebar/DEV_MODE deps
 	bin/katt hostname=httpbin.org my_name=Joe your_name=Mike -- ./doc/example-httpbin.apib >test/cli 2>/dev/null || { cat test/cli && exit 1; }
 	bin/katt from-har --apib -- ./doc/example-teapot.har > test/example-teapot.apib && diff -U0 doc/example-teapot.apib test/example-teapot.apib
-else
-.PHONY: test_cli
-test_cli:
-	: Skipping test_cli in BARE_MODE
 endif
 
 .PHONY: eunit
