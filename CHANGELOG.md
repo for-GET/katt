@@ -1,6 +1,15 @@
 # CHANGELOG
 
-## 1.5.0
+## 1.5.1 - 2016-04-03
+
+### Notable changes
+
+* improvements to BARE_MODE
+
+[Full list of changes since 1.5.0](https://github.com/for-GET/katt/compare/for-GET:1.5.0...1.5.1)
+
+
+## 1.5.0 - 2016-03-18
 
 ### Breaking changes
 
