@@ -226,6 +226,14 @@ katt:run("xml_and_json_scenario.apib", [], [{ext, XmlJson}]).
 See [src/katt_callbacks_json.erl](src/katt_callbacks_json.erl) to see how your
 `custom_callbacks_xml` module should be implemented.
 
+### If you would like to build KATT with almost no dependencies
+
+``` bash
+export KATT_BARE_MODE=true
+# or
+touch .rebar/BARE_MODE
+```
+
 
 ## Contributing
 
