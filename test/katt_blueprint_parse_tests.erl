@@ -1,4 +1,4 @@
-%% -*- coding: latin-1 -*-
+%% -*- coding: utf-8 -*-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Copyright 2012- Klarna AB
 %%% Copyright 2014- AUTHORS
@@ -35,7 +35,7 @@ parse_api_test_()->
                             },
   [ ?_assertEqual(
       Expected,
-      parse_unindented("--- API tæst ---
+      parse_unindented(<<"--- API tæst ---
         ---
         ¿Test ÄPI?
         ---
@@ -47,10 +47,10 @@ parse_api_test_()->
 
         GET /three
         < 200
-        "))
+        "/utf8>>))
   , ?_assertEqual(
       Expected,
-      parse_unindented("
+      parse_unindented(<<"
 
         --- API tæst ---
 
@@ -67,10 +67,10 @@ parse_api_test_()->
         GET /three
         < 200
 
-        "))
+        "/utf8>>))
   , ?_assertEqual(
       Expected,
-      parse_unindented("
+      parse_unindented(<<"
 
 
 
@@ -95,7 +95,7 @@ parse_api_test_()->
 
 
 
-        "))
+        "/utf8>>))
   ].
 
 
@@ -784,7 +784,7 @@ fail_parse_invalid_http_header_name_test_() ->
         < 200
         < " ++ BadHeaderName ++ ": application/json
         ")
-    ) || BadHeaderName <- [":", "", "Œ"]].
+    ) || BadHeaderName <- [":", "", from_utf8(<<"Œ"/utf8>>)]].
 
 
 parse_simple_body_test_() ->
@@ -871,11 +871,13 @@ op_method(Method) ->
   #katt_transaction{ request=#katt_request{ method = Method } }.
 
 %% Unindent the blueprint before parsing it.
-parse_unindented(BlueprintString) ->
-  parse(unindent(BlueprintString)).
+parse_unindented(BlueprintString) when is_list(BlueprintString) ->
+  parse_unindented(utf8(BlueprintString));
+parse_unindented(BlueprintBinary) when is_binary(BlueprintBinary) ->
+  parse(unindent(BlueprintBinary)).
 
-parse(BlueprintString) ->
-  try katt_blueprint_parse:string(utf8(BlueprintString)) of
+parse(BlueprintBinary) ->
+  try katt_blueprint_parse:string(BlueprintBinary) of
     {ok, BP} -> BP
   catch error:Reason -> {error, Reason}
   end.
@@ -884,8 +886,11 @@ parse(BlueprintString) ->
 utf8(Chars) ->
   unicode:characters_to_binary(Chars, utf8).
 
+from_utf8(Binary) ->
+  unicode:characters_to_list(Binary, utf8).
+
 %% Remove leading spaces from all lines in Str.
-unindent(Str) ->
-  Lines = re:split(Str, "\n", [{return, list}]),
+unindent(Binary) ->
+  Lines = re:split(Binary, "\n", [{return, list}]),
   F = fun(Line) -> string:strip(Line, left, hd(" ")) end,
   string:join(lists:map(F, Lines), "\n").
