@@ -122,6 +122,7 @@ or in array format
 }
 ```
 
+
 ## Examples
 
 A simple example that will make requests to a third party server:
@@ -152,6 +153,7 @@ You can also output the result in JSON format, with `--json`, and beautify it e.
 ```bash
 bin/katt --json hostname=httpbin.org my_name=Joe your_name=Mike -- doc/example-httpbin.apib | python -m json.tool
 ```
+
 
 ## Interface
 
@@ -223,6 +225,7 @@ katt:run("xml_and_json_scenario.apib", [], [{ext, XmlJson}]).
 
 See [src/katt_callbacks_json.erl](src/katt_callbacks_json.erl) to see how your
 `custom_callbacks_xml` module should be implemented.
+
 
 ## Contributing
 
