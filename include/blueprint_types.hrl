@@ -35,16 +35,16 @@
                           , parsed_body = null          :: any()
                           }).
 
--record(katt_transaction, { description = null          :: utf8_string()
+-record(katt_transaction, { description = null          :: utf8_string() | null
                           , request = #katt_request{}   :: #katt_request{}
                           , response = #katt_response{} :: #katt_response{}
                           }).
 
--record(katt_blueprint,   { filename = null             :: file:filename()
-                          , name = null                 :: utf8_string()
-                          , description = null          :: utf8_string()
+-record(katt_blueprint,   { filename = null             :: file:filename() | null
+                          , name = null                 :: utf8_string() | null
+                          , description = null          :: utf8_string() | null
                           , transactions = []           :: [#katt_transaction{}]
-                          , footer = null               :: utf8_string()
+                          , footer = null               :: utf8_string() | null
                           }).
 
 %%%_* Emacs ====================================================================
