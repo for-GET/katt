@@ -135,10 +135,16 @@ external_http_request(Url, Method, Hdrs, Body, Timeout, []) ->
                    ),
   Options = [{recv_timeout, Timeout}],
   case hackney:request(Method, BUrl, BHdrs, Body, Options) of
-    {ok, Status, BResHdrs, Client} ->
+    OK when element(1, OK) =:= ok ->
       %% lhttpc was the predecesor of hackney
       %% and we're maintaining a backwards compatible return value
-      {ok, ResBody} = hackney:body(Client),
+      {Status, BResHdrs, ResBody} = case OK of
+                                      {ok, Status0, BResHdrs0, Client} ->
+                                        {ok, ResBody0} = hackney:body(Client),
+                                        {Status0, BResHdrs0, ResBody0};
+                                      {ok, Status0, BResHdrs0} ->
+                                        {Status0, BResHdrs0, <<>>}
+                                    end,
       ResHdrs0 = lists:map( fun({Name, Value})->
                                 {binary_to_list(Name), binary_to_list(Value)}
                             end
