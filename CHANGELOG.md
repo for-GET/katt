@@ -1,10 +1,19 @@
 # CHANGELOG
 
+## 1.5.2 - 2016-04-04
+
+### Notable changes
+
+* fix crash with HEAD requests #47
+
+[Full list of changes since 1.5.1](https://github.com/for-GET/katt/compare/for-GET:1.5.1...1.5.2)
+
+
 ## 1.5.1 - 2016-04-03
 
 ### Notable changes
 
-* improvements to BARE_MODE
+* improvements to BARE_MODE #45
 
 [Full list of changes since 1.5.0](https://github.com/for-GET/katt/compare/for-GET:1.5.0...1.5.1)
 
