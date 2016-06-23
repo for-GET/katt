@@ -125,16 +125,21 @@ xref:
 	$(REBAR) xref skip_deps=true
 
 .PHONY: test
-test: .rebar/DEV_MODE deps test_cli eunit xref dialyzer
+test: .rebar/DEV_MODE deps test_cli test_cli_ssh eunit xref dialyzer
 
 ifdef KATT_BARE_MODE
 .PHONY: test_cli
 test_cli:
 	: Skipping $@ in BARE_MODE
+.PHONY: test_cli_ssh
+test_cli_ssl:
+	: Skipping $@ in BARE_MODE
 else
 test_cli: .rebar/DEV_MODE deps
 	bin/katt hostname=httpbin.org my_name=Joe your_name=Mike -- ./doc/example-httpbin.apib >test/cli 2>/dev/null || { cat test/cli && exit 1; }
 	bin/katt from-har --apib -- ./doc/example-teapot.har > test/example-teapot.apib && diff -U0 doc/example-teapot.apib test/example-teapot.apib
+test_cli_ssl: .rebar/DEV_MODE deps
+	bin/katt hostname=httpbin.org my_name=Joe your_name=Mike protocol=https: -- ./doc/example-httpbin.apib >test/cli 2>/dev/null || { cat test/cli && exit 1; }
 endif
 
 .PHONY: eunit
