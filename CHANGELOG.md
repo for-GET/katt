@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 1.5.3 - 2016-06-23
+
+### Notable changes
+
+* fix CLI problems when requesting HTTPS URLs
+
+[Full list of changes since 1.5.2](https://github.com/for-GET/katt/compare/for-GET:1.5.2...1.5.3)
+
+
 ## 1.5.2 - 2016-04-04
 
 ### Notable changes
