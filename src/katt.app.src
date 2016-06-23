@@ -9,11 +9,12 @@
                     , {registered,   []}
                     , {applications, [ kernel
                                      , stdlib
-                                     , jsx
                                      , crypto
                                      , asn1
                                      , public_key
                                      , ssl
+
+                                     , jsx
                                      , hackney
                                      , tdiff
                                      ]}
