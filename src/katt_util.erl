@@ -133,7 +133,9 @@ external_http_request(Url, Method, Hdrs, Body, Timeout, []) ->
                      end
                    , Hdrs
                    ),
-  Options = [{recv_timeout, Timeout}],
+  Options = [ {recv_timeout, Timeout}
+            , {insecure, true}
+            ],
   case hackney:request(Method, BUrl, BHdrs, Body, Options) of
     OK when element(1, OK) =:= ok ->
       %% lhttpc was the predecesor of hackney
