@@ -2,6 +2,7 @@ sudo: false
 language:
   - erlang
 otp_release:
+  - 19.0
   - 18.3
   - 18.2
   - 18.1
@@ -20,13 +21,13 @@ otp_release:
   - R15B01
   - R15B
 script:
-  - "[[ ${TRAVIS_OTP_RELEASE} != 18.3 ]] || make elvis"
+  - "[[ ${TRAVIS_OTP_RELEASE} != 19.0 ]] || make elvis"
   - make
   - make .rebar/DEV_MODE deps test_cli xref eunit
   - "[[ ${TRAVIS_OTP_RELEASE} = R15* ]] || make test_cli_ssl"
-  - "[[ ${TRAVIS_OTP_RELEASE} != 18.3 ]] || make dialyzer"
+  - "[[ ${TRAVIS_OTP_RELEASE} != 19.0 ]] || make dialyzer"
   - make clean .rebar/BARE_MODE # TEST BARE_MODE AS WELL
   - make
   - make .rebar/DEV_MODE deps test_cli xref
   - "[[ ${TRAVIS_OTP_RELEASE} = R15* ]] || make test_cli_ssl"
-  - "[[ ${TRAVIS_OTP_RELEASE} != 18.3 ]] || make dialyzer"
+  - "[[ ${TRAVIS_OTP_RELEASE} != 19.0 ]] || make dialyzer"
