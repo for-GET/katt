@@ -116,6 +116,8 @@ katt_run(ScenarioFilename, Params) ->
   ok = ensure_started(idna),
   ok = ensure_started(mimerl),
   ok = ensure_started(certifi),
+  ok = ensure_started(metrics),
+  ok = ensure_started(ssl_verify_fun),
   ok = ensure_started(hackney),
 
   ok = ensure_started(tdiff),
