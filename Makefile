@@ -125,13 +125,13 @@ xref:
 	$(REBAR) xref skip_deps=true
 
 .PHONY: test
-test: .rebar/DEV_MODE deps test_cli test_cli_ssh eunit xref dialyzer
+test: .rebar/DEV_MODE deps test_cli test_cli_ssl eunit xref dialyzer
 
 ifdef KATT_BARE_MODE
 .PHONY: test_cli
 test_cli:
 	: Skipping $@ in BARE_MODE
-.PHONY: test_cli_ssh
+.PHONY: test_cli_ssl
 test_cli_ssl:
 	: Skipping $@ in BARE_MODE
 else
