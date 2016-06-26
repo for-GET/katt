@@ -26,8 +26,8 @@
 -include("blueprint_types.hrl").
 
 parse_api_test_()->
-  Expected = #katt_blueprint{ name=(<<"API tæst"/utf8>>)
-                            , description=(<<"¿Test ÄPI?"/utf8>>)
+  Expected = #katt_blueprint{ name=utf8("API tæst")
+                            , description=utf8("¿Test ÄPI?")
                             , transactions=[ op_url("/one")
                                            , op_url("/two")
                                            , op_url("/three")
@@ -35,7 +35,7 @@ parse_api_test_()->
                             },
   [ ?_assertEqual(
       Expected,
-      parse_unindented(<<"--- API tæst ---
+      parse_unindented("--- API tæst ---
         ---
         ¿Test ÄPI?
         ---
@@ -47,10 +47,10 @@ parse_api_test_()->
 
         GET /three
         < 200
-        "/utf8>>))
+        "))
   , ?_assertEqual(
       Expected,
-      parse_unindented(<<"
+      parse_unindented("
 
         --- API tæst ---
 
@@ -67,10 +67,10 @@ parse_api_test_()->
         GET /three
         < 200
 
-        "/utf8>>))
+        "))
   , ?_assertEqual(
       Expected,
-      parse_unindented(<<"
+      parse_unindented("
 
 
 
@@ -95,7 +95,7 @@ parse_api_test_()->
 
 
 
-        "/utf8>>))
+        "))
   ].
 
 
@@ -784,7 +784,7 @@ fail_parse_invalid_http_header_name_test_() ->
         < 200
         < " ++ BadHeaderName ++ ": application/json
         ")
-    ) || BadHeaderName <- [":", "", from_utf8(<<"Œ"/utf8>>)]].
+    ) || BadHeaderName <- [":", "", "Œ"]].
 
 
 parse_simple_body_test_() ->
@@ -886,11 +886,9 @@ parse(BlueprintBinary) ->
 utf8(Chars) ->
   unicode:characters_to_binary(Chars, utf8).
 
-from_utf8(Binary) ->
-  unicode:characters_to_list(Binary, utf8).
+%% from_utf8(Binary) ->
+%%   unicode:characters_to_list(Binary, utf8).
 
 %% Remove leading spaces from all lines in Str.
-unindent(Binary) ->
-  Lines = re:split(Binary, "\n", [{return, list}]),
-  F = fun(Line) -> string:strip(Line, left, hd(" ")) end,
-  string:join(lists:map(F, Lines), "\n").
+unindent(Binary) when is_binary(Binary) ->
+  re:replace(Binary, "\n +", "\n", [global, {return, binary}]).
