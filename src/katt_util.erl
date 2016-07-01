@@ -387,8 +387,10 @@ value_to_jsx(List) when is_list(List) ->
                , List
                )
   end;
+value_to_jsx(Value) when not is_binary(Value) ->
+  list_to_binary(erl_to_list(Value));
 value_to_jsx(Value) ->
-  list_to_binary(erl_to_list(Value)).
+  Value.
 
 is_valid(ParentKey, E, A) ->
   case validate(ParentKey, E, A) of
