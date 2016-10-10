@@ -462,14 +462,28 @@ validate_proplist( ParentKey
   Keys = lists:usort([ Key
                        || {Key, _} <- lists:merge(EItems, AItems)
                      ]),
-  [ validate( ParentKey ++ "/" ++ Key
-            , proplists:get_value(Key, EItems)
-            , proplists:get_value(Key, AItems)
-            , Unexpected
-            , Callbacks
-            )
-    || Key <- Keys
-  ].
+  lists:map( fun(Key) ->
+                 case proplists:get_value(Key, EItems, Unexpected) of
+                   EValue
+                     when EValue =:= ?UNEXPECTED orelse
+                          EValue =:= ?MATCH_ANY ->
+                     validate( ParentKey ++ "/" ++ Key
+                             , undefined
+                             , proplists:get_value(Key, AItems)
+                             , EValue
+                             , Callbacks
+                             );
+                   EValue ->
+                     validate( ParentKey ++ "/" ++ Key
+                             , EValue
+                             , proplists:get_value(Key, AItems)
+                             , Unexpected
+                             , Callbacks
+                             )
+                 end
+             end
+           , Keys
+           ).
 
 
 %% Validate when unexpected values show up
