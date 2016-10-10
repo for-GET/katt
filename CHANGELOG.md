@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 1.5.4 - 2016-10-10
+
+### Notable changes
+
+* fix matching nested objects with match-any properties
+* allow {{_}} to match nothing
+
+[Full list of changes since 1.5.3](https://github.com/for-GET/katt/compare/for-GET:1.5.3...1.5.4)
+
+
 ## 1.5.3 - 2016-06-23
 
 ### Notable changes
