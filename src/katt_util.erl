@@ -548,7 +548,7 @@ validate_primitive(Key, E, A, Callbacks) when is_list(E) ->
                       ),
       RE1 = re:replace( RE0
                       , ?MATCH_ANY
-                      , "___store___"
+                      , "___skip___"
                       , [global]
                       ),
       RE2 = re:replace( RE1
@@ -562,7 +562,12 @@ validate_primitive(Key, E, A, Callbacks) when is_list(E) ->
                       , "(.+)"
                       , [global]
                       ),
-      RE = ["^", RE3, "$"],
+      RE4 = re:replace( RE3
+                      , "___skip___"
+                      , "(.*)"
+                      , [global]
+                      ),
+      RE = ["^", RE4, "$"],
       case re:run(A, RE, [global, {capture, all_but_first, AStringType}]) of
         nomatch ->
           {not_equal, {Key, E, A, TextDiffFun(E, A)}};
