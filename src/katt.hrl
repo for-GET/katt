@@ -32,12 +32,16 @@
 -define(TYPE,                       "{{type}}").
 -define(PROTOCOL_HTTP,              "http:").
 -define(PROTOCOL_HTTPS,             "https:").
+
 -define(DEFAULT_SCENARIO_TIMEOUT,   120000).
 -define(DEFAULT_REQUEST_TIMEOUT,    20000).
+
+-define(DEFAULT_BASE_URL,           "http://127.0.0.1").
 -define(DEFAULT_PROTOCOL,           ?PROTOCOL_HTTP).
 -define(DEFAULT_HOSTNAME,           "127.0.0.1").
 -define(DEFAULT_PORT_HTTP,          80).
 -define(DEFAULT_PORT_HTTPS,         443).
+
 -define(DEFAULT_EXT_FUN,            fun katt_callbacks:ext/1).
 -define(DEFAULT_RECALL_FUN,         fun katt_callbacks:recall/4).
 -define(DEFAULT_PARSE_FUN,          fun katt_callbacks:parse/4).

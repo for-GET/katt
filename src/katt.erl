@@ -149,19 +149,36 @@ run_loop(ScenarioTimeout, ProgressFun) ->
 %% Take default params, and also merge in optional params from Params, to return
 %% a proplist of params.
 make_params(ScenarioParams0) ->
-  ScenarioParams = [ {katt_util:to_list(K), V} || {K, V} <- ScenarioParams0],
+  ScenarioParams1 = [ {katt_util:to_list(K), V} || {K, V} <- ScenarioParams0],
+  BaseUrl =
+    case proplists:get_value("base_url", ScenarioParams1) of
+      undefined ->
+        base_url_from_params(ScenarioParams1);
+      BaseUrl0 ->
+        BaseUrl0
+    end,
+  {ok, {Protocol0, _, Hostname, Port, _, _}} = http_uri:parse(BaseUrl),
+  Protocol = katt_util:to_list(Protocol0) ++ ":",
+  BaseUrlParams = [ {"base_url", BaseUrl}
+                  , {"protocol", Protocol}
+                  , {"hostname", Hostname}
+                  , {"port", Port}
+                  ],
+  ScenarioParams2 = katt_util:merge_proplists(ScenarioParams1, BaseUrlParams),
+  DefaultParams = [ {"request_timeout", ?DEFAULT_REQUEST_TIMEOUT}
+                  , {"scenario_timeout", ?DEFAULT_SCENARIO_TIMEOUT}
+                  ],
+  katt_util:merge_proplists(DefaultParams, ScenarioParams2).
+
+base_url_from_params(ScenarioParams) ->
   Protocol = proplists:get_value("protocol", ScenarioParams, ?DEFAULT_PROTOCOL),
+  Hostname = proplists:get_value("hostname", ScenarioParams, ?DEFAULT_HOSTNAME),
   DefaultPort = case Protocol of
                   ?PROTOCOL_HTTP -> ?DEFAULT_PORT_HTTP;
                   ?PROTOCOL_HTTPS -> ?DEFAULT_PORT_HTTPS
                 end,
-  DefaultParams = [ {"protocol", Protocol}
-                  , {"hostname", ?DEFAULT_HOSTNAME}
-                  , {"port", DefaultPort}
-                  , {"request_timeout", ?DEFAULT_REQUEST_TIMEOUT}
-                  , {"scenario_timeout", ?DEFAULT_SCENARIO_TIMEOUT}
-                  ],
-  katt_util:merge_proplists(DefaultParams, ScenarioParams).
+  Port = proplists:get_value("port", ScenarioParams, DefaultPort),
+  Protocol ++ "//" ++ make_host(Protocol, Hostname, Port).
 
 run_blueprint(From, Blueprint, Params, Callbacks) ->
   Result = run_transactions( From

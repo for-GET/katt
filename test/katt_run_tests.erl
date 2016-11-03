@@ -302,6 +302,7 @@ POST /katt_run_with_params
 < 200
 < Content-Type: application/vnd.katt.test-v{{<version}}+{{<syntax}}
 {
+    \"base_url\": \"{{<base_url}}\",
     \"protocol\": \"{{<protocol}}\",
     \"hostname\": \"{{<hostname}}\",
     \"port\": \"{{<port}}\",
@@ -324,6 +325,7 @@ katt_run_with_params_http( _
                          , _Options
                          ) ->
   {ok, {{200, []}, [{"Content-Type", "application/vnd.katt.test-v1+json"}], <<"{
+    \"base_url\": \"http://example.com\",
     \"protocol\": \"http:\",
     \"hostname\": \"example.com\",
     \"port\": 80,
@@ -389,6 +391,7 @@ katt_run_with_store() ->
                  , Scenario
                  , _
                  , [ _
+                   , _
                    , {"param1", "param1"}
                    , {"param2", "param2"}
                    , {"param3", "param3"}
