@@ -294,8 +294,8 @@ make_katt_response( #katt_response{headers=Hdrs0, body=Body0} = Res
 -spec make_request_url( string()
                       , params()
                       ) -> nonempty_string().
-make_request_url(Url = ?PROTOCOL_HTTP "//" ++ _, _Params) -> Url;
-make_request_url(Url = ?PROTOCOL_HTTPS "//" ++ _, _Params) -> Url;
+make_request_url(Url = ?PROTOCOL_HTTP ++ "//" ++ _, _Params) -> Url;
+make_request_url(Url = ?PROTOCOL_HTTPS ++ "//" ++ _, _Params) -> Url;
 make_request_url(Path, Params) ->
   Protocol = proplists:get_value("protocol", Params),
   Hostname = proplists:get_value("hostname", Params),
