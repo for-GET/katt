@@ -45,9 +45,17 @@
                  ) -> any().
 recall_body(true = _JustCheck, [Hdrs, _Bin], _Params, _Callbacks) ->
   is_wfu_content_type(Hdrs);
-recall_body(false = _JustCheck, [_Hdrs, <<"{{", _/binary>> = Bin], [], _Callbacks) ->
+recall_body( false = _JustCheck
+           , [_Hdrs, <<"{{", _/binary>> = Bin]
+           , []
+           , _Callbacks
+           ) ->
   Bin;
-recall_body(false = _JustCheck, [_Hdrs, <<"{", _/binary>> = Bin], [], _Callbacks) ->
+recall_body( false = _JustCheck
+           , [_Hdrs, <<"{", _/binary>> = Bin]
+           , []
+           , _Callbacks
+           ) ->
   hackney_url:qs(jsx:decode(Bin));
 recall_body(false = _JustCheck, [_Hdrs, Bin], [], _Callbacks) ->
   Bin;
@@ -59,7 +67,9 @@ recall_body(false = _JustCheck, [Hdrs, Bin0], [{K0, V0} | Next], Callbacks) ->
   Bin1 =
     lists:foldl( fun({Prefix, Suffix}, LoopBin) ->
                      re:replace( LoopBin
-                               , "(" ++ Prefix ++ ")" ++ REK ++ "(" ++ Suffix ++ ")"
+                               , "(" ++ Prefix ++ ")"
+                                 ++ REK
+                                 ++ "(" ++ Suffix ++ ")"
                                , "\\1" ++ REV ++ "\\2"
                                , [{return, binary}, global])
                  end
