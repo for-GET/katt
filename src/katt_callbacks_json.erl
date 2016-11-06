@@ -37,7 +37,7 @@
 
 %%%_* API ======================================================================
 
-%% @doc Recall all params inside json content.
+%% @doc Recall all params inside application/json or application/*+json content.
 %% @end
 -spec recall_body( boolean()
                  , any()
