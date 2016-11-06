@@ -214,9 +214,9 @@ blueprint_to_apib(Blueprint) ->
 is_json_content_type(Hdrs0) ->
   Hdrs = [{to_lower(K), V} || {K, V} <- Hdrs0],
   ContentType = proplists:get_value("content-type", Hdrs, ""),
-  case string:str(ContentType, "json") of
-    0 -> false;
-    _ -> true
+  case re:run(ContentType, "^application/(.+\\+)?json(;.+)?$") of
+    nomatch -> false;
+    {match, _} -> true
   end.
 
 get_params_and_failures(Result) when not is_list(Result) ->
