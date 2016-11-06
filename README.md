@@ -1,4 +1,4 @@
-# KATT [![Build Status][2]][1]
+# KATT [![Build Status][2]][1] [Docs][3]
 
 KATT (Klarna* API Testing Tool) is an HTTP-based API testing tool for Erlang.
 
@@ -251,3 +251,4 @@ fulfilled before making your pull-request:
 
   [1]: https://travis-ci.org/for-GET/katt
   [2]: https://travis-ci.org/for-GET/katt.png
+  [3]: https://dev.erldocs.com/github.com/for-get/katt/
