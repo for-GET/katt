@@ -50,11 +50,11 @@ recall_body(false = _JustCheck, [_Hdrs, Bin], [], _Callbacks) ->
   Bin;
 recall_body(false = _JustCheck, [Hdrs, Bin0], [{K0, V0} | Next], Callbacks) ->
   K = ?RECALL_BEGIN_TAG ++ K0 ++ ?RECALL_END_TAG,
-  REK = "\"" ++ katt_util:escape_regex(K) ++ "\"",
+  REK = katt_util:escape_regex(K),
   V = katt_util:maybe_json_string(V0),
   REV = katt_util:escape_regex(V),
   Bin1 = re:replace( Bin0
-                   , REK
+                   , "\"" ++ REK ++ "\""
                    , REV
                    , [{return, binary}, global]),
   Bin = katt_callbacks:recall(text, Bin1, [{K0, V0}], Callbacks),

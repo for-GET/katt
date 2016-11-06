@@ -83,21 +83,21 @@ to_lower(X) when is_list(X) ->
 
 escape_regex(Other) when not is_list(Other) andalso not is_binary(Other) ->
   to_list(Other);
-escape_regex(Bin0) ->
-  Bin = to_list(Bin0),
+escape_regex(Str0) ->
+  Str = to_list(Str0),
   to_list(re:replace(
-    Bin,
+    Str,
     "[\\-\\[\\]\\/\\{\\}\\(\\)\\*\\+\\?\\.\\,\\\\\^\\$\\|\\#\\s\\&]",
     "\\\\&",
     [global])).
 
 maybe_json_string(Str) when is_binary(Str) orelse is_list(Str) ->
-  to_utf8(insert_escape_quotes(Str));
+  insert_escape_quotes(Str);
 maybe_json_string(X) ->
   X.
 
 insert_escape_quotes(Str) when is_binary(Str) ->
-  insert_escape_quotes(from_utf8(Str));
+  to_utf8(insert_escape_quotes(from_utf8(Str)));
 insert_escape_quotes(Str) when is_list(Str) ->
   "\"" ++ Str ++ "\"".
 
