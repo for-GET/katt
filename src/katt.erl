@@ -57,13 +57,13 @@ main(Args) ->
 %% @doc Run test scenario. Argument is the full path to the scenario file,
 %% a KATT Blueprint file, or the KATT Blueprint itself.
 %% @end
--spec run(scenario()) -> run_result().
+-spec run(scenario()) -> run_results().
 run(Scenario) -> run(Scenario, []).
 
 %% @doc Run test scenario. Argument is the full path to the scenario file,
 %% a KATT Blueprint file, or the KATT Blueprint itself.
 %% @end
--spec run(scenario(), params()) -> run_result().
+-spec run(scenario(), params()) -> run_results().
 run(Scenario, Params) -> run(Scenario, Params, []).
 
 %% @doc Run test scenario. First argument is the full path to the scenario file,
@@ -73,18 +73,74 @@ run(Scenario, Params) -> run(Scenario, Params, []).
 %% Third argument is a key-value list of custom callbacks such as a custom
 %% parser to use instead of the built-in default parser (maybe_parse_body).
 %% @end
--spec run(scenario(), params(), callbacks()) -> run_result().
-run(Scenario, ScenarioParams, ScenarioCallbacks) ->
+-spec run(scenario(), params(), callbacks()) -> run_results().
+run(Blueprint, ScenarioParams, ScenarioCallbacks)
+  when is_record(Blueprint, katt_blueprint) ->
   Params = ordsets:from_list(make_params(ScenarioParams)),
   Callbacks = make_callbacks(ScenarioCallbacks),
   Timeout = proplists:get_value( "scenario_timeout"
                                , Params
                                ),
+  StressSleep = proplists:get_value( "stress_sleep"
+                                   , Params
+                                   ),
+  StressMaxWorkers = proplists:get_value( "stress_max_workers"
+                                        , Params
+                                        ),
+  StressTasks = proplists:get_value( "stress_tasks"
+                                   , Params
+                                   ),
   ProgressFun = proplists:get_value( progress
                                    , Callbacks
                                    ),
-  spawn_link(?MODULE, run, [self(), Scenario, Params, Callbacks]),
-  run_loop(Timeout, ProgressFun).
+  MainPid = self(),
+  WaitForWorkerFun =
+    fun(Me) ->
+        receive
+          {done, _} = Msg ->
+            MainPid ! Msg;
+          Msg ->
+            MainPid ! Msg,
+            Me(Me)
+        after Timeout ->
+            ProgressFun(status, timeout),
+            {error, timeout, Timeout}
+        end
+    end,
+  WorkerFun =
+    fun() ->
+        WorkerPid = self(),
+        spawn_link(?MODULE, run, [WorkerPid, Blueprint, Params, Callbacks]),
+        WaitForWorkerFun(WaitForWorkerFun)
+    end,
+  Results = run_loop( { StressTasks
+                      , 0
+                      , StressMaxWorkers
+                      , WorkerFun
+                      }
+                    , {StressSleep, StressMaxWorkers}
+                    , []
+                    , ProgressFun
+                    ),
+  case StressTasks of
+    1 ->
+      [FirstResult|_] = Results,
+      FirstResult;
+    _ ->
+      Results
+  end;
+run(Filename, ScenarioParams, ScenarioCallbacks) ->
+  Callbacks = make_callbacks(ScenarioCallbacks),
+  ProgressFun = proplists:get_value( progress
+                                   , Callbacks
+                                   ),
+  ProgressFun(parsing, Filename),
+  {ok, Blueprint} = katt_blueprint_parse:file(Filename),
+  ProgressFun(parsed, Filename),
+  run( Blueprint#katt_blueprint{filename = Filename}
+     , ScenarioParams
+     , ScenarioCallbacks
+     ).
 
 %%%_* Internal exports =========================================================
 
@@ -95,7 +151,8 @@ run(From, Blueprint, Params, Callbacks)
                                                    , Blueprint
                                                    , Params
                                                    , Callbacks),
-  FailureFilter = fun({ _Transaction
+  FailureFilter = fun({ _Index
+                      , _Description
                       , _Params
                       , _Request
                       , _Response
@@ -134,18 +191,6 @@ make_callbacks(Callbacks) ->
 
 %%%_* Internal =================================================================
 
-run_loop(ScenarioTimeout, ProgressFun) ->
-  receive
-    {progress, Step, Detail} ->
-      ProgressFun(Step, Detail),
-      run_loop(ScenarioTimeout, ProgressFun);
-    {done, Result} ->
-      Result
-  after ScenarioTimeout ->
-      ProgressFun(status, timeout),
-      {error, timeout, ScenarioTimeout}
-  end.
-
 %% Take default params, and also merge in optional params from Params, to return
 %% a proplist of params.
 make_params(ScenarioParams0) ->
@@ -167,6 +212,10 @@ make_params(ScenarioParams0) ->
   ScenarioParams2 = katt_util:merge_proplists(ScenarioParams1, BaseUrlParams),
   DefaultParams = [ {"request_timeout", ?DEFAULT_REQUEST_TIMEOUT}
                   , {"scenario_timeout", ?DEFAULT_SCENARIO_TIMEOUT}
+                  , {"stress_sleep", ?DEFAULT_STRESS_SLEEP}
+                  , {"stress_tasks", ?DEFAULT_STRESS_TASKS}
+                  , {"stress_max_workers", ?DEFAULT_STRESS_MAX_WORKERS}
+                  , {"stress_timeout", ?DEFAULT_SCENARIO_TIMEOUT}
                   ],
   katt_util:merge_proplists(DefaultParams, ScenarioParams2).
 
@@ -180,6 +229,56 @@ base_url_from_params(ScenarioParams) ->
   Port = proplists:get_value("port", ScenarioParams, DefaultPort),
   Protocol ++ "//" ++ make_host(Protocol, Hostname, Port).
 
+run_loop({0, 0, _, _} = _WorkerArgs, {_Sleep, _BatchSize}, Acc, _ProgressFun) ->
+  Acc;
+run_loop(WorkerArgs, {Sleep, BatchSize}, Acc, ProgressFun) ->
+  io:format(standard_error, "~p\n", [WorkerArgs]),
+  receive
+    {progress, Step, Detail} ->
+      ProgressFun(Step, Detail),
+      run_loop(WorkerArgs, {Sleep, BatchSize}, Acc, ProgressFun);
+    {done, Result} ->
+      Acc1 = [Result|Acc],
+      WorkerArgs1 = free_worker(WorkerArgs),
+      WorkerArgs2 =
+        case Sleep of
+          infinity ->
+            decrease_max_workers(WorkerArgs1, 1);
+          _ ->
+            consume_workers(WorkerArgs1)
+        end,
+      run_loop(WorkerArgs2, {Sleep, BatchSize}, Acc1, ProgressFun)
+  after Sleep ->
+      WorkerArgs1 = increase_max_workers(WorkerArgs, BatchSize),
+      WorkerArgs2 = consume_workers(WorkerArgs1),
+      run_loop(WorkerArgs2, {Sleep, BatchSize}, Acc, ProgressFun)
+  end.
+
+consume_workers({ 0 = _Tasks
+                , _Workers
+                , _MaxWorkers
+                , _WorkerFun
+                } = Args) ->
+  Args;
+consume_workers({_Tasks, _Workers, _MaxWorkers, _WorkerFun} = Args)
+  when _Workers =:= _MaxWorkers ->
+  Args;
+consume_workers({Tasks, Workers, MaxWorkers, WorkerFun}) ->
+  spawn_link(WorkerFun),
+  consume_workers({Tasks - 1, Workers + 1, MaxWorkers, WorkerFun}).
+
+increase_max_workers({Tasks, Workers, _MaxWorkers, WorkerFun}, BatchSize) ->
+  MaxWorkers = Workers + BatchSize,
+  {Tasks, Workers, MaxWorkers, WorkerFun}.
+
+decrease_max_workers({Tasks, Workers, MaxWorkers0, WorkerFun}, BatchSize) ->
+  MaxWorkers = MaxWorkers0 - BatchSize,
+  {Tasks, Workers, MaxWorkers, WorkerFun}.
+
+
+free_worker({Tasks, Workers, MaxWorkers, WorkerFun}) ->
+  {Tasks, Workers - 1, MaxWorkers, WorkerFun}.
+
 run_blueprint(From, Blueprint, Params, Callbacks) ->
   Result = run_transactions( From
                            , Blueprint#katt_blueprint.transactions
@@ -187,16 +286,16 @@ run_blueprint(From, Blueprint, Params, Callbacks) ->
                            , Callbacks
                            , {0, []}
                            ),
-  {FinalParams, {_Count, TransactionResults}} = Result,
+  {FinalParams, {_Index, TransactionResults}} = Result,
   {FinalParams, lists:reverse(TransactionResults)}.
 
 run_transactions( _From
                 , []
                 , FinalParams
                 , _Callbacks
-                , {Count, Results}
+                , {Index, Results}
                 ) ->
-  {FinalParams, {Count, Results}};
+  {FinalParams, {Index, Results}};
 run_transactions( From
                 , [#katt_transaction{ description = Description0
                                     , request = Req0
@@ -204,14 +303,14 @@ run_transactions( From
                                     }|T]
                 , Params
                 , Callbacks
-                , {Count, Results}
+                , {Index, Results}
                 ) ->
   Hdrs0 = Req0#katt_request.headers,
   Description = case proplists:get_value("x-katt-description", Hdrs0) of
                   undefined ->
                     case Description0 of
                       <<>> ->
-                        "Transaction " ++ integer_to_list(Count);
+                        "Transaction " ++ integer_to_list(Index);
                       _ ->
                         Description0
                     end;
@@ -233,7 +332,8 @@ run_transactions( From
                                 ),
   case ValidationResult of
     {pass, AddParams} ->
-      Result = { Description
+      Result = { Index
+               , Description
                , Params
                , Request
                , ActualResponse
@@ -245,17 +345,18 @@ run_transactions( From
                       , T
                       , NextParams
                       , Callbacks
-                      , {Count + 1, [Result|Results]}
+                      , {Index + 1, [Result|Results]}
                       );
     _                 ->
-      Result = { Description
+      Result = { Index
+               , Description
                , Params
                , Request
                , ActualResponse
                , ValidationResult
                },
       From ! {progress, transaction_result, Result},
-      {Params, {Count + 1, [Result|Results]}}
+      {Params, {Index + 1, [Result|Results]}}
   end.
 
 make_katt_request( #katt_request{headers=Hdrs0, url=Url0, body=Body0} = Req

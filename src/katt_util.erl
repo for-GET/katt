@@ -34,6 +34,7 @@
         , escape_regex/1
         , maybe_json_string/1
         , run_result_to_jsx/1
+        , run_result_to_latency/1
         , is_valid/3
         , validate/3
         , is_valid/5
@@ -122,6 +123,25 @@ run_result_to_jsx({ PassOrFail
   , {transaction_results, TransactionResults}
   ].
 
+run_result_to_latency({_, _, _, _, TransactionResults0}) ->
+  TransactionResults =
+    lists:map( fun transaction_result_to_latency/1
+             , TransactionResults0
+             ),
+  TransactionResults.
+
+transaction_result_to_latency({_, _, _, _, Response, Result}) ->
+  case {Response, Result} of
+    {{error, Reason}, _} ->
+      "error;" ++ to_list(Reason);
+    {{error, Reason, _}, _} ->
+      "error;" ++ to_list(Reason);
+    {{katt_response, _, _, _, _, ResMetrics}, pass} ->
+      proplists:get_value(latency_ms, ResMetrics);
+    _ ->
+      element(1, Result)
+  end.
+
 -ifdef(BARE_MODE).
 external_http_request(_Url, _Method, _Hdrs, _Body, _Timeout, []) ->
   throw(bare_mode).
@@ -136,8 +156,10 @@ external_http_request(Url, Method, Hdrs, Body, Timeout, []) ->
   Options = [ {recv_timeout, Timeout}
             , {insecure, true}
             ],
+  StartTime = os:timestamp(),
   case hackney:request(Method, BUrl, BHdrs, Body, Options) of
     OK when element(1, OK) =:= ok ->
+      EndTime = os:timestamp(),
       %% lhttpc was the predecesor of hackney
       %% and we're maintaining a backwards compatible return value
       {Status, BResHdrs, ResBody} = case OK of
@@ -153,7 +175,16 @@ external_http_request(Url, Method, Hdrs, Body, Timeout, []) ->
                           , BResHdrs
                           ),
       ResHdrs = lists:reverse(ResHdrs0),
-      {ok, {{Status, ""}, ResHdrs, ResBody}};
+      { ok
+      , { {Status, ""}
+        , ResHdrs
+        , ResBody
+        , [ {start_timestamp, timestamp_to_s(StartTime)}
+          , {end_timestamp, timestamp_to_s(EndTime)}
+          , {latency_ms, round(timer:now_diff(EndTime, StartTime)/1000)}
+          ]
+        }
+      };
     Error ->
       Error
   end.
@@ -265,19 +296,26 @@ maybe_list_to_binary(Str) when is_list(Str) ->
 maybe_list_to_binary(NonStr) ->
   NonStr.
 
-transaction_result_to_jsx({ Description
+transaction_result_to_jsx({ Index
+                          , Description
                           , Params
                           , Request
                           , Response
                           , Result
                           }) ->
   {katt_request, Method, Url, ReqHeaders, ReqBody} = Request,
-  {Status, ResHeaders, ResBody} =
+  {Status, ResHeaders, ResBody, ResMetrics} =
     case Response of
       {error, ResBody0} ->
-        {500, [], atom_to_binary(ResBody0, utf8)};
-      {katt_response, Status0, ResHeaders0, ResBody0, _ResParsedBody} ->
-        {Status0, ResHeaders0, ResBody0}
+        {500, [], atom_to_binary(ResBody0, utf8), []};
+      { katt_response
+      , Status0
+      , ResHeaders0
+      , ResBody0
+      , _ResParsedBody
+      , ResMetrics0
+      } ->
+        {Status0, ResHeaders0, ResBody0, ResMetrics0}
   end,
   Errors = case Result of
              pass ->
@@ -301,7 +339,8 @@ transaction_result_to_jsx({ Description
                   _ ->
                     [{errors, Errors}]
                 end,
-  [ {description, Description}
+  [ {index, Index}
+  , {description, Description}
   , {params, proplist_to_jsx(Params)}
   , {request, [ {method, list_to_binary(Method)}
               , {url, list_to_binary(Url)}
@@ -315,6 +354,7 @@ transaction_result_to_jsx({ Description
                  , proplist_to_jsx(ResHeaders)
                  }
                , {body, value_to_jsx(ResBody)}
+               , {metrics, proplist_to_jsx(ResMetrics)}
                ]}
   ] ++ MaybeErrors.
 
@@ -637,3 +677,6 @@ body_to_apib(null) ->
   <<"">>;
 body_to_apib(Body) ->
   <<"<<<\n", Body/binary, "\n>>>\n">>.
+
+timestamp_to_s({Mega, Sec, _Micro}) ->
+  Mega * 1000000 + Sec.

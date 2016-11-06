@@ -33,6 +33,7 @@
                           , headers = []                :: [http_header()]
                           , body = null                 :: binary() | null
                           , parsed_body = null          :: any()
+                          , metrics = []                :: proplists:proplist()
                           }).
 
 -record(katt_transaction, { description = null          :: utf8_string() | null

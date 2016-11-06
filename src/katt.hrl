@@ -35,6 +35,9 @@
 
 -define(DEFAULT_SCENARIO_TIMEOUT,   120000).
 -define(DEFAULT_REQUEST_TIMEOUT,    20000).
+-define(DEFAULT_STRESS_SLEEP,       infinity).
+-define(DEFAULT_STRESS_MAX_WORKERS, 1).
+-define(DEFAULT_STRESS_TASKS,       1).
 
 -define(DEFAULT_BASE_URL,           "http://127.0.0.1").
 -define(DEFAULT_PROTOCOL,           ?PROTOCOL_HTTP).
@@ -60,22 +63,25 @@
                              | binary().
 -type callbacks()           :: [{atom(), function()}].
 
+-type run_results()         :: run_result()
+                             | [run_result()].
 -type run_result()          :: run_error()
                              | scenario_result().
 -type run_error()           :: {error, reason(), details()}.
 -type reason()              :: atom().
 -type details()             :: any().
--type scenario_result()     :: { pass | fail
-                               , file:filename()
-                               , params()
-                               , params()
-                               , [transaction_result()]
+-type scenario_result()     :: { pass | fail % validation result
+                               , file:filename() % description
+                               , params() % initial params
+                               , params() % final params
+                               , [transaction_result()] % transaction results
                                }.
--type transaction_result()  :: { string()
-                               , params()
-                               , #katt_request{}
-                               , #katt_response{}
-                               , validation_result()
+-type transaction_result()  :: { integer() % index
+                               , string() % description
+                               , params() % params
+                               , #katt_request{} % request
+                               , #katt_response{} % actual response
+                               , validation_result() % validation result
                                }.
 -type validation_result()   :: pass
                              | {fail, [validation_failure()]}.

@@ -59,8 +59,19 @@ main(["--json"|Rest], Options, [], []) ->
 main(["--all"|Rest], Options, [], []) ->
   main(Rest, [{all, true}|Options], [], []);
 
-main(["--"|ScenarioFilenames], Options, Params0, []) ->
+main(["--latency"|Rest], Options, [], []) ->
+  main(Rest, [{latency, true}, {all, true}|Options], [], []);
+
+main(["--"|ScenarioFilenames], Options0, Params0, []) ->
   Params = parse_params(Params0),
+  Options =
+    case proplists:get_value("stress_tasks", Params, 1) > 1 of
+      true ->
+        [{all, true}|Options0];
+      _ ->
+        Options0
+    end,
+  ensure_all_started(),
   run(Options, Params, ScenarioFilenames);
 main([Param|Rest], Options, Params, []) ->
   main(Rest, Options, [Param|Params], []).
@@ -68,70 +79,87 @@ main([Param|Rest], Options, Params, []) ->
 run(_Options, _Params, []) ->
   ok;
 run(Options, Params0, [ScenarioFilename|ScenarioFilenames]) ->
-  KattResult0 = katt_run(ScenarioFilename, Params0),
-  KattResult = case {proplists:get_value('all', Options, false), KattResult0} of
-                 {false, { PassOrFail
-                         , ScenarioFilename
-                         , Params
-                         , FinalParams
-                         , TransactionResults0
-                         }} ->
-                   { PassOrFail
-                   , ScenarioFilename
-                   , Params
-                   , FinalParams
-                   , [lists:last(TransactionResults0)]
-                   };
-                 _ ->
-                   KattResult0
-               end,
-  case proplists:get_value(json, Options) of
-    undefined ->
-      io:fwrite("~p\n\n", [KattResult]);
+  {Passed, NewParams, KattResults} = katt_run(ScenarioFilename, Params0),
+  flush_results(KattResults, Options),
+  case Passed of
     true ->
-      JsonResult = katt_util:run_result_to_jsx(KattResult),
-      Result = jsx:encode(JsonResult),
-      io:fwrite("~s\n\n", [Result])
-  end,
-  case KattResult of
-    {pass, _, _, NewParams , _} ->
       run(Options, NewParams, ScenarioFilenames);
-    _ ->
+    false ->
       %% init:stop not setting status code correctly
       %% init:stop(1)
       halt(1)
   end.
 
 katt_run(ScenarioFilename, Params) ->
-  %% Don't use application:ensure_all_started(katt)
-  %% nor application:ensure_started(_)
-  %% in order to maintain compatibility with R16B01 and lower
-  ok = ensure_started(crypto),
-  ok = ensure_started(asn1),
-  ok = ensure_started(public_key),
-  ok = ensure_started(ssl),
+  KattResults0 =
+    katt:run( ScenarioFilename
+            , Params
+            , [{ progress
+               , fun(Step, Detail) ->
+                     io:fwrite( standard_error
+                              , "\n== PROGRESS REPORT ~p ==\n~p\n\n~p\n\n"
+                              , [Step, erlang:localtime(), Detail])
+                 end
+               }]),
+  KattResults =
+    case is_list(KattResults0) of
+      true ->
+        KattResults0;
+      false ->
+        [KattResults0]
+    end,
+  case KattResults of
+    [{pass, _, _, NewParams , _}] ->
+      {true, NewParams, KattResults};
+    _ ->
+      {false, [], KattResults}
+  end.
 
-  ok = ensure_started(jsx),
+flush_results(KattResults0, Options) ->
+  All = proplists:get_value(all, Options, false),
+  Json = proplists:get_value(json, Options, false),
+  Latency = proplists:get_value(latency, Options, false),
 
-  ok = ensure_started(idna),
-  ok = ensure_started(mimerl),
-  ok = ensure_started(certifi),
-  ok = ensure_started(metrics),
-  ok = ensure_started(ssl_verify_fun),
-  ok = ensure_started(hackney),
+  KattResults = maybe_only_last_transaction(KattResults0, not All),
+  case {Latency, Json} of
+    {false, false} ->
+      io:fwrite("~p\n\n", [KattResults]);
+    {false, true} ->
+      JsonResults = lists:map( fun katt_util:run_result_to_jsx/1
+                             , KattResults
+                             ),
+      Results = jsx:encode(JsonResults),
+      io:fwrite("~s\n\n", [Results]);
+    {true, _} ->
+      LatencyResults =
+        lists:map( fun(KattResult) ->
+                       IntResult = katt_util:run_result_to_latency(KattResult),
+                       Result = lists:map(fun katt_util:to_list/1, IntResult),
+                       string:join(Result, ", ")
+                   end
+                 , KattResults
+                 ),
+      io:fwrite("~s\n\n", [string:join(LatencyResults, "\n")])
+  end.
 
-  ok = ensure_started(tdiff),
-
-  ok = ensure_started(katt),
-  katt:run( ScenarioFilename
-          , Params
-          , [{ progress
-             , fun(Step, Detail) ->
-                   io:fwrite( standard_error
-                            , "\n== PROGRESS REPORT ~p ==\n~p\n\n~p\n\n"
-                            , [Step, erlang:localtime(), Detail])
-               end
-             }]).
+maybe_only_last_transaction(KattResults, false) ->
+  KattResults;
+maybe_only_last_transaction(KattResults, true) ->
+  lists:map( fun({ PassOrFail
+                 , ScenarioFilename
+                 , Params
+                 , FinalParams
+                 , TransactionResults
+                 }) ->
+                 { PassOrFail
+                 , ScenarioFilename
+                 , Params
+                 , FinalParams
+                 , [lists:last(TransactionResults)]
+                 }
+             end
+           , KattResults
+           ).
 
 parse_params(Params) ->
   parse_params(Params, []).
@@ -205,5 +233,27 @@ ensure_started(App) ->
     {error, {already_started, App}} ->
       ok
   end.
+
+ensure_all_started() ->
+  %% Don't use application:ensure_all_started(katt)
+  %% nor application:ensure_started(_)
+  %% in order to maintain compatibility with R16B01 and lower
+  ok = ensure_started(crypto),
+  ok = ensure_started(asn1),
+  ok = ensure_started(public_key),
+  ok = ensure_started(ssl),
+
+  ok = ensure_started(jsx),
+
+  ok = ensure_started(idna),
+  ok = ensure_started(mimerl),
+  ok = ensure_started(certifi),
+  ok = ensure_started(metrics),
+  ok = ensure_started(ssl_verify_fun),
+  ok = ensure_started(hackney),
+
+  ok = ensure_started(tdiff),
+
+  ok = ensure_started(katt).
 
 -endif.
