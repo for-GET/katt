@@ -37,6 +37,10 @@
         , katt_run_with_store_http/6
         , katt_run_with_struct_blueprint/0
         , katt_run_with_struct_http/6
+        , katt_run_with_wfu_blueprint/0
+        , katt_run_with_wfu_http/6
+        , katt_run_with_wfu_json_blueprint/0
+        , katt_run_with_wfu_json_http/6
         ]).
 
 %%% Suite
@@ -65,6 +69,8 @@ katt_test_() ->
     , katt_run_with_api_mismatch()
     , katt_run_with_store()
     , katt_run_with_struct()
+    , katt_run_with_wfu()
+    , katt_run_with_wfu_json()
     ]
   }.
 
@@ -489,6 +495,96 @@ katt_run_with_struct_http( _
     \"not_object\": {}
 }
 "/utf8>>}}.
+
+%%% Test with application/x-www-form-urlencoded
+
+katt_run_with_wfu() ->
+  Scenario = ?FUNCTION,
+  ?_assertMatch( { pass
+                 , Scenario
+                 , _
+                 , _
+                 , [ {_, _, _, _, pass}
+                   ]
+                 }
+               , katt:run( Scenario
+                         , [ {test_space, <<"a b c"/utf8>>}
+                           , {test_url, <<"http://example.com"/utf8>>}
+                           ]
+                         )
+               ).
+
+katt_run_with_wfu_blueprint() ->
+  katt_blueprint_parse:string(
+    <<"--- Test 8 ---
+
+POST /katt_run_with_wfu
+> Content-Type: application/x-www-form-urlencoded
+test_space={{<test_space}}&test_url={{<test_url}}
+< 200
+< Content-Type: application/x-www-form-urlencoded
+test_url={{<test_url}}&test_space={{<test_space}}
+"/utf8>>).
+
+katt_run_with_wfu_http( _
+                 , "POST"
+                 , _
+                 , _
+                 , _Timeout
+                 , _Options
+                 ) ->
+  {ok, { {200, []}
+       , [{"content-type", "application/x-www-form-urlencoded"}]
+       , <<"test_url=http%3A%2F%2Fexample.com&test_space=a%20b%20c"/utf8>>
+       }}.
+
+%%% Test with application/x-www-form-urlencoded as json
+
+katt_run_with_wfu_json() ->
+  Scenario = ?FUNCTION,
+  ?_assertMatch( { pass
+                 , Scenario
+                 , _
+                 , _
+                 , [ {_, _, _, _, pass}
+                   ]
+                 }
+               , katt:run( Scenario
+                         , [ {test_space, <<"a b c"/utf8>>}
+                           , {test_url, <<"http://example.com"/utf8>>}
+                           ]
+                         )
+               ).
+
+katt_run_with_wfu_json_blueprint() ->
+  katt_blueprint_parse:string(
+    <<"--- Test 8 ---
+
+POST /katt_run_with_wfu
+> Content-Type: application/x-www-form-urlencoded
+{
+  \"test_space\": \"{{<test_space}}\",
+  \"test_url\": \"{{<test_url}}\"
+}
+< 200
+< Content-Type: application/x-www-form-urlencoded
+{
+  \"test_url\": \"{{<test_url}}\",
+  \"test_space\": \"{{<test_space}}\"
+}
+"/utf8>>).
+
+katt_run_with_wfu_json_http( _
+                 , "POST"
+                 , _
+                 , _
+                 , _Timeout
+                 , _Options
+                 ) ->
+  {ok, { {200, []}
+       , [{"content-type", "application/x-www-form-urlencoded"}]
+       , <<"test_url=http%3A%2F%2Fexample.com&test_space=a%20b%20c"/utf8>>
+       }}.
 
 %%% Helpers
 

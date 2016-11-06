@@ -15,20 +15,21 @@ Use for shooting HTTP requests in a sequential order and verifying the response.
 Any relevant difference between expected and actual responses will cause a
 failure.
 
-The builtin validator supports basic text validation and more advanced validation of HTTP headers and JSON structures.
+The builtin validator supports basic text validation and more advanced validation of HTTP headers,
+and media-types (`application/json`, `application/*+json`, `application/x-www-form-urlencoded`).
 
 The validator makes use of a few tags with special meaning:
 
-`"{{_}}"`  
+`"{{_}}"`
 Match anything (i.e. no real validation, only check existence).
 
-`"{{unexpected}}"`  
+`"{{unexpected}}"`
 Match nothing (i.e. no real validation, only check lack of existence)
 
-`"{{>key}}"`  
+`"{{>key}}"`
 Store value of the whole string (key must be unique within testcase)
 
-`"{{<key}}"`  
+`"{{<key}}"`
 Recall stored value.
 
 The `"{{_}}"` tag can also be used as a JSON object's property in order to
@@ -204,24 +205,20 @@ katt:run("text_only_scenario.apib", [], [{ext, OnlyText}]).
 ### If you would like to add XML support
 
 ```erlang
-XmlJson =
+PlusXml =
   fun(recall_body) ->
-    [ fun katt_callbacks_json:recall_body/4
-    , fun custom_callbacks_xml:recall_body/4
-    ];
+    [ fun custom_callbacks_xml:recall_body/4
+    ] ++ katt_callbacks:ext(recall_body);
   fun(parse) ->
-    [ fun katt_callbacks_json:parse/5
-    , fun custom_callbacks_xml:parse/5
-    ];
+    [ fun custom_callbacks_xml:parse/5
+    ] ++ katt_callbacks:ext(parse);
   fun(validate_body) ->
-    [ fun katt_callbacks_json:validate_body/3
-    , fun custom_callbacks_xml:validate_body/3
-    ],
+    [ fun custom_callbacks_xml:validate_body/3
+    ] ++ katt_callbacks:ext(validate_body),
   fun(validate_type) ->
-    [ fun katt_callbacks_json:validate_type/7
-    , fun custom_callbacks_xml:validate_type/7
-    ],
-katt:run("xml_and_json_scenario.apib", [], [{ext, XmlJson}]).
+    [ fun custom_callbacks_xml:validate_type/7
+    ] ++ katt_callbacks:ext(validate_type),
+katt:run("xml_scenario.apib", [], [{ext, PlusXml}]).
 ```
 
 See [src/katt_callbacks_json.erl](src/katt_callbacks_json.erl) to see how your

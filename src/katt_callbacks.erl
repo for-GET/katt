@@ -49,15 +49,19 @@ ext(_) -> [].
 -else.
 ext(recall_body) ->
   [ fun katt_callbacks_json:recall_body/4
+  , fun katt_callbacks_wfu:recall_body/4
   ];
 ext(parse) ->
   [ fun katt_callbacks_json:parse/5
+  , fun katt_callbacks_wfu:parse/5
   ];
 ext(validate_body) ->
   [ fun katt_callbacks_json:validate_body/4
+  , fun katt_callbacks_wfu:validate_body/4
   ];
 ext(validate_type) ->
   [ fun katt_callbacks_json:validate_type/7
+  , fun katt_callbacks_wfu:validate_type/7
   ].
 -endif.
 

@@ -85,11 +85,11 @@ escape_regex(Other) when not is_list(Other) andalso not is_binary(Other) ->
   to_list(Other);
 escape_regex(Str0) ->
   Str = to_list(Str0),
-  to_list(re:replace(
-    Str,
-    "[\\-\\[\\]\\/\\{\\}\\(\\)\\*\\+\\?\\.\\,\\\\\^\\$\\|\\#\\s\\&]",
-    "\\\\&",
-    [global])).
+  re:replace( Str
+            , "[\\-\\[\\]\\/\\{\\}\\(\\)\\*\\+\\?\\.\\,\\\\\^\\$\\|\\#\\s\\&]"
+            , "\\\\&"
+            , [{return, list}, global]
+            ).
 
 maybe_json_string(Str) when is_binary(Str) orelse is_list(Str) ->
   insert_escape_quotes(Str);
