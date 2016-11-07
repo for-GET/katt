@@ -77,14 +77,14 @@ run(Scenario, Params) -> run(Scenario, Params, []).
 run(Scenario, ScenarioParams, ScenarioCallbacks) ->
   Params = ordsets:from_list(make_params(ScenarioParams)),
   Callbacks = make_callbacks(ScenarioCallbacks),
-  ScenarioTimeout = proplists:get_value( "scenario_timeout"
-                                       , Params
-                                       ),
+  Timeout = proplists:get_value( "scenario_timeout"
+                               , Params
+                               ),
   ProgressFun = proplists:get_value( progress
                                    , Callbacks
                                    ),
   spawn_link(?MODULE, run, [self(), Scenario, Params, Callbacks]),
-  run_loop(ScenarioTimeout, ProgressFun).
+  run_loop(Timeout, ProgressFun).
 
 %%%_* Internal exports =========================================================
 
