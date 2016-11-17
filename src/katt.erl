@@ -157,12 +157,20 @@ make_params(ScenarioParams0) ->
       BaseUrl0 ->
         BaseUrl0
     end,
-  {ok, {Protocol0, _, Hostname, Port, _, _}} = http_uri:parse(BaseUrl),
+  {ok, {Protocol0, _, Hostname, Port, Path0, _}} = http_uri:parse(BaseUrl),
+  Path =
+    case Path0 of
+      "/" ->
+        "";
+      _ ->
+        Path0
+    end,
   Protocol = katt_util:to_list(Protocol0) ++ ":",
   BaseUrlParams = [ {"base_url", BaseUrl}
                   , {"protocol", Protocol}
                   , {"hostname", Hostname}
                   , {"port", Port}
+                  , {"base_path", Path}
                   ],
   ScenarioParams2 = katt_util:merge_proplists(ScenarioParams1, BaseUrlParams),
   DefaultParams = [ {"request_timeout", ?DEFAULT_REQUEST_TIMEOUT}
@@ -178,7 +186,8 @@ base_url_from_params(ScenarioParams) ->
                   ?PROTOCOL_HTTPS -> ?DEFAULT_PORT_HTTPS
                 end,
   Port = proplists:get_value("port", ScenarioParams, DefaultPort),
-  Protocol ++ "//" ++ make_host(Protocol, Hostname, Port).
+  BasePath = proplists:get_value("base_path", ScenarioParams, ?DEFAULT_BASE_PATH),
+  Protocol ++ "//" ++ make_host(Protocol, Hostname, Port) ++ BasePath.
 
 run_blueprint(From, Blueprint, Params, Callbacks) ->
   Result = run_transactions( From
@@ -300,9 +309,11 @@ make_request_url(Path, Params) ->
   Protocol = proplists:get_value("protocol", Params),
   Hostname = proplists:get_value("hostname", Params),
   Port = proplists:get_value("port", Params),
+  BasePath = proplists:get_value("base_path", Params, ""),
   string:join([ Protocol
               , "//"
               , make_host(Protocol, Hostname, Port)
+              , BasePath
               , Path
               ], "").
 

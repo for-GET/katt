@@ -165,6 +165,7 @@ bin/katt --json base_url=http://httpbin.org my_name=Joe your_name=Mike -- doc/ex
       * `protocol`
       * `hostname`
       * `port`
+      * `base_path`
     * `request_timeout`
     * `scenario_timeout`
   * `callbacks` (optional)

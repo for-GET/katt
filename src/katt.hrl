@@ -41,6 +41,7 @@
 -define(DEFAULT_HOSTNAME,           "127.0.0.1").
 -define(DEFAULT_PORT_HTTP,          80).
 -define(DEFAULT_PORT_HTTPS,         443).
+-define(DEFAULT_BASE_PATH,          "").
 
 -define(DEFAULT_EXT_FUN,            fun katt_callbacks:ext/1).
 -define(DEFAULT_RECALL_FUN,         fun katt_callbacks:recall/4).
