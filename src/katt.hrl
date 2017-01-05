@@ -55,10 +55,10 @@
 -type param_name()          :: string()
                              | atom().
 -type param_value()          :: atom()
-                             | integer()
-                             | float()
-                             | string()
-                             | binary().
+                              | integer()
+                              | float()
+                              | string()
+                              | binary().
 -type callbacks()           :: [{atom(), function()}].
 
 -type run_result()          :: run_error()
