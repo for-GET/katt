@@ -64,8 +64,10 @@ transactions <-
     Head = proplists:get_value(head, Node),
     Tail = proplists:get_value(tail, Node),
     case Head of
-      [] -> Tail;
-      _  -> [Head | Tail]
+      [] ->
+        Tail;
+      _ ->
+        [Head | Tail]
     end
   `;
 
@@ -135,7 +137,8 @@ request <-
     }
   `;
 
-request_headers <- request_header* ~;
+request_headers <-
+  request_header* ~;
 
 request_header <-
   in header:http_header
@@ -162,7 +165,8 @@ response_status <-
     proplists:get_value(status, Node)
   `;
 
-response_headers <- response_header* ~;
+response_headers <-
+  response_header* ~;
 
 response_header <-
   out http_header
@@ -196,7 +200,8 @@ http_header_name <-
   `;
 
 
-http_header_value <- text0
+http_header_value <-
+  text0
   `
     unicode:characters_to_list(Node)
   `;
@@ -241,26 +246,32 @@ simple_body_line <-
     proplists:get_value(text, Node)
   `;
 
-in <- ">" s+ ~;
+in <-
+  ">" s+ ~;
 
-out <- "<" s+ ~;
+out <-
+  "<" s+ ~;
 
 
 %%% Helper rules
 
-text0 <- [^\n\r]*
+text0 <-
+  [^\n\r]*
   `
   concatenate_chars(Node)
   `;
 
-text1 <- [^\n\r]+
+text1 <-
+  [^\n\r]+
   `
   concatenate_chars(Node)
   `;
 
-empty_line <- s* eol ~;
+empty_line <-
+  s* eol ~;
 
-eolf <- eol / eof ~;
+eolf <-
+  eol / eof ~;
 
 eol <-
   "\n"
@@ -268,7 +279,8 @@ eol <-
   / "\r"
   ~;
 
-eof <- !. ` <<>> `;
+eof <-
+  !. ` <<>> `;
 
 
 %% TODO: add support for the following unicode whitespace characters:
@@ -277,7 +289,8 @@ eof <- !. ` <<>> `;
 %% I.e. make support for what "\s" matches in JavaScript regexps,
 %% sans "\r", "\n", "\u2028" and "\u2029".
 %% See ECMA-262, 5.1 ed., 15.10.2.12.
-s <- [\t\v\f ] ~;
+s <-
+  [\t\v\f ] ~;
 
 
 %%% Records and extra functions
@@ -286,8 +299,10 @@ s <- [\t\v\f ] ~;
 
 -include("blueprint_types.hrl").
 
-null_if_empty([])      -> null;
-null_if_empty(String)  -> String.
+null_if_empty([]) ->
+  null;
+null_if_empty(String) ->
+  String.
 
 concatenate_lines([H|_]=Lines) when is_binary(H) ->
   StringList = lists:map(fun unicode:characters_to_list/1, Lines),
