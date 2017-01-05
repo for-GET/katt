@@ -199,7 +199,6 @@ http_header_name <-
     unicode:characters_to_list(concatenate_chars(Node))
   `;
 
-
 http_header_value <-
   text0
   `
