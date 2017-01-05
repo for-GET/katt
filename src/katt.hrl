@@ -51,10 +51,10 @@
 -define(DEFAULT_TEXT_DIFF_FUN,      fun katt_callbacks:text_diff/2).
 -define(DEFAULT_VALIDATE_FUN,       fun katt_callbacks:validate/4).
 
--type params()              :: [{param_name(), param()}].
+-type params()              :: [{param_name(), param_value()}].
 -type param_name()          :: string()
                              | atom().
--type param()               :: atom()
+-type param_value()          :: atom()
                              | integer()
                              | float()
                              | string()
