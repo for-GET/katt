@@ -33,6 +33,7 @@
         , validate_type/6
         , progress/2
         , text_diff/2
+        , transform/4
         ]).
 
 %%%_* Includes =================================================================
@@ -222,6 +223,18 @@ text_diff(_A, _B) ->
 text_diff(A, B) ->
   [{text_diff, tdiff:diff(A, B)}].
 -endif.
+
+%% @doc Transform a request or a response
+%% @end
+-spec transform( list()
+               , request() | {response(), list()}
+               , params()
+               , callbacks()
+               ) -> request() | response().
+transform(_Id, #katt_request{} = Req, _Params, _Callbacks) ->
+  Req;
+transform(_Id, {#katt_response{} = Res, _Actual}, _Params, _Callbacks) ->
+  Res.
 
 %%%_* Internal =================================================================
 

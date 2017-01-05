@@ -179,12 +179,17 @@ bin/katt --json base_url=http://httpbin.org my_name=Joe your_name=Mike -- doc/ex
     * `validate` to be called with `expected`, `actual`, `params`, `callbacks`
     * `progress` to be called with `transaction_result`
     * `text_diff` to be called with `text`, `text`
+    * `transform` to be called with `id`, `katt_request` or `{katt_response, actual_response}`, `params`, `callbacks`
 
 A request can also be configured via HTTP request headers:
 
 * `x-katt-description` would take precedence over the transaction's description
 * `x-katt-request-timeout` would take precedence over the `request_timeout` param
 * `x-katt-request-sleep` would delay the request for a specific amount of milliseconds
+* `x-katt-transform` would call the `tranform` callback with it's value as `id`
+
+A response can also be configured via HTTP response headers:
+* `x-katt-transform` would call the `tranform` callback with it's value as `id`
 
 ### If you would like to convert a HAR file to an APIB file
 

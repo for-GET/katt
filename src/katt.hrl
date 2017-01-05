@@ -54,6 +54,7 @@
 -define(DEFAULT_RECALL_FUN,         fun katt_callbacks:recall/4).
 -define(DEFAULT_REQUEST_FUN,        fun katt_callbacks:request/3).
 -define(DEFAULT_TEXT_DIFF_FUN,      fun katt_callbacks:text_diff/2).
+-define(DEFAULT_TRANSFORM_FUN,      fun katt_callbacks:transform/4).
 -define(DEFAULT_VALIDATE_FUN,       fun katt_callbacks:validate/4).
 
 -type params()              :: [{param_name(), param_value()}].
