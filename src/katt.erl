@@ -186,7 +186,10 @@ base_url_from_params(ScenarioParams) ->
                   ?PROTOCOL_HTTPS -> ?DEFAULT_PORT_HTTPS
                 end,
   Port = proplists:get_value("port", ScenarioParams, DefaultPort),
-  BasePath = proplists:get_value("base_path", ScenarioParams, ?DEFAULT_BASE_PATH),
+  BasePath = proplists:get_value( "base_path"
+                                , ScenarioParams
+                                , ?DEFAULT_BASE_PATH
+                                ),
   Protocol ++ "//" ++ make_host(Protocol, Hostname, Port) ++ BasePath.
 
 run_blueprint(From, Blueprint, Params, Callbacks) ->
