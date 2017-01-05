@@ -44,12 +44,12 @@
 -define(DEFAULT_BASE_PATH,          "").
 
 -define(DEFAULT_EXT_FUN,            fun katt_callbacks:ext/1).
--define(DEFAULT_RECALL_FUN,         fun katt_callbacks:recall/4).
 -define(DEFAULT_PARSE_FUN,          fun katt_callbacks:parse/4).
--define(DEFAULT_REQUEST_FUN,        fun katt_callbacks:request/3).
--define(DEFAULT_VALIDATE_FUN,       fun katt_callbacks:validate/4).
 -define(DEFAULT_PROGRESS_FUN,       fun katt_callbacks:progress/2).
+-define(DEFAULT_RECALL_FUN,         fun katt_callbacks:recall/4).
+-define(DEFAULT_REQUEST_FUN,        fun katt_callbacks:request/3).
 -define(DEFAULT_TEXT_DIFF_FUN,      fun katt_callbacks:text_diff/2).
+-define(DEFAULT_VALIDATE_FUN,       fun katt_callbacks:validate/4).
 
 -type params()              :: [{param_name(), param()}].
 -type param_name()          :: string()

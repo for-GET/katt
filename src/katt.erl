@@ -124,12 +124,12 @@ run(From, Filename, Params, Callbacks) ->
 %% @private
 make_callbacks(Callbacks) ->
   katt_util:merge_proplists([ {ext, ?DEFAULT_EXT_FUN}
-                            , {recall, ?DEFAULT_RECALL_FUN}
                             , {parse, ?DEFAULT_PARSE_FUN}
-                            , {request, ?DEFAULT_REQUEST_FUN}
-                            , {validate, ?DEFAULT_VALIDATE_FUN}
                             , {progress, ?DEFAULT_PROGRESS_FUN}
+                            , {recall, ?DEFAULT_RECALL_FUN}
+                            , {request, ?DEFAULT_REQUEST_FUN}
                             , {text_diff, ?DEFAULT_TEXT_DIFF_FUN}
+                            , {validate, ?DEFAULT_VALIDATE_FUN}
                             ], Callbacks).
 
 %%%_* Internal =================================================================
