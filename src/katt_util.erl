@@ -467,17 +467,16 @@ validate_proplist( ParentKey
                        || {Key, _} <- lists:merge(EItems, AItems)
                      ]),
   lists:map( fun(Key) ->
-                 case proplists:get_value(Key, EItems, ItemsMode) of
-                   EItemsNode
-                     when EItemsNode =:= ?UNEXPECTED orelse
-                          EItemsNode =:= ?MATCH_ANY ->
+                 EValue = proplists:get_value(Key, EItems, ItemsMode),
+                 case is_items_mode(EValue) of
+                   true ->
                      validate( ParentKey ++ "/" ++ Key
                              , undefined
                              , proplists:get_value(Key, AItems)
-                             , EItemsNode
+                             , EValue
                              , Callbacks
                              );
-                   EValue ->
+                   false ->
                      validate( ParentKey ++ "/" ++ Key
                              , EValue
                              , proplists:get_value(Key, AItems)
@@ -652,3 +651,10 @@ body_to_apib(null) ->
   <<"">>;
 body_to_apib(Body) ->
   <<"<<<\n", Body/binary, "\n>>>\n">>.
+
+is_items_mode(_ItemsNode)
+  when _ItemsNode =:= ?MATCH_ANY orelse
+       _ItemsNode =:= ?UNEXPECTED ->
+  true;
+is_items_mode(_ItemsNode) ->
+  false.
