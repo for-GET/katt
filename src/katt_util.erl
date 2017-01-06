@@ -468,13 +468,13 @@ validate_proplist( ParentKey
                      ]),
   lists:map( fun(Key) ->
                  case proplists:get_value(Key, EItems, ItemsMode) of
-                   EValue
-                     when EValue =:= ?UNEXPECTED orelse
-                          EValue =:= ?MATCH_ANY ->
+                   EItemsNode
+                     when EItemsNode =:= ?UNEXPECTED orelse
+                          EItemsNode =:= ?MATCH_ANY ->
                      validate( ParentKey ++ "/" ++ Key
                              , undefined
                              , proplists:get_value(Key, AItems)
-                             , EValue
+                             , EItemsNode
                              , Callbacks
                              );
                    EValue ->
