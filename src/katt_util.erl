@@ -514,14 +514,18 @@ validate_simple(Key, E, A, _Unexpected, Callbacks) ->
   validate_primitive(Key, E, A, Callbacks).
 
 %% Validate JSON primitive types or empty structured types
-validate_primitive(_Key, E, E, _Callbacks) ->
+%% Expected anything
+validate_primitive(_Key, ?MATCH_ANY, _A, _Callbacks) ->
   {pass, []};
+
+%% Expected actual
+validate_primitive(_Key, _E, _E, _Callbacks) ->
+  {pass, []};
+%% Expected text
 validate_primitive(Key, E, A, Callbacks) when is_binary(A) ->
   validate_primitive(Key, E, from_utf8(A), Callbacks);
 validate_primitive(Key, E, A, Callbacks) when is_binary(E) ->
   validate_primitive(Key, from_utf8(E), A, Callbacks);
-validate_primitive(_Key, ?MATCH_ANY, _A, _Callbacks) ->
-  {pass, []};
 validate_primitive(Key, E, A, Callbacks) when is_list(E) ->
   TextDiffFun = proplists:get_value( text_diff
                                    , Callbacks
@@ -598,6 +602,7 @@ validate_primitive(Key, E, A, Callbacks) when is_list(E) ->
     _ ->
       {not_equal, {Key, E, A}}
   end;
+%% Otherwise
 validate_primitive(Key, E, A, _Callbacks) ->
   {not_equal, {Key, E, A}}.
 
