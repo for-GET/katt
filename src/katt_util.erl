@@ -415,9 +415,11 @@ validate(ParentKey, E, A) ->
 %% Expected actual
 validate(_ParentKey, _E, _E, _Unexpected, _Callbacks) ->
   {pass, []};
+
 %% Expected anything
 validate(_ParentKey, ?MATCH_ANY = _E, _A, _Unexpected, _Callbacks) ->
   {pass, []};
+
 %% Expected struct/array, got struct/array
 validate( ParentKey
         , {Type, EItems} = _E
@@ -432,6 +434,7 @@ validate( ParentKey
                    , Unexpected
                    , Callbacks
                    );
+
 %% Expected some Type
 validate( ParentKey
         , {Type, Options} = _E
@@ -447,6 +450,7 @@ validate( ParentKey
                               , Unexpected
                               , Callbacks
                               );
+
 %% Expected something else
 validate(ParentKey, E, A, Unexpected, Callbacks) ->
   validate_simple(ParentKey, E, A, Unexpected, Callbacks).
@@ -485,13 +489,14 @@ validate_proplist( ParentKey
            , Keys
            ).
 
-
 %% Validate when unexpected values show up
 %% Expected anything
 validate_simple(_Key, undefined = _E, _A, ?MATCH_ANY, _Callbacks) ->
   {pass, []};
+
 %% validate_simple(_Key, [] = _E, _A, ?MATCH_ANY) ->
 %%   {pass, []};
+
 %% Not expected and undefined
 validate_simple( _Key
                , ?UNEXPECTED = _E
@@ -500,15 +505,19 @@ validate_simple( _Key
                , _Callbacks
                ) ->
   {pass, []};
+
 %% Not expected
 validate_simple(Key, undefined = E, A, ?UNEXPECTED, _Callbacks) ->
   {unexpected, {Key, E, A}};
+
 %% Expected undefined
 validate_simple(Key, undefined = _E, A, Unexpected, Callbacks) ->
   validate_primitive(Key, Unexpected, A, Callbacks);
+
 %% Expected but undefined
 validate_simple(Key, E, undefined = A, _Unexpected, _Callbacks) ->
   {not_equal, {Key, E, A}};
+
 %% Otherwise
 validate_simple(Key, E, A, _Unexpected, Callbacks) ->
   validate_primitive(Key, E, A, Callbacks).
@@ -517,10 +526,10 @@ validate_simple(Key, E, A, _Unexpected, Callbacks) ->
 %% Expected anything
 validate_primitive(_Key, ?MATCH_ANY, _A, _Callbacks) ->
   {pass, []};
-
 %% Expected actual
 validate_primitive(_Key, _E, _E, _Callbacks) ->
   {pass, []};
+
 %% Expected text
 validate_primitive(Key, E, A, Callbacks) when is_binary(A) ->
   validate_primitive(Key, E, from_utf8(A), Callbacks);
@@ -602,6 +611,7 @@ validate_primitive(Key, E, A, Callbacks) when is_list(E) ->
     _ ->
       {not_equal, {Key, E, A}}
   end;
+
 %% Otherwise
 validate_primitive(Key, E, A, _Callbacks) ->
   {not_equal, {Key, E, A}}.
