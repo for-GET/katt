@@ -125,7 +125,7 @@ validate_type( true = _JustCheck
              , _ParentKey
              , _Options
              , _Actual
-             , _Unexpected
+             , _ItemsMode
              , _Callbacks
              ) when Type =:= "set" orelse
                     Type =:= "runtime_value" orelse
@@ -136,7 +136,7 @@ validate_type( true = _JustCheck
              , _ParentKey
              , _Options
              , _Actual
-             , _Unexpected
+             , _ItemsMode
              , _Callbacks
              ) ->
   false;
@@ -145,13 +145,13 @@ validate_type( false = _JustCheck
              , ParentKey
              , Options
              , Actual
-             , Unexpected
+             , ItemsMode
              , Callbacks
              ) ->
   katt_validate_type:validate_type_set( ParentKey
                                       , Options
                                       , Actual
-                                      , Unexpected
+                                      , ItemsMode
                                       , Callbacks
                                       );
 validate_type( false = _JustCheck
@@ -159,13 +159,13 @@ validate_type( false = _JustCheck
              , ParentKey
              , Options
              , Actual
-             , Unexpected
+             , ItemsMode
              , Callbacks
              ) ->
   katt_validate_type:validate_type_runtime_value( ParentKey
                                                 , Options
                                                 , Actual
-                                                , Unexpected
+                                                , ItemsMode
                                                 , Callbacks
                                                 );
 validate_type( false = _JustCheck
@@ -173,13 +173,13 @@ validate_type( false = _JustCheck
              , ParentKey
              , Options
              , Actual
-             , Unexpected
+             , ItemsMode
              , Callbacks
              ) ->
   katt_validate_type:validate_type_runtime_validation( ParentKey
                                                      , Options
                                                      , Actual
-                                                     , Unexpected
+                                                     , ItemsMode
                                                      , Callbacks
                                                      );
 validate_type( false = _JustCheck
@@ -187,7 +187,7 @@ validate_type( false = _JustCheck
              , _ParentKey
              , _Options
              , _Actual
-             , _Unexpected
+             , _ItemsMode
              , _Callbacks
              ) ->
   fail.

@@ -400,8 +400,8 @@ is_valid(ParentKey, E, A) ->
       false
   end.
 
-is_valid(ParentKey, E, A, Unexpected, Callbacks) ->
-  Result = validate(ParentKey, E, A, Unexpected, Callbacks),
+is_valid(ParentKey, E, A, ItemsMode, Callbacks) ->
+  Result = validate(ParentKey, E, A, ItemsMode, Callbacks),
   case get_params_and_failures(Result) of
     {_, []} ->
       true;
@@ -413,25 +413,25 @@ validate(ParentKey, E, A) ->
   validate_primitive(ParentKey, E, A, []).
 
 %% Expected anything
-validate(_ParentKey, ?MATCH_ANY = _E, _A, _Unexpected, _Callbacks) ->
+validate(_ParentKey, ?MATCH_ANY = _E, _A, _ItemsMode, _Callbacks) ->
   {pass, []};
 
 %% Expected actual
-validate(_ParentKey, _E, _E, _Unexpected, _Callbacks) ->
+validate(_ParentKey, _E, _E, _ItemsMode, _Callbacks) ->
   {pass, []};
 
 %% Expected struct/array, got struct/array
 validate( ParentKey
         , {Type, EItems} = _E
         , {Type, AItems} = _A
-        , Unexpected
+        , ItemsMode
         , Callbacks
         ) when Type =:= struct orelse
                Type =:= array ->
   validate_proplist( ParentKey
                    , EItems
                    , AItems
-                   , Unexpected
+                   , ItemsMode
                    , Callbacks
                    );
 
@@ -439,7 +439,7 @@ validate( ParentKey
 validate( ParentKey
         , {Type, Options} = _E
         , A
-        , Unexpected
+        , ItemsMode
         , Callbacks
         ) when Type =/= struct andalso
                Type =/= array ->
@@ -447,27 +447,27 @@ validate( ParentKey
                               , ParentKey ++ "/{{" ++ Type ++ "}}"
                               , Options
                               , A
-                              , Unexpected
+                              , ItemsMode
                               , Callbacks
                               );
 
 %% Expected something else
-validate(ParentKey, E, A, Unexpected, Callbacks) ->
-  validate_simple(ParentKey, E, A, Unexpected, Callbacks).
+validate(ParentKey, E, A, ItemsMode, Callbacks) ->
+  validate_simple(ParentKey, E, A, ItemsMode, Callbacks).
 
 validate_proplist( ParentKey
                  , EItems0
                  , AItems
-                 , _Unexpected
+                 , _ItemsMode
                  , Callbacks
                  ) ->
-  Unexpected = proplists:get_value(?MATCH_ANY, EItems0, ?MATCH_ANY),
+  ItemsMode = proplists:get_value(?MATCH_ANY, EItems0, ?MATCH_ANY),
   EItems = proplists:delete(?MATCH_ANY, EItems0),
   Keys = lists:usort([ Key
                        || {Key, _} <- lists:merge(EItems, AItems)
                      ]),
   lists:map( fun(Key) ->
-                 case proplists:get_value(Key, EItems, Unexpected) of
+                 case proplists:get_value(Key, EItems, ItemsMode) of
                    EValue
                      when EValue =:= ?UNEXPECTED orelse
                           EValue =:= ?MATCH_ANY ->
@@ -481,7 +481,7 @@ validate_proplist( ParentKey
                      validate( ParentKey ++ "/" ++ Key
                              , EValue
                              , proplists:get_value(Key, AItems)
-                             , Unexpected
+                             , ItemsMode
                              , Callbacks
                              )
                  end
@@ -501,7 +501,7 @@ validate_simple(_Key, undefined = _E, _A, ?MATCH_ANY, _Callbacks) ->
 validate_simple( _Key
                , ?UNEXPECTED = _E
                , undefined = _A
-               , _Unexpected
+               , _ItemsMode
                , _Callbacks
                ) ->
   {pass, []};
@@ -511,15 +511,15 @@ validate_simple(Key, undefined = E, A, ?UNEXPECTED, _Callbacks) ->
   {unexpected, {Key, E, A}};
 
 %% Expected undefined
-validate_simple(Key, undefined = _E, A, Unexpected, Callbacks) ->
-  validate_primitive(Key, Unexpected, A, Callbacks);
+validate_simple(Key, undefined = _E, A, ItemsMode, Callbacks) ->
+  validate_primitive(Key, ItemsMode, A, Callbacks);
 
 %% Expected but undefined
-validate_simple(Key, E, undefined = A, _Unexpected, _Callbacks) ->
+validate_simple(Key, E, undefined = A, _ItemsMode, _Callbacks) ->
   {not_equal, {Key, E, A}};
 
 %% Otherwise
-validate_simple(Key, E, A, _Unexpected, Callbacks) ->
+validate_simple(Key, E, A, _ItemsMode, Callbacks) ->
   validate_primitive(Key, E, A, Callbacks).
 
 %% Validate JSON primitive types or empty structured types

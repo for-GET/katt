@@ -60,7 +60,7 @@ So the above would validate against JSON instances such as
 or even `{"some_array": [4, 3, 2, 1]}` unless we add `{{unexpected}}`.
 
 `runtime_value` would just run code (only `erlang` and `shell` supported for now),
-while having access to `ParentKey`, `Actual`, `Unexpected` and `Callbacks`,
+while having access to `ParentKey`, `Actual`, `ItemsMode` and `Callbacks`,
 and return the expected value and matched against the actual one.
 
 ```
@@ -89,7 +89,7 @@ or in array format
 ```
 
 `runtime_validation` would just run code (only `erlang` and `shell` supported for now),
-while having access to `ParentKey`, `Actual`, `Unexpected` and `Callbacks`,
+while having access to `ParentKey`, `Actual`, `ItemsMode` and `Callbacks`,
 and return
 
 * `{pass, [{"Key", "Value"}]}` i.e. validation passed, store new param "Key" with value "Value"

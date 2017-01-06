@@ -102,7 +102,7 @@ validate_type( true = _JustCheck
              , _ParentKey
              , _Options
              , _Actual
-             , _Unexpected
+             , _ItemsMode
              , _Callbacks
              ) when Type =:= "set" orelse
                     Type =:= "runtime_value" orelse
@@ -113,7 +113,7 @@ validate_type( true = _JustCheck
              , _ParentKey
              , _Options
              , _Actual
-             , _Unexpected
+             , _ItemsMode
              , _Callbacks
              ) ->
   false;
@@ -122,13 +122,13 @@ validate_type( false = _JustCheck
              , ParentKey
              , Options
              , Actual
-             , Unexpected
+             , ItemsMode
              , Callbacks
              ) ->
   katt_validate_type:validate_type_set( ParentKey
                                       , Options
                                       , Actual
-                                      , Unexpected
+                                      , ItemsMode
                                       , Callbacks
                                       );
 validate_type( false = _JustCheck
@@ -136,13 +136,13 @@ validate_type( false = _JustCheck
              , ParentKey
              , Options
              , Actual
-             , Unexpected
+             , ItemsMode
              , Callbacks
              ) ->
   katt_validate_type:validate_type_runtime_value( ParentKey
                                                 , Options
                                                 , Actual
-                                                , Unexpected
+                                                , ItemsMode
                                                 , Callbacks
                                                 );
 validate_type( false = _JustCheck
@@ -150,13 +150,13 @@ validate_type( false = _JustCheck
              , ParentKey
              , Options
              , Actual
-             , Unexpected
+             , ItemsMode
              , Callbacks
              ) ->
   katt_validate_type:validate_type_runtime_validation( ParentKey
                                                      , Options
                                                      , Actual
-                                                     , Unexpected
+                                                     , ItemsMode
                                                      , Callbacks
                                                      );
 validate_type( false = _JustCheck
@@ -164,7 +164,7 @@ validate_type( false = _JustCheck
              , _ParentKey
              , _Options
              , _Actual
-             , _Unexpected
+             , _ItemsMode
              , _Callbacks
              ) ->
   fail.
@@ -202,10 +202,10 @@ normalize_jsx(Items0) when is_list(Items0) ->
   Items1 = [ normalize_jsx(Item)
              || Item <- Items0
            ],
-  Unexpected = case lists:member(?UNEXPECTED, Items1) of
-                 true -> [{?MATCH_ANY, ?UNEXPECTED}];
-                 false -> []
-               end,
+  ItemsMode = case lists:member(?UNEXPECTED, Items1) of
+                true -> [{?MATCH_ANY, ?UNEXPECTED}];
+                false -> []
+              end,
   Items2 = lists:delete(?UNEXPECTED, Items1),
   MatchAny = case lists:member(?MATCH_ANY, Items2) of
                true -> [{?MATCH_ANY, ?MATCH_ANY}];
@@ -213,7 +213,7 @@ normalize_jsx(Items0) when is_list(Items0) ->
              end,
   Items3 = lists:delete(?MATCH_ANY, Items2),
   Items = katt_util:enumerate(Items3),
-  {array, Items ++ Unexpected ++ MatchAny};
+  {array, Items ++ ItemsMode ++ MatchAny};
 normalize_jsx(Str) when is_binary(Str) ->
   katt_util:from_utf8(Str);
 normalize_jsx(Value) ->

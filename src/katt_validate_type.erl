@@ -44,16 +44,16 @@
 validate_type_set( ParentKey
                  , Options
                  , {array, AItems0} = _Actual
-                 , _Unexpected
+                 , _ItemsMode
                  , Callbacks
                  ) ->
   {array, EItems0} = proplists:get_value("value", Options),
-  Unexpected = proplists:get_value(?MATCH_ANY, EItems0, ?MATCH_ANY),
+  ItemsMode = proplists:get_value(?MATCH_ANY, EItems0, ?MATCH_ANY),
   EItems1 = proplists:delete(?MATCH_ANY, EItems0),
   EItems = lists:keysort(2, EItems1),
   AItems = lists:keysort(2, AItems0),
-  validate_set(ParentKey, EItems, AItems, Unexpected, Callbacks, []);
-validate_type_set(ParentKey, Options, Actual, _Unexpected, _Callbacks) ->
+  validate_set(ParentKey, EItems, AItems, ItemsMode, Callbacks, []);
+validate_type_set(ParentKey, Options, Actual, _ItemsMode, _Callbacks) ->
   [{not_equal, {ParentKey, Options, Actual}}].
 
 -spec validate_type_runtime_value( string()
@@ -65,7 +65,7 @@ validate_type_set(ParentKey, Options, Actual, _Unexpected, _Callbacks) ->
 validate_type_runtime_value( ParentKey
                            , [{"erlang", Erlang0} | _Options]
                            , Actual
-                           , Unexpected
+                           , ItemsMode
                            , Callbacks
                            ) ->
   Erlang = case Erlang0 of
@@ -81,7 +81,7 @@ validate_type_runtime_value( ParentKey
       {value, Expected0, _} = erl_eval:exprs( Exprs
                                             , [ {'ParentKey', ParentKey}
                                               , {'Actual', Actual}
-                                              , {'Unexpected', Unexpected}
+                                              , {'ItemsMode', ItemsMode}
                                               , {'Callbacks', Callbacks}]
                                             ),
       {undefined, Expected0}
@@ -94,14 +94,14 @@ validate_type_runtime_value( ParentKey
     end,
   case Error of
     undefined ->
-      katt_util:validate(ParentKey, Expected, Actual, Unexpected, Callbacks);
+      katt_util:validate(ParentKey, Expected, Actual, ItemsMode, Callbacks);
     _ ->
       {not_equal, {ParentKey, Error, Actual}}
   end;
 validate_type_runtime_value( ParentKey
                            , [{"shell", Shell0} | _Options]
                            , Actual
-                           , Unexpected
+                           , ItemsMode
                            , Callbacks
                            ) ->
   Shell = case Shell0 of
@@ -116,14 +116,14 @@ validate_type_runtime_value( ParentKey
                                     , { "KATT_ACTUAL"
                                       , io_lib:format("~p", [Actual])
                                       }
-                                    , { "KATT_UNEXPECTED"
-                                      , io_lib:format("~p", [Unexpected])
+                                    , { "KATT_ITEMS_MODE"
+                                      , io_lib:format("~p", [ItemsMode])
                                       }
                                     ]),
     validate_type_runtime_value( ParentKey
                                , [{"erlang", Erlang}]
                                , Actual
-                               , Unexpected
+                               , ItemsMode
                                , Callbacks
                                )
   catch
@@ -143,7 +143,7 @@ validate_type_runtime_value( ParentKey
 validate_type_runtime_validation( ParentKey
                                 , [{"erlang", Erlang0} | _Options]
                                 , Actual
-                                , Unexpected
+                                , ItemsMode
                                 , Callbacks
                                 ) ->
   Erlang = case Erlang0 of
@@ -158,7 +158,7 @@ validate_type_runtime_validation( ParentKey
     {value, Result, _} = erl_eval:exprs( Exprs
                                        , [ {'ParentKey', ParentKey}
                                          , {'Actual', Actual}
-                                         , {'Unexpected', Unexpected}
+                                         , {'ItemsMode', ItemsMode}
                                          , {'Callbacks', Callbacks}]
                                        ),
     Result
@@ -173,7 +173,7 @@ validate_type_runtime_validation( ParentKey
 validate_type_runtime_validation( ParentKey
                                 , [{"shell", Shell0} | _Options]
                                 , Actual
-                                , Unexpected
+                                , ItemsMode
                                 , Callbacks
                                 ) ->
   Shell = case Shell0 of
@@ -188,14 +188,14 @@ validate_type_runtime_validation( ParentKey
                                     , { "KATT_ACTUAL"
                                       , io_lib:format("~p", [Actual])
                                       }
-                                    , { "KATT_UNEXPECTED"
-                                      , io_lib:format("~p", [Unexpected])
+                                    , { "KATT_ITEMS_MODE"
+                                      , io_lib:format("~p", [ItemsMode])
                                       }
                                     ]),
     validate_type_runtime_validation( ParentKey
                                     , [{"erlang", Erlang}]
                                     , Actual
-                                    , Unexpected
+                                    , ItemsMode
                                     , Callbacks
                                     )
   catch
@@ -221,7 +221,7 @@ validate_type_runtime_validation( ParentKey
 validate_set( _ParentKey
             , [] = _Expected
             , [] = _Actual
-            , _Unexpected
+            , _ItemsMode
             , _Callbacks
             , Errors
             ) ->
@@ -253,7 +253,7 @@ validate_set( ParentKey
 validate_set( ParentKey
             , Expected
             , []
-            , _Unexpected
+            , _ItemsMode
             , _Callbacks
             , Errors
             ) ->
@@ -264,7 +264,7 @@ validate_set( ParentKey
 validate_set( ParentKey
             , [{EKey, EValue} | ERest] = _Expected
             , Actual
-            , Unexpected
+            , ItemsMode
             , Callbacks
             , Errors
             ) ->
@@ -273,7 +273,7 @@ validate_set( ParentKey
                          not katt_util:is_valid( _ParentKey = ""
                                                , EValue
                                                , Value
-                                               , Unexpected
+                                               , ItemsMode
                                                , Callbacks
                                                )
                      end
@@ -283,14 +283,14 @@ validate_set( ParentKey
       Errors1 =
         [{not_contains, {ParentKey ++ "/" ++ EKey, EValue, undefined}}] ++
         Errors,
-      validate_set(ParentKey, ERest, Actual, Unexpected, Callbacks, Errors1);
+      validate_set(ParentKey, ERest, Actual, ItemsMode, Callbacks, Errors1);
     {ARest1, [{_AKey, AValue}|ARest2]} ->
       ARest = ARest1 ++ ARest2,
       Errors1 = [katt_util:validate( _ParentKey = ""
                                    , EValue
                                    , AValue
-                                   , Unexpected
+                                   , ItemsMode
                                    , Callbacks
                                    )] ++ Errors,
-      validate_set(ParentKey, ERest, ARest, Unexpected, Callbacks, Errors1)
+      validate_set(ParentKey, ERest, ARest, ItemsMode, Callbacks, Errors1)
   end.

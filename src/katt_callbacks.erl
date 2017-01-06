@@ -333,7 +333,7 @@ validate_type( Type
              , ParentKey
              , Expected
              , Actual
-             , Unexpected
+             , ItemsMode
              , Callbacks
              ) ->
   ExtFun = proplists:get_value(ext, Callbacks),
@@ -344,7 +344,7 @@ validate_type( Type
                                             , ParentKey
                                             , Expected
                                             , Actual
-                                            , Unexpected
+                                            , ItemsMode
                                             , Callbacks
                                             )
                                  end
@@ -359,7 +359,7 @@ validate_type( Type
          , ParentKey
          , Expected
          , Actual
-         , Unexpected
+         , ItemsMode
          , Callbacks
          )
   end.
