@@ -412,12 +412,12 @@ is_valid(ParentKey, E, A, Unexpected, Callbacks) ->
 validate(ParentKey, E, A) ->
   validate_primitive(ParentKey, E, A, []).
 
-%% Expected actual
-validate(_ParentKey, _E, _E, _Unexpected, _Callbacks) ->
-  {pass, []};
-
 %% Expected anything
 validate(_ParentKey, ?MATCH_ANY = _E, _A, _Unexpected, _Callbacks) ->
+  {pass, []};
+
+%% Expected actual
+validate(_ParentKey, _E, _E, _Unexpected, _Callbacks) ->
   {pass, []};
 
 %% Expected struct/array, got struct/array
