@@ -489,39 +489,23 @@ validate_proplist( ParentKey
            ).
 
 %% Validate when unexpected values show up
-%% Expected anything
-validate_simple(_Key, undefined = _E, _A, ?MATCH_ANY, _Callbacks) ->
-  {pass, []};
-
-%% validate_simple(_Key, [] = _E, _A, ?MATCH_ANY) ->
-%%   {pass, []};
-
-%% Not expected and undefined
-validate_simple( _Key
-               , ?UNEXPECTED = _E
-               , undefined = _A
-               , _ItemsMode
-               , _Callbacks
-               ) ->
-  {pass, []};
-
-%% Not expected
-validate_simple(Key, undefined = E, A, ?UNEXPECTED, _Callbacks) ->
-  {unexpected, {Key, E, A}};
-
-%% Expected undefined
+%% Default to ItemsMode
 validate_simple(Key, undefined = _E, A, ItemsMode, Callbacks) ->
   validate_primitive(Key, ItemsMode, A, Callbacks);
-
-%% Expected but undefined
-validate_simple(Key, E, undefined = A, _ItemsMode, _Callbacks) ->
-  {not_equal, {Key, E, A}};
 
 %% Otherwise
 validate_simple(Key, E, A, _ItemsMode, Callbacks) ->
   validate_primitive(Key, E, A, Callbacks).
 
 %% Validate JSON primitive types or empty structured types
+%% Not expected and undefined
+validate_primitive(_Key, ?UNEXPECTED = _E, undefined = _A, _Callbacks) ->
+  {pass, []};
+
+%% Not expected
+validate_primitive(Key, ?UNEXPECTED = E, A, _Callbacks) ->
+  {unexpected, {Key, E, A}};
+
 %% Expected anything
 validate_primitive(_Key, ?MATCH_ANY, _A, _Callbacks) ->
   {pass, []};
@@ -534,7 +518,7 @@ validate_primitive(Key, E, A, Callbacks) when is_binary(A) ->
   validate_primitive(Key, E, from_utf8(A), Callbacks);
 validate_primitive(Key, E, A, Callbacks) when is_binary(E) ->
   validate_primitive(Key, from_utf8(E), A, Callbacks);
-validate_primitive(Key, E, A, Callbacks) when is_list(E) ->
+validate_primitive(Key, E, A, Callbacks) when is_list(E) andalso is_list(A) ->
   TextDiffFun = proplists:get_value( text_diff
                                    , Callbacks
                                    ),
