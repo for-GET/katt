@@ -509,6 +509,7 @@ validate_primitive(Key, ?UNEXPECTED = E, A, _Callbacks) ->
 %% Expected anything
 validate_primitive(_Key, ?MATCH_ANY, _A, _Callbacks) ->
   {pass, []};
+
 %% Expected actual
 validate_primitive(_Key, _E, _E, _Callbacks) ->
   {pass, []};
