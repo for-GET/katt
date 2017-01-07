@@ -120,8 +120,7 @@ http_method <-
   / "MOVE"
   / "MKCOL"
   / "HEAD"
-  ~
-  ;
+  ~;
 
 request <-
   signature:signature headers:request_headers body:body?
@@ -138,7 +137,8 @@ request <-
   `;
 
 request_headers <-
-  request_header* ~;
+  request_header*
+  ~;
 
 request_header <-
   in header:http_header
@@ -166,7 +166,8 @@ response_status <-
   `;
 
 response_headers <-
-  response_header* ~;
+  response_header*
+  ~;
 
 response_header <-
   out http_header
@@ -217,7 +218,8 @@ signature <-
 %% We do not support DelimitedBodyVariable.
 body <-
   delimited_body_fixed
-  / simple_body ~;
+  / simple_body
+  ~;
 
 delimited_body_fixed <-
   "<<<" s* eol
@@ -246,10 +248,12 @@ simple_body_line <-
   `;
 
 in <-
-  ">" s+ ~;
+  ">" s+
+  ~;
 
 out <-
-  "<" s+ ~;
+  "<" s+
+  ~;
 
 
 %%% Helper rules
@@ -267,10 +271,12 @@ text1 <-
   `;
 
 empty_line <-
-  s* eol ~;
+  s* eol
+  ~;
 
 eolf <-
-  eol / eof ~;
+  eol / eof
+  ~;
 
 eol <-
   "\n"
@@ -281,7 +287,6 @@ eol <-
 eof <-
   !. ` <<>> `;
 
-
 %% TODO: add support for the following unicode whitespace characters:
 %% \u00A0\u1680\u180E\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007
 %% \u2008\u2009\u200A\u202F\u205F\u3000\uFEFF
@@ -289,8 +294,8 @@ eof <-
 %% sans "\r", "\n", "\u2028" and "\u2029".
 %% See ECMA-262, 5.1 ed., 15.10.2.12.
 s <-
-  [\t\v\f ] ~;
-
+  [\t\v\f ]
+  ~;
 
 %%% Records and extra functions
 `
