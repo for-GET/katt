@@ -498,6 +498,14 @@ validate_simple(Key, E, A, _ItemsMode, Callbacks) ->
   validate_primitive(Key, E, A, Callbacks).
 
 %% Validate JSON primitive types or empty structured types
+%% Expected and undefined
+validate_primitive(Key, ?EXPECTED = E, undefined = A, _Callbacks) ->
+  {expected, {Key, E, A}};
+
+%% Expected
+validate_primitive(_Key, ?EXPECTED = _E, _A, _Callbacks) ->
+  {pass, []};
+
 %% Not expected and undefined
 validate_primitive(_Key, ?UNEXPECTED = _E, undefined = _A, _Callbacks) ->
   {pass, []};

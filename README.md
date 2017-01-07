@@ -21,7 +21,10 @@ and media-types (`application/json`, `application/*+json`, `application/x-www-fo
 The validator makes use of a few tags with special meaning:
 
 `"{{_}}"`
-Match anything (i.e. no real validation, only check existence).
+Match anything including undefined (i.e. no real validation).
+
+`"{{expected}}"`
+Match anything but undefined (i.e. no real validation, only check existence).
 
 `"{{unexpected}}"`
 Match nothing (i.e. no real validation, only check lack of existence)

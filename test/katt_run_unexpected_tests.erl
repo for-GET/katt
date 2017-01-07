@@ -127,7 +127,7 @@ katt_run_with_expected_but_undefined() ->
                  , Scenario
                  , _
                  , _
-                 , [ {_, _, _, _, {fail, [ { not_equal
+                 , [ {_, _, _, _, {fail, [ { expected
                                            , {"/body/expected", _, _}
                                            }
                                          ]}}
@@ -144,7 +144,7 @@ GET /katt_run_with_expected_but_undefined
 < 200
 < Content-Type: application/json
 {
-    \"expected\": \"{{>defined_value}}\"
+    \"expected\": \"{{expected}}\"
 }
 "/utf8>>).
 

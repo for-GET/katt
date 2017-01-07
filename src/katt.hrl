@@ -30,6 +30,7 @@
 -define(STORE_BEGIN_TAG,            "{{>").
 -define(STORE_END_TAG,              "}}").
 
+-define(EXPECTED,                   "{{expected}}").
 -define(MATCH_ANY,                  "{{_}}").
 -define(TYPE,                       "{{type}}").
 -define(UNEXPECTED,                 "{{unexpected}}").
