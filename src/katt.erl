@@ -129,6 +129,7 @@ make_callbacks(Callbacks) ->
                             , {recall, ?DEFAULT_RECALL_FUN}
                             , {request, ?DEFAULT_REQUEST_FUN}
                             , {text_diff, ?DEFAULT_TEXT_DIFF_FUN}
+                            , {transform, ?DEFAULT_TRANSFORM_FUN}
                             , {validate, ?DEFAULT_VALIDATE_FUN}
                             ], Callbacks).
 
@@ -234,10 +235,10 @@ run_transactions( From
   Req = Req0#katt_request{headers = Hdrs},
   From ! {progress, run_transaction, Description},
   Request = make_katt_request(Req, Params, Callbacks),
-  ExpectedResponse = make_katt_response(Res, Params, Callbacks),
   RequestFun = proplists:get_value(request, Callbacks),
   ValidateFun = proplists:get_value(validate, Callbacks),
   ActualResponse = RequestFun(Request, Params, Callbacks),
+  ExpectedResponse = make_katt_response(ActualResponse, Res, Params, Callbacks),
   ValidationResult = ValidateFun( ExpectedResponse
                                 , ActualResponse
                                 , Params
@@ -270,7 +271,7 @@ run_transactions( From
       {Params, {Count + 1, [Result|Results]}}
   end.
 
-make_katt_request( #katt_request{headers=Hdrs0, url=Url0, body=Body0} = Req
+make_katt_request( #katt_request{url=Url0, headers=Hdrs0, body=Body0} = Req0
                  , Params
                  , Callbacks
                  ) ->
@@ -284,12 +285,14 @@ make_katt_request( #katt_request{headers=Hdrs0, url=Url0, body=Body0} = Req
   Url = make_request_url(Url1, Params),
   Hdrs = RecallFun(headers, Hdrs0, Params, Callbacks),
   [Hdrs, Body] = RecallFun(body, [Hdrs, Body0], Params, Callbacks),
-  Req#katt_request{ url = Url
-                  , headers = Hdrs
-                  , body = Body
-                  }.
+  Req = Req0#katt_request{ url = Url
+                         , headers = Hdrs
+                         , body = Body
+                         },
+  maybe_transform_request(Req, Params, Callbacks).
 
-make_katt_response( #katt_response{headers=Hdrs0, body=Body0} = Res
+make_katt_response( ActualResponse
+                  , #katt_response{headers=Hdrs0, body=Body0} = Res0
                   , Params
                   , Callbacks
                   ) ->
@@ -298,10 +301,11 @@ make_katt_response( #katt_response{headers=Hdrs0, body=Body0} = Res
   Hdrs = RecallFun(headers, Hdrs0, Params, Callbacks),
   [Hdrs, Body] = RecallFun(body, [Hdrs, Body0], Params, Callbacks),
   ParsedBody = ParseFun(Hdrs, Body, Params, Callbacks),
-  Res#katt_response{ headers = Hdrs
-                   , body = Body
-                   , parsed_body = ParsedBody
-                   }.
+  Res = Res0#katt_response{ headers = Hdrs
+                          , body = Body
+                          , parsed_body = ParsedBody
+                          },
+  maybe_transform_response(Res, Params, Callbacks, ActualResponse).
 
 -spec make_request_url( string()
                       , params()
@@ -320,8 +324,31 @@ make_request_url(Path, Params) ->
               , Path
               ], "").
 
-
 make_host(?PROTOCOL_HTTP, Hostname, 80) -> Hostname;
 make_host(?PROTOCOL_HTTPS, Hostname, 443) -> Hostname;
 make_host(_Proto, Hostname, Port) ->
   Hostname ++ ":" ++ katt_util:to_list(Port).
+
+maybe_transform_request(Req0, Params, Callbacks) ->
+  Hdrs0 = Req0#katt_request.headers,
+  case proplists:get_value("x-katt-transform", Hdrs0) of
+    undefined ->
+      Req0;
+    TransformId ->
+      TransformFun = proplists:get_value(transform, Callbacks),
+      Hdrs = proplists:delete("x-katt-transform", Hdrs0),
+      Req = Req0#katt_request{headers = Hdrs},
+      TransformFun(TransformId, Req, Params, Callbacks)
+  end.
+
+maybe_transform_response(Res0, Params, Callbacks, ActualResponse) ->
+  Hdrs0 = Res0#katt_response.headers,
+  case proplists:get_value("x-katt-transform", Hdrs0) of
+    undefined ->
+      Res0;
+    TransformId ->
+      TransformFun = proplists:get_value(transform, Callbacks),
+      Hdrs = proplists:delete("x-katt-transform", Hdrs0),
+      Res = Res0#katt_response{headers = Hdrs},
+      TransformFun(TransformId, {Res, ActualResponse}, Params, Callbacks)
+  end.
