@@ -69,7 +69,7 @@ and return the expected value and matched against the actual one.
 ```
 {
   "rfc1123": {
-    "{{type}}": "runtime_validation",
+    "{{type}}": "runtime_value",
     "erlang": "list_to_binary(httpd_util:rfc1123_date(calendar:now_to_datetime(erlang:now())))"
   }
 }
@@ -80,7 +80,7 @@ or in array format
 ```
 {
   "rfc1123": {
-    "{{type}}": "runtime_validation",
+    "{{type}}": "runtime_value",
     "erlang": ["list_to_binary(",
                "  httpd_util:rfc1123_date(",
                "    calendar:now_to_datetime(",
