@@ -57,6 +57,8 @@ main(["--json"|Rest], Options, [], []) ->
 main(["--all"|Rest], Options, [], []) ->
   main(Rest, [{all, true}|Options], [], []);
 
+main([], _, _, _) ->
+  throw({error, missing_scenario_filenames});
 main(["--"|ScenarioFilenames], Options, Params0, []) ->
   Params = parse_params(Params0),
   run(Options, Params, ScenarioFilenames);
