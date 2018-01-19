@@ -502,12 +502,12 @@ validate_primitive(_Key, ?MATCH_ANY, _A, _Callbacks) ->
 validate_primitive(_Key, _E, _E, _Callbacks) ->
   {pass, []};
 
-%% Expected text
+%% Expected text or store param
 validate_primitive(Key, E, A, Callbacks) when is_binary(E) ->
   validate_primitive(Key, from_utf8(E), A, Callbacks);
 validate_primitive(Key, E, A, Callbacks) when is_binary(A) ->
   validate_primitive(Key, E, from_utf8(A), Callbacks);
-validate_primitive(Key, E, A, Callbacks) when is_list(E) andalso is_list(A) ->
+validate_primitive(Key, E, A, Callbacks) when is_list(E) ->
   TextDiffFun = proplists:get_value( text_diff
                                    , Callbacks
                                    ),
@@ -519,13 +519,13 @@ validate_primitive(Key, E, A, Callbacks) when is_list(E) andalso is_list(A) ->
     ++ ?MATCH_ANY
     ++ ")",
   case re:run(E, RE_HAS_PARAMS, [global, {capture, all_but_first, list}]) of
-    nomatch ->
+    nomatch when is_list(A) ->
       {not_equal, {Key, E, A, TextDiffFun(E, A)}};
     {match, [[?MATCH_ANY]]} ->
       {pass, []};
     {match, [[E]]} ->
       {pass, [{store_tag2param(E), A}]};
-    {match, Params0} ->
+    {match, Params0} when is_list(A) ->
       Params = lists:map( fun([?MATCH_ANY]) ->
                               ?MATCH_ANY;
                              ([Match]) ->
