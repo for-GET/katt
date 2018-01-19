@@ -417,6 +417,8 @@ katt_run_with_store() ->
                    , {"param5_float", 1.1}
                    , {"param5_integer", 1}
                    , {"param5_null", null}
+                   , {"param6", "param 6"}
+                   , {"param7", null}
                    , _
                    , _
                    , _
@@ -431,6 +433,9 @@ katt_run_with_store() ->
 katt_run_with_store_blueprint() ->
   katt_blueprint_parse:string(
     <<"--- Test 7 ---
+
+PARAM param6=param 6
+PARAM param7:=null
 
 GET /katt_run_with_store
 < 200

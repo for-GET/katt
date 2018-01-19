@@ -44,6 +44,18 @@ default, one can do `{..., "{{_}}": "{{unexpected}}"}` or
 `[..., "{{unexpected}}"]`, effectively making a rule that no properties/items
 are expected beyond the ones defined.
 
+**NOTE** If some values are static (constants) and you want to reuse them across multiple requests,
+you can add one or more params like below
+(note the difference between `=` and `:=` which is also a convention for passing parameters via the CLI)
+
+```
+PARAM a_string=with some text
+PARAM not_a_string:=true
+PARAM not_another_string:=null
+PARAM not_yet_another_string:=1.1
+PARAM another_string=1.1
+```
+
 For more complex validations, KATT supports extensible validation types.
 Built-in validation types: `set`, `runtime_value`, `runtime_validation`.
 

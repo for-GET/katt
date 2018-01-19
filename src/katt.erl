@@ -212,13 +212,15 @@ run_transactions( _From
   {FinalParams, {Count, Results}};
 run_transactions( From
                 , [#katt_transaction{ description = Description0
+                                    , params = TransactionParams
                                     , request = Req0
                                     , response = Res
                                     }|T]
-                , Params
+                , Params0
                 , Callbacks
                 , {Count, Results}
                 ) ->
+  Params = katt_util:merge_proplists(Params0, TransactionParams),
   Hdrs0 = Req0#katt_request.headers,
   Description = case proplists:get_value("x-katt-description", Hdrs0) of
                   undefined ->
