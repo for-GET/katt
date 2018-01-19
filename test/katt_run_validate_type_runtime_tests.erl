@@ -92,7 +92,7 @@ GET /katt_run_with_runtime_value
 < Content-Type: application/json
 {
     \"{{type}}\": \"runtime_value\",
-    \"erlang\": \"{array, [ParentKey, 1]}\"
+    \"erlang\": \"Actual\"
 }
 "/utf8>>).
 
@@ -105,11 +105,9 @@ katt_run_with_runtime_value_http( _
                                 ) ->
   {ok, {{200, []}, [
                     {"content-type", "application/json"}
-                   ], <<"[
-    \"/\",
-    1
-]
-"/utf8>>}}.
+                   ], <<"{
+    \"any\": \"value\"
+}"/utf8>>}}.
 
 %%% Test with runtime_value array
 
@@ -206,7 +204,15 @@ katt_run_with_runtime_validation_pass() ->
   ?_assertMatch( { pass
                  , Scenario
                  , _
-                 , _
+                 , [ _
+                   , _
+                   , _
+                   , {"param", "value"}
+                   , _
+                   , _
+                   , _
+                   , _
+                   ]
                  , [ {_, _, _, _, pass}
                    ]
                  }
@@ -221,8 +227,10 @@ GET /katt_run_with_runtime_validation_pass
 < 200
 < Content-Type: application/json
 {
-    \"{{type}}\": \"runtime_validation\",
-    \"erlang\": \"{pass, [{\\\"Param\\\", \\\"Value\\\"}]}\"
+    \"param\": {
+        \"{{type}}\": \"runtime_validation\",
+        \"erlang\": \"{pass, [{\\\"param\\\", Actual}]}\"
+    }
 }
 "/utf8>>).
 
@@ -236,7 +244,7 @@ katt_run_with_runtime_validation_pass_http( _
   {ok, {{200, []}, [
                     {"content-type", "application/json"}
                    ], <<"{
-    \"any\": \"value\"
+    \"param\": \"value\"
 }
 "/utf8>>}}.
 
@@ -269,7 +277,7 @@ GET /katt_run_with_runtime_validation_fail
 {
     \"{{type}}\": \"runtime_validation\",
     \"erlang\": \"{not_equal,
-                   {\\\"/body/{{runtime_validation}}\\\", false, true}
+                   {ParentKey, false, Actual}
                   }\"
 }
 "/utf8>>).
