@@ -413,6 +413,10 @@ katt_run_with_store() ->
                    , {"param3", "param3"}
                    , {"param4", "param4"}
                    , {"param5", "param5"}
+                   , {"param5_boolean", true}
+                   , {"param5_float", 1.1}
+                   , {"param5_integer", 1}
+                   , {"param5_null", null}
                    , _
                    , _
                    , _
@@ -436,7 +440,11 @@ GET /katt_run_with_store
 < X-Bar: baz{{>param4}}
 < X-Qux: qux{{_}}
 {
-    \"param5\": \"{{>param5}}\"
+    \"param5\": \"{{>param5}}\",
+    \"param5_null\": \"{{>param5_null}}\",
+    \"param5_boolean\": \"{{>param5_boolean}}\",
+    \"param5_integer\": \"{{>param5_integer}}\",
+    \"param5_float\": \"{{>param5_float}}\"
 }
 "/utf8>>).
 
@@ -452,7 +460,11 @@ katt_run_with_store_http( _
                     {"x-foo", "param3"},
                     {"x-bar", "bazparam4"},
                     {"x-qux", "quxnorf"}], <<"{
-    \"param5\": \"param5\"
+    \"param5\": \"param5\",
+    \"param5_null\": null,
+    \"param5_boolean\": true,
+    \"param5_integer\": 1,
+    \"param5_float\": 1.1
 }
 "/utf8>>}}.
 
