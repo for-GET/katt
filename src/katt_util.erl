@@ -521,9 +521,7 @@ validate_primitive(Key, E, A, Callbacks) when is_list(E) ->
   case re:run(E, RE_HAS_PARAMS, [global, {capture, all_but_first, list}]) of
     nomatch when is_list(A) ->
       {not_equal, {Key, E, A, TextDiffFun(E, A)}};
-    {match, [[?MATCH_ANY]]} ->
-      {pass, []};
-    {match, [[E]]} ->
+    {match, [[E]]} when E =/= ?MATCH_ANY  ->
       {pass, [{store_tag2param(E), A}]};
     {match, Params0} when is_list(A) ->
       Params = lists:map( fun([?MATCH_ANY]) ->
