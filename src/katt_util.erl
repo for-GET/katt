@@ -62,7 +62,7 @@ merge_proplists(List1, List2) ->
 
 to_list(X) when is_atom(X) -> atom_to_list(X);
 to_list(X) when is_integer(X) -> integer_to_list(X);
-to_list(X) when is_float(X) -> my_float_to_list(X);
+to_list(X) when is_float(X) -> io_lib:format("~p", [X]);
 to_list(X) when is_binary(X) -> binary_to_list(X);
 to_list(X) when is_list(X) -> X.
 
@@ -234,26 +234,6 @@ get_params_and_failures(Result) ->
    ).
 
 %%%_* Internal =================================================================
-
-my_float_to_list(X) when is_float(X) ->
-  my_float_to_list(X, 0).
-my_float_to_list(X, Decimals) when is_float(X) ->
-  Multiplier = trunc(math:pow(10, Decimals)),
-  X1 = X * Multiplier,
-  X2 = trunc(X1) + 0.0,
-  case X1 =:= X2 of
-    true ->
-      String = integer_to_list(trunc(X1)),
-      Number = [ string:sub_string(String, 1, Decimals)
-               , string:sub_string(String, min( Decimals + 1
-                                              , string:len(String) + 1
-                                              ))
-               ],
-      string:join(Number, ".");
-    false ->
-      Decimals1 = Decimals + 1,
-      my_float_to_list(X, Decimals1)
-  end.
 
 proplist_to_jsx([]) ->
   [{}];
