@@ -23,6 +23,16 @@
 -type utf8_string() :: unicode:unicode_binary().
 -type http_header() :: {string(), string()}.
 
+-type katt_transaction_params()      :: [{ katt_transaction_param_name()
+                                         , katt_transaction_param_value()
+                                         }].
+-type katt_transaction_param_name()  :: string().
+-type katt_transaction_param_value() :: atom()
+                                      | integer()
+                                      | float()
+                                      | string()
+                                      | binary().
+
 -record(katt_request,     { method = "GET"              :: string()
                           , url = "/"                   :: string()
                           , headers = []                :: [http_header()]
@@ -36,6 +46,7 @@
                           }).
 
 -record(katt_transaction, { description = null          :: utf8_string() | null
+                          , params = []                 :: katt_transaction_params()
                           , request = #katt_request{}   :: #katt_request{}
                           , response = #katt_response{} :: #katt_response{}
                           }).

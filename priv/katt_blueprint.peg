@@ -79,15 +79,18 @@ transactions_tail <-
 
 transaction <-
   description:transaction_description?
+  params:transaction_params?
   request:request
   response:response
   `
     Description = proplists:get_value(description, Node),
+    Params = proplists:get_value(params, Node),
     Request = proplists:get_value(request, Node),
     Response = proplists:get_value(response, Node),
 
     #katt_transaction{
       description=null_if_empty(Description),
+      params=Params,
       request=Request,
       response=Response
     }
@@ -100,9 +103,53 @@ transaction_description <-
   `;
 
 transaction_description_line <-
-  !http_method text:text0 eol
+  !http_method_or_transaction_param_keyword text:text0 eol
   `
     proplists:get_value(text, Node)
+  `;
+
+http_method_or_transaction_param_keyword <-
+  http_method
+  / transaction_param_keyword
+  ~;
+
+transaction_params <-
+  params:transaction_param* empty_line*
+  `
+    proplists:get_value(params, Node)
+  `;
+
+transaction_param <-
+  transaction_param_keyword s+ name:transaction_param_name nonstring:":"? "=" value:transaction_param_value eol
+  `
+    NonString = proplists:get_value(nonstring, Node) =/= "",
+    Name = proplists:get_value(name, Node),
+    Value0 = proplists:get_value(value, Node),
+
+    Value = case NonString of
+              true ->
+                try_to_convert_to([boolean, null, integer, float], Value0);
+              false ->
+                Value0
+            end,
+
+    {Name, Value}
+  `;
+
+transaction_param_keyword <-
+  "PARAM"
+  ~;
+
+transaction_param_name <-
+  [a-z0-9_]+
+  `
+    unicode:characters_to_list(concatenate_chars(Node))
+  `;
+
+transaction_param_value <-
+  text0
+  `
+    unicode:characters_to_list(Node)
   `;
 
 %% Assembled from RFC 2616, 5323, 5789.
@@ -214,7 +261,6 @@ signature <-
     {Method, Url}
   `;
 
-
 %% We do not support DelimitedBodyVariable.
 body <-
   delimited_body_fixed
@@ -317,4 +363,42 @@ concatenate_lines([]) ->
 concatenate_chars(Chars) ->
   << <<Char/utf8>> || <<Char/utf8>> <- Chars >>.
 
+try_to_convert_to([], _Value) ->
+  throw({error, unknown_param_type});
+try_to_convert_to([boolean|Rest], Value0) ->
+  Value = string:to_lower(Value0),
+  case Value of
+    "true" ->
+      true;
+    "false" ->
+      false;
+    _ ->
+      try_to_convert_to(Rest, Value0)
+  end;
+try_to_convert_to([float|Rest], Value) ->
+  case string:to_float(Value) of
+    {error, _} ->
+      try_to_convert_to(Rest, Value);
+    {FloatValue, []} ->
+      FloatValue;
+    _ ->
+      try_to_convert_to(Rest, Value)
+  end;
+try_to_convert_to([integer|Rest], Value) ->
+  case string:to_integer(Value) of
+    {error, _} ->
+      try_to_convert_to(Rest, Value);
+    {IntValue, []} ->
+      IntValue;
+    _ ->
+      try_to_convert_to(Rest, Value)
+  end;
+try_to_convert_to([null|Rest], Value0) ->
+  Value = string:to_lower(Value0),
+  case Value of
+    "null" ->
+      null;
+    _ ->
+      try_to_convert_to(Rest, Value)
+  end.
 `
