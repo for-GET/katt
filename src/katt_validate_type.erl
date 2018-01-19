@@ -78,12 +78,12 @@ validate_type_runtime_value( ParentKey
     try
       {ok, Tokens, _} = erl_scan:string(Erlang),
       {ok, Exprs} = erl_parse:parse_exprs(Tokens),
-      {value, Expected0, _} = erl_eval:exprs( Exprs
-                                            , [ {'ParentKey', ParentKey}
-                                              , {'Actual', Actual}
-                                              , {'ItemsMode', ItemsMode}
-                                              , {'Callbacks', Callbacks}]
-                                            ),
+      Bindings = [ {'ParentKey', ParentKey}
+                 , {'Actual', Actual}
+                 , {'ItemsMode', ItemsMode}
+                 , {'Callbacks', Callbacks}
+                 ],
+      {value, Expected0, _} = erl_eval:exprs(Exprs, orddict:from_list(Bindings)),
       {undefined, Expected0}
     catch
       C:E ->
@@ -155,12 +155,12 @@ validate_type_runtime_validation( ParentKey
   try
     {ok, Tokens, _} = erl_scan:string(Erlang),
     {ok, Exprs} = erl_parse:parse_exprs(Tokens),
-    {value, Result, _} = erl_eval:exprs( Exprs
-                                       , [ {'ParentKey', ParentKey}
-                                         , {'Actual', Actual}
-                                         , {'ItemsMode', ItemsMode}
-                                         , {'Callbacks', Callbacks}]
-                                       ),
+    Bindings = [ {'ParentKey', ParentKey}
+               , {'Actual', Actual}
+               , {'ItemsMode', ItemsMode}
+               , {'Callbacks', Callbacks}
+               ],
+    {value, Result, _} = erl_eval:exprs(Exprs, orddict:from_list(Bindings)),
     Result
   catch
     C:E ->
