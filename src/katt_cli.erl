@@ -51,8 +51,6 @@ main(Options) ->
 main(["from-har"|Rest], [], [], []) ->
   katt_har_cli:main(Rest);
 
-%%%_* Internal =================================================================
-
 main(["--json"|Rest], Options, [], []) ->
   main(Rest, [{json, true}|Options], [], []);
 
@@ -64,6 +62,8 @@ main(["--"|ScenarioFilenames], Options, Params0, []) ->
   run(Options, Params, ScenarioFilenames);
 main([Param|Rest], Options, Params, []) ->
   main(Rest, Options, [Param|Params], []).
+
+%%%_* Internal =================================================================
 
 run(_Options, _Params, []) ->
   ok;
