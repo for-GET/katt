@@ -294,6 +294,9 @@ katt_run_with_params() ->
                            , {test_boolean, true}
                            , {test_integer, 1}
                            , {test_float, 1.1}
+                           , {test_float_2, 1.11}
+                           , {test_float_3, 11.1}
+                           , {test_float_4, 11.11}
                            , {test_string, "string"}
                            , {test_binary, <<"binary"/utf8>>}
                            ]
@@ -318,6 +321,9 @@ POST /katt_run_with_params
     \"null\": \"{{<test_null}}\",
     \"integer\": \"{{<test_integer}}\",
     \"float\": \"{{<test_float}}\",
+    \"float_2\": \"{{<test_float_2}}\",
+    \"float_3\": \"{{<test_float_3}}\",
+    \"float_4\": \"{{<test_float_4}}\",
     \"string\": \"{{<test_string}}\",
     \"binary\": \"{{<test_binary}}\"
 }
@@ -341,6 +347,9 @@ katt_run_with_params_http( _
     \"boolean\": true,
     \"integer\": 1,
     \"float\": 1.1,
+    \"float_2\": 1.11,
+    \"float_3\": 11.1,
+    \"float_4\": 11.11,
     \"string\": \"string\",
     \"binary\": \"binary\"
 }
