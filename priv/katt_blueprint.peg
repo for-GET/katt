@@ -120,19 +120,26 @@ transaction_params <-
   `;
 
 transaction_param <-
-  transaction_param_keyword s+ name:transaction_param_name nonstring:":"? "=" value:transaction_param_value eol
+  transaction_param_string
+  / transaction_param_nonstring
+  ~;
+
+transaction_param_string <-
+  transaction_param_keyword s+ name:transaction_param_name "=" '"' value:transaction_param_value_string '"' eol
   `
-    NonString = proplists:get_value(nonstring, Node) =/= "",
+    Name = proplists:get_value(name, Node),
+    Value = proplists:get_value(value, Node),
+
+    {Name, Value}
+  `;
+
+transaction_param_nonstring <-
+  transaction_param_keyword s+ name:transaction_param_name "=" value:transaction_param_value_nonstring eol
+  `
     Name = proplists:get_value(name, Node),
     Value0 = proplists:get_value(value, Node),
 
-    Value = case NonString of
-              true ->
-                try_to_convert_to([boolean, null, integer, float], Value0);
-              false ->
-                Value0
-            end,
-
+    Value = try_to_convert_to([boolean, null, integer, float], Value0),
     {Name, Value}
   `;
 
@@ -146,7 +153,13 @@ transaction_param_name <-
     unicode:characters_to_list(concatenate_chars(Node))
   `;
 
-transaction_param_value <-
+transaction_param_value_string <-
+  [^"]*
+  `
+    unicode:characters_to_list(concatenate_chars(Node))
+  `;
+
+transaction_param_value_nonstring <-
   text0
   `
     unicode:characters_to_list(Node)

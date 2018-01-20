@@ -434,8 +434,8 @@ katt_run_with_store_blueprint() ->
   katt_blueprint_parse:string(
     <<"--- Test 7 ---
 
-PARAM param6=param 6
-PARAM param7:=null
+PARAM param6=\"param 6\"
+PARAM param7=null
 
 GET /katt_run_with_store
 < 200
