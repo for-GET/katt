@@ -54,7 +54,7 @@
 * switched lhttpc for hackney #17
 * switched mochijson3 for jsx
 
-[Full list of changes since 1.4.0](https://github.com/for-GET/katt/compare/for-GET:1.4.0...1.5.0-rc)
+[Full list of changes since 1.4.0](https://github.com/for-GET/katt/compare/for-GET:1.4.0...1.5.0)
 
 
 ## [1.4.0] - 2016-01-19
