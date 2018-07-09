@@ -83,7 +83,8 @@ validate_type_runtime_value( ParentKey
                  , {'ItemsMode', ItemsMode}
                  , {'Callbacks', Callbacks}
                  ],
-      {value, Expected0, _} = erl_eval:exprs(Exprs, orddict:from_list(Bindings)),
+      BindingsDict = orddict:from_list(Bindings),
+      {value, Expected0, _} = erl_eval:exprs(Exprs, BindingsDict),
       {undefined, Expected0}
     catch
       C:E ->
