@@ -31,10 +31,10 @@ script:
   - "[[ ${TRAVIS_OTP_RELEASE} != ${LATEST_OTP_RELEASE} ]] || make elvis"
   - make
   - make .rebar/DEV_MODE deps xref eunit
-  - "[[ ${TRAVIS_OTP_RELEASE} != ${LATEST_OTP_RELEASE} ]] || make test_cli"
+  - "[[ ${TRAVIS_OTP_RELEASE} = R15* ]] || make test_cli"
   - "[[ ${TRAVIS_OTP_RELEASE} != ${LATEST_OTP_RELEASE} ]] || make dialyzer"
   - make clean .rebar/BARE_MODE # TEST BARE_MODE AS WELL
   - make
   - make .rebar/DEV_MODE deps xref
-  - "[[ ${TRAVIS_OTP_RELEASE} != ${LATEST_OTP_RELEASE} ]] || make test_cli"
+  - "[[ ${TRAVIS_OTP_RELEASE} = R15* ]] || make test_cli"
   - "[[ ${TRAVIS_OTP_RELEASE} != ${LATEST_OTP_RELEASE} ]] || make dialyzer"
