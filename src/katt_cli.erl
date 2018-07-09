@@ -115,6 +115,7 @@ katt_run(ScenarioFilename, Params) ->
 
   ok = ensure_started(jsx),
 
+  ok = ensure_started(unicode_util_compat),
   ok = ensure_started(idna),
   ok = ensure_started(mimerl),
   ok = ensure_started(certifi),
