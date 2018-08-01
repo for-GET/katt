@@ -134,7 +134,7 @@ test_cli:
 	: Skipping $@ in BARE_MODE
 else
 test_cli: .rebar/DEV_MODE deps
-	bin/katt hostname=httpbin-org.herokuapp.com my_name=Joe your_name=Mike protocol=https: -- ./doc/example-httpbin.apib >test/cli 2>/dev/null || { cat test/cli && exit 1; }
+	bin/katt hostname=httpbin.org my_name=Joe your_name=Mike protocol=https: -- ./doc/example-httpbin.apib >test/cli 2>/dev/null || { cat test/cli && exit 1; }
 	bin/katt from-har --apib -- ./doc/example-teapot.har > test/example-teapot.apib && diff -U0 doc/example-teapot.apib test/example-teapot.apib
 endif
 
