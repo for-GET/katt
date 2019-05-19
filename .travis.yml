@@ -18,7 +18,7 @@ otp_release:
   - 18.1
   - 18.0
 script:
-  - LATEST_OTP_RELEASE=21.0
+  - LATEST_OTP_RELEASE=22.0
   - "[[ ${TRAVIS_OTP_RELEASE} != ${LATEST_OTP_RELEASE} ]] || make elvis"
   - make
   - make .rebar/DEV_MODE deps xref eunit
