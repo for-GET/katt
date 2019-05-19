@@ -67,9 +67,11 @@ GET /cache
 < Content-Type: application/json
 {
     "url": "{{<protocol}}//{{<hostname}}/cache",
-    "headers": "{{_}}",
+    "headers": {
+        "host": "{{<hostname}}"
+    },
     "args": "{{_}}",
-    "origin": "{{>origin}}"
+    "origin": "{{_}}"
 }
 
 
@@ -85,7 +87,7 @@ POST /post
 > Accept: application/json
 > Content-Type: application/json
 > User-Agent: KATT
-{"origin":"{{<origin}}","whoarewe":"{{<your_name}}_and_{{<my_name}}","date":"{{<some_date}}"}
+{"hostname":"{{<hostname}}","whoarewe":"{{<your_name}}_and_{{<my_name}}","date":"{{<some_date}}"}
 < 200
 < Content-Type: application/json
 {
@@ -93,8 +95,10 @@ POST /post
     "data": "{{>raw_data}}",
     "files": {},
     "form": {},
-    "headers": "{{_}}",
-    "origin": "{{<origin}}",
+    "headers": {
+        "host": "{{<hostname}}"
+    },
+    "origin": "{{_}}",
     "url": "{{<protocol}}//{{<hostname}}/post",
     "json": {
         "origin": "{{<origin}}",
@@ -105,7 +109,7 @@ POST /post
 
 PARAM some_static_param="somevalue"
 
-GET /get?whoarewe={{<whoarewe}}&origin={{<origin}}&somevalue={{<some_static_param}}
+GET /get?whoarewe={{<whoarewe}}&hostname={{<hostname}}&somevalue={{<some_static_param}}
 > Accept: application/json
 > User-Agent: KATT
 < 200
@@ -113,10 +117,10 @@ GET /get?whoarewe={{<whoarewe}}&origin={{<origin}}&somevalue={{<some_static_para
 {
     "args": {
         "whoarewe": "{{<your_name}}_and_{{<my_name}}",
-        "origin": "{{<origin}}{{_}}",
+        "hostname": "{{<hostname}}{{_}}",
         "somevalue": "{{<some_static_param}}"
     },
     "headers": "{{_}}",
     "origin": "{{_}}",
-    "url": "{{<protocol}}//{{<hostname}}/get?{{_}}&origin={{<origin}}&{{_}}"
+    "url": "{{<protocol}}//{{<hostname}}/get?{{_}}&hostname={{<hostname}}&{{_}}"
 }
