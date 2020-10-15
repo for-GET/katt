@@ -45,6 +45,7 @@
         , blueprint_to_apib/1
         , is_json_content_type/1
         , get_params_and_failures/1
+        , default_port/1
         ]).
 
 %%%_* Includes =================================================================
@@ -232,6 +233,13 @@ get_params_and_failures(Result) ->
     {[], []},
     lists:flatten(Result)
    ).
+
+default_port("http") -> 80;
+default_port("https") -> 443;
+default_port("ftp") -> 21;
+default_port("ssh") -> 22;
+default_port("sftp") -> 22;
+default_port("tftp") -> 69.
 
 %%%_* Internal =================================================================
 

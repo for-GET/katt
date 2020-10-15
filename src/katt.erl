@@ -158,7 +158,12 @@ make_params(ScenarioParams0) ->
       BaseUrl0 ->
         BaseUrl0
     end,
-  {ok, {Protocol0, _, Hostname, Port, Path0, _}} = http_uri:parse(BaseUrl),
+  ParsedBaseUrl = #{
+    scheme := Protocol0,
+    host := Hostname,
+    path := Path0
+  } = uri_string:parse(BaseUrl),
+  Port = maps:get(port, ParsedBaseUrl, katt_util:default_port(Protocol0)),
   Path =
     case Path0 of
       "/" ->
@@ -166,7 +171,7 @@ make_params(ScenarioParams0) ->
       _ ->
         Path0
     end,
-  Protocol = katt_util:to_list(Protocol0) ++ ":",
+  Protocol = Protocol0 ++ ":",
   BaseUrlParams = [ {"base_url", BaseUrl}
                   , {"protocol", Protocol}
                   , {"hostname", Hostname}
