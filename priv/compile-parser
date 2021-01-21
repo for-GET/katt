@@ -4,10 +4,7 @@
 %% grammar file.
 
 main(_) ->
-    %% Katt is the main project
-    Neotoma1 = filename:dirname(escript:script_name()) ++ "/../_build/default/lib/neotoma/ebin",
-    %% Katt is a dependency
-    Neotoma2 = filename:dirname(escript:script_name()) ++ "/../../neotoma/ebin",
-    code:add_pathz(filename:absname(Neotoma1)),
-    code:add_pathz(filename:absname(Neotoma2)),
+    DepsDir = os:getenv("REBAR_DEPS_DIR"),
+    Neotoma =  DepsDir ++ "/neotoma/ebin",
+    code:add_pathz(filename:absname(Neotoma)),
     neotoma:file("priv/katt_blueprint.peg", [{output, "src/"}]).
