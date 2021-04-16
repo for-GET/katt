@@ -48,6 +48,8 @@ recall_body(true = _JustCheck, [Hdrs, _Bin], _Params, _Callbacks) ->
   katt_util:is_json_content_type(Hdrs);
 recall_body(false = _JustCheck, [_Hdrs, Bin], [], _Callbacks) ->
   Bin;
+recall_body(JustCheck, [Hdrs, Bin], [{_K, [H|_]} | Next], Callbacks) when is_tuple(H) ->
+  recall_body(JustCheck, [Hdrs, Bin], Next, Callbacks);
 recall_body(false = _JustCheck, [Hdrs, Bin0], [{K0, V0} | Next], Callbacks) ->
   K = ?RECALL_BEGIN_TAG ++ K0 ++ ?RECALL_END_TAG,
   REK = katt_util:escape_regex(K),

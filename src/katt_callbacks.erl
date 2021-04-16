@@ -78,6 +78,8 @@ recall(_Scope, null, _Params, _Callbacks) ->
   null;
 recall(_Scope, Input, [], _Callbacks) ->
   Input;
+recall(text, Bin, [{_K, [H|_]} | Next], Callbacks) when is_tuple(H) ->
+  recall(text, Bin, Next, Callbacks);
 recall(text, Bin0, [{K0, V} | Next], Callbacks) ->
   K = ?RECALL_BEGIN_TAG ++ K0 ++ ?RECALL_END_TAG,
   REK = katt_util:escape_regex(K),
@@ -262,8 +264,9 @@ http_request( #katt_request{ method = Method
             end,
   Hdrs1 = proplists:delete("x-katt-request-sleep", Hdrs0),
   Hdrs = proplists:delete("x-katt-request-timeout", Hdrs1),
+  Options = proplists:get_value("request_options", Params),
   timer:sleep(Sleep),
-  katt_util:external_http_request(Url, Method, Hdrs, Body, Timeout, []).
+  katt_util:external_http_request(Url, Method, Hdrs, Body, Timeout, Options).
 
 validate_status( #katt_response{status=E}
                , #katt_response{status=A}
