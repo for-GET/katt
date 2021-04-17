@@ -435,6 +435,25 @@ validate( ParentKey
 validate(ParentKey, E, A, ItemsMode, Callbacks) ->
   validate_simple(ParentKey, E, A, ItemsMode, Callbacks).
 
+%% Expected empty list, got empty list
+validate_proplist( _ParentKey
+                 , []
+                 , []
+                 , _ItemsMode
+                 , _Callbacks
+                 ) ->
+  {pass, []};
+
+%% Expected empty list, got something else
+validate_proplist( ParentKey
+                 , []
+                 , AItems
+                 , _ItemsMode
+                 , Callbacks
+                 ) ->
+  TextDiffFun = proplists:get_value(text_diff, Callbacks),
+  {not_equal, {ParentKey, [], AItems, TextDiffFun([], AItems)}};
+
 validate_proplist( ParentKey
                  , EItems0
                  , AItems
