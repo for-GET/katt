@@ -264,9 +264,8 @@ http_request( #katt_request{ method = Method
             end,
   Hdrs1 = proplists:delete("x-katt-request-sleep", Hdrs0),
   Hdrs = proplists:delete("x-katt-request-timeout", Hdrs1),
-  Options = proplists:get_value("request_options", Params),
   timer:sleep(Sleep),
-  katt_util:external_http_request(Url, Method, Hdrs, Body, Timeout, Options).
+  katt_util:external_http_request(Url, Method, Hdrs, Body, Timeout, Params).
 
 validate_status( #katt_response{status=E}
                , #katt_response{status=A}
