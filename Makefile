@@ -39,6 +39,7 @@ ifeq (true,$(TRAVIS))
 endif
 
 SRCS := $(wildcard src/* include/* rebar.config)
+SRCS := $(filter-out src/katt_blueprint.erl,$(SRCS))
 
 SRC_BEAMS := $(patsubst src/%.erl, ebin/%.beam, $(wildcard src/*.erl))
 
