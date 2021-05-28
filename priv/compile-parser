@@ -5,7 +5,7 @@
 
 main(_) ->
     %% Katt is the main project
-    Neotoma1 = filename:dirname(escript:script_name()) ++ "/../deps/neotoma/ebin",
+    Neotoma1 = filename:dirname(escript:script_name()) ++ "/../_build/default/lib/neotoma/ebin",
     %% Katt is a dependency
     Neotoma2 = filename:dirname(escript:script_name()) ++ "/../../neotoma/ebin",
     code:add_pathz(filename:absname(Neotoma1)),

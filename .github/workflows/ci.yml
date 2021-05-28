@@ -71,9 +71,6 @@ jobs:
       - if: ${{ matrix.otp_vsn == 'latest' }}
         shell: bash
         run: make test_cli dialyzer
-      - if: ${{ matrix.otp_vsn == 'latest' }}
-        shell: bash
-        run: make elvis docs
 
       # BARE_MODE
 
@@ -84,9 +81,3 @@ jobs:
       - if: ${{ matrix.otp_vsn == 'latest' }}
         shell: bash
         run: make test_cli dialyzer
-
-      # MISC
-
-      - if: ${{ matrix.otp_vsn == 'latest' }}
-        shell: bash
-        run: make elvis docs
