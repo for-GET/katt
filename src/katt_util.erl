@@ -83,6 +83,8 @@ to_lower(X) when is_list(X) ->
 
 escape_regex(Other) when not is_list(Other) andalso not is_binary(Other) ->
   to_list(Other);
+escape_regex([H|_]=List) when is_tuple(H) ->
+  List;
 escape_regex(Str0) ->
   Str = to_list(Str0),
   re:replace( Str
@@ -123,19 +125,21 @@ run_result_to_jsx({ PassOrFail
   ].
 
 -ifdef(BARE_MODE).
-external_http_request(_Url, _Method, _Hdrs, _Body, _Timeout, []) ->
+external_http_request(_Url, _Method, _Hdrs, _Body, _Timeout, _Options) ->
   {error, katt_bare_mode}.
 -else.
-external_http_request(Url, Method, Hdrs, Body, Timeout, []) ->
+external_http_request(Url, Method, Hdrs, Body, Timeout, Options0) ->
   BUrl = list_to_binary(Url),
   BHdrs = lists:map( fun({Name, Value})->
                          {list_to_binary(Name), list_to_binary(Value)}
                      end
                    , Hdrs
                    ),
-  Options = [ {recv_timeout, Timeout}
-            , {insecure, true}
-            ],
+  DefaultOpts = [ {recv_timeout, Timeout}
+                , {insecure, true}
+                ],
+  Options = lists:ukeymerge(1, lists:ukeysort(1, Options0),
+                               lists:ukeysort(1, DefaultOpts)),
   case hackney:request(Method, BUrl, BHdrs, Body, Options) of
     OK when element(1, OK) =:= ok ->
       %% lhttpc was the predecesor of hackney
