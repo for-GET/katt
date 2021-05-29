@@ -50,7 +50,7 @@
 
 %% @doc Run from CLI with arguments.
 %% @end
--spec main([string()]) -> ok.
+-spec main([string()]) -> ok | {error, katt_bare_mode}.
 main(Args) ->
   katt_cli:main(Args).
 
@@ -135,6 +135,41 @@ make_callbacks(Callbacks) ->
 
 %%%_* Internal =================================================================
 
+-ifdef(OTP_RELEASE). %% OTP 21+
+http_uri_parse(URI) ->
+  case uri_string:parse(URI) of
+ 	URIMap when is_map(URIMap) ->
+      Scheme0 = maps:get(scheme, URIMap, <<"no_scheme">>),
+      Scheme = if is_binary(Scheme0) -> binary_to_atom(Scheme0, utf8); true -> list_to_atom(Scheme0) end,
+      Host = maps:get(host, URIMap, if is_binary(URI) -> <<>>; true -> "" end),
+      %% port defaults as per http_uri:scheme_defaults/0
+      %% see https://github.com/erlang/otp/blob/2831b6c/lib/inets/src/http_lib/http_uri.erl#L101-L107
+      DefaultPort = case Scheme of
+                      http -> 80;
+                      https -> 443;
+                      ftp -> 21;
+                      ssh -> 22;
+                      sftp -> 22;
+                      tftp -> 69
+                    end,
+      Port = maps:get(port, URIMap, DefaultPort),
+      Path = maps:get(path, URIMap, if is_binary(URI) -> <<"/">>; true -> "" end),
+      { ok
+      , Scheme
+      , Host
+      , Port
+      , Path
+      };
+ 	{error, Reason, _Info} ->
+      {error, Reason}
+  end.
+-else.
+http_uri_parse(URI) ->
+  {ok, {Scheme, _, Host, Port, Path, _Query}} = http_uri:parse(URI),
+  {ok, Scheme, Host, Port, Path}.
+-endif.
+
+
 run_loop(ScenarioTimeout, ProgressFun) ->
   receive
     {progress, Step, Detail} ->
@@ -158,7 +193,7 @@ make_params(ScenarioParams0) ->
       BaseUrl0 ->
         BaseUrl0
     end,
-  {ok, {Protocol0, _, Hostname, Port, Path0, _}} = http_uri:parse(BaseUrl),
+  {ok, Protocol0, Hostname, Port, Path0} = http_uri_parse(BaseUrl),
   Path =
     case Path0 of
       "/" ->
@@ -182,9 +217,15 @@ make_params(ScenarioParams0) ->
 base_url_from_params(ScenarioParams) ->
   Protocol = proplists:get_value("protocol", ScenarioParams, ?DEFAULT_PROTOCOL),
   Hostname = proplists:get_value("hostname", ScenarioParams, ?DEFAULT_HOSTNAME),
+  %% port defaults as per http_uri:scheme_defaults/0
+  %% see https://github.com/erlang/otp/blob/2831b6c/lib/inets/src/http_lib/http_uri.erl#L101-L107
   DefaultPort = case Protocol of
-                  ?PROTOCOL_HTTP -> ?DEFAULT_PORT_HTTP;
-                  ?PROTOCOL_HTTPS -> ?DEFAULT_PORT_HTTPS
+                      "http:" -> 80;
+                      "https:" -> 443;
+                      "ftp:" -> 21;
+                      "ssh:" -> 22;
+                      "sftp:" -> 22;
+                      "tftp:" -> 69
                 end,
   Port = proplists:get_value("port", ScenarioParams, DefaultPort),
   BasePath = proplists:get_value( "base_path"
@@ -312,8 +353,8 @@ make_katt_response( ActualResponse
 -spec make_request_url( string()
                       , params()
                       ) -> nonempty_string().
-make_request_url(Url = ?PROTOCOL_HTTP ++ "//" ++ _, _Params) -> Url;
-make_request_url(Url = ?PROTOCOL_HTTPS ++ "//" ++ _, _Params) -> Url;
+make_request_url(Url = "http://" ++ _, _Params) -> Url;
+make_request_url(Url = "https://" ++ _, _Params) -> Url;
 make_request_url(Path, Params) ->
   Protocol = proplists:get_value("protocol", Params),
   Hostname = proplists:get_value("hostname", Params),
@@ -326,8 +367,8 @@ make_request_url(Path, Params) ->
               , Path
               ], "").
 
-make_host(?PROTOCOL_HTTP, Hostname, 80) -> Hostname;
-make_host(?PROTOCOL_HTTPS, Hostname, 443) -> Hostname;
+make_host("http:", Hostname, 80) -> Hostname;
+make_host("https:", Hostname, 443) -> Hostname;
 make_host(_Proto, Hostname, Port) ->
   Hostname ++ ":" ++ katt_util:to_list(Port).
 

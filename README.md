@@ -269,6 +269,6 @@ fulfilled before making your pull-request:
 [Apache 2.0](LICENSE)
 
 
-  [1]: https://travis-ci.org/for-GET/katt
-  [2]: https://travis-ci.org/for-GET/katt.png
+  [1]: https://github.com/for-GET/katt
+  [2]: https://github.com/for-GET/katt/workflows/CI/badge.svg?branch=master
   [3]: https://dev.erldocs.com/github.com/for-get/katt/

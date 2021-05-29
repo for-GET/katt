@@ -126,7 +126,7 @@ run_result_to_jsx({ PassOrFail
 
 -ifdef(BARE_MODE).
 external_http_request(_Url, _Method, _Hdrs, _Body, _Timeout, _Options) ->
-  throw(bare_mode).
+  {error, katt_bare_mode}.
 -else.
 external_http_request(Url, Method, Hdrs, Body, Timeout, Options0) ->
   BUrl = list_to_binary(Url),
@@ -401,7 +401,7 @@ validate(_ParentKey, ?MATCH_ANY = _E, _A, _ItemsMode, _Callbacks) ->
   {pass, []};
 
 %% Expected actual
-validate(_ParentKey, _E, _E, _ItemsMode, _Callbacks) ->
+validate(_ParentKey, E, E, _ItemsMode, _Callbacks) ->
   {pass, []};
 
 %% Expected struct/array, got struct/array
@@ -503,7 +503,7 @@ validate_primitive(_Key, ?MATCH_ANY, _A, _Callbacks) ->
   {pass, []};
 
 %% Expected actual
-validate_primitive(_Key, _E, _E, _Callbacks) ->
+validate_primitive(_Key, E, E, _Callbacks) ->
   {pass, []};
 
 %% Expected text or store param

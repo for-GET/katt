@@ -1,20 +1,18 @@
 .NOTPARALLEL:
 
-REBAR ?= $(shell command -v rebar >/dev/null 2>&1 && echo "rebar" || echo "$(CURDIR)/rebar")
+CHMOD := $(shell command -v chmod 2>/dev/null)
+CURL := $(shell command -v curl 2>/dev/null)
+DIFF := $(shell command -v diff 2>/dev/null)
+LN := $(shell command -v ln 2>/dev/null)
 
-ELVIS ?= $(shell command -v elvis >/dev/null 2>&1 && echo "elvis" || echo "$(CURDIR)/elvis")
+OTP_RELEASE = $(shell erl -eval 'io:format("~s", [erlang:system_info(otp_release)]), halt().'  -noshell)
 
-DEPS_PLT := $(CURDIR)/.deps_plt
+ifdef CI
+REBAR = ./rebar3.OTP$(OTP_RELEASE)
+else
+REBAR ?= $(shell command -v rebar3 2>/dev/null || echo "./rebar3.OTP$(OTP_RELEASE)")
+endif
 
-ERLANG_DIALYZER_APPS := erts \
-						kernel \
-						stdlib \
-						crypto \
-						asn1 \
-						public_key \
-						ssl
-
-DIALYZER := dialyzer
 ifdef CI
 export KATT_DEV_MODE=true
 endif
@@ -27,23 +25,17 @@ ifneq (,$(wildcard .rebar/BARE_MODE))
 export KATT_BARE_MODE=true
 endif
 
-# Travis CI is slow at building dialyzer PLT
-TRAVIS ?=
-ifeq (true,$(TRAVIS))
-	OTP_VSN := $(shell erl -noshell -eval 'io:format("~p", [erlang:system_info(otp_release)]), erlang:halt(0).' | perl -lne 'print for /^(?:"R)?(\d+).*/g')
-	NO_DIALYZER := $(shell expr $(OTP_VSN) \<= 14 )
-
-	ifeq ($(NO_DIALYZER), 1)
-		DIALYZER := : not running dialyzer on TRAVIS with R14 and below
-	endif
-endif
-
 SRCS := $(wildcard src/* include/* rebar.config)
+SRCS := $(filter-out src/katt_blueprint.erl,$(SRCS))
 
 SRC_BEAMS := $(patsubst src/%.erl, ebin/%.beam, $(wildcard src/*.erl))
 
 .PHONY: all
-all: deps ebin/katt.app bin/katt
+ifdef KATT_BARE_MODE
+all: ebin/katt.app
+else
+all: ebin/katt.app escript
+endif
 
 # Clean
 
@@ -54,58 +46,36 @@ conf_clean:
 .PHONY: clean
 clean:
 	$(REBAR) clean
-	$(RM) -r .rebar
-	$(RM) -r bin
+
+.PHONY: distclean
+distclean:
+	$(MAKE) clean
+	$(RM) -r _build
 	$(RM) doc/*.html
 	$(RM) doc/edoc-info
 	$(RM) doc/erlang.png
 	$(RM) doc/stylesheet.css
-	$(RM) -r ebin
 	$(RM) -r logs
 	$(RM) src/katt_blueprint.erl
 
-.PHONY: distclean
-distclean:
-	$(RM) $(DEPS_PLT)
-	$(RM) -r deps
-	$(MAKE) clean
-
-# Deps
-
-.PHONY: get-deps
-get-deps:
-	$(REBAR) get-deps
-
-.PHONY: update-deps
-update-deps:
-	$(REBAR) update-deps
-
-.PHONY: delete-deps
-delete-deps:
-	$(REBAR) delete-deps
-
-.PHONY: deps
-deps: get-deps
+.PHONY: clean-tests
+clean-tests:
+	@ rm -rf _build/test/lib
 
 # Docs
 
 .PHONY: docs
 docs:
-	$(REBAR) doc skip_deps=true
+	$(REBAR) edoc
 
 # Compile
 
 ebin/katt.app: compile
 
-.PHONY: bin/katt
-ifdef KATT_BARE_MODE
-bin/katt:
-	: Skipping $@ in BARE_MODE
-else
-bin/katt: ebin/katt.app $(SRC_BEAMS)
+.PHONY: escript
+escript: ebin/katt.app
 	$(REBAR) escriptize
-	bin/katt --help
-endif
+	./_build/default/bin/katt --help
 
 .PHONY: compile
 compile: $(SRCS)
@@ -121,37 +91,83 @@ compile: $(SRCS)
 	mkdir -p .rebar
 	touch .rebar/BARE_MODE
 
-.PHONY: xref
-xref:
-	$(REBAR) xref skip_deps=true
-
 .PHONY: test
-test: .rebar/DEV_MODE deps test_cli eunit xref dialyzer
+# Would be nice to include elvis to test, but it fails on OTP-18
+# test: elvis
+test: test_cli
+test: eunit ct xref dialyzer cover
+
+.PHONY: elvis
+elvis:
+	$(REBAR) lint
 
 ifdef KATT_BARE_MODE
 .PHONY: test_cli
 test_cli:
 	: Skipping $@ in BARE_MODE
 else
-test_cli: .rebar/DEV_MODE deps
-	bin/katt hostname=httpbin.org my_name=Joe your_name=Mike protocol=https: -- ./doc/example-httpbin.apib >test/cli 2>/dev/null || { cat test/cli && exit 1; }
-	bin/katt from-har --apib -- ./doc/example-teapot.har > test/example-teapot.apib && diff -U0 doc/example-teapot.apib test/example-teapot.apib
+test_cli: .rebar/DEV_MODE
+	./_build/default/bin/katt hostname=httpbin.org my_name=Joe your_name=Mike protocol=https: -- \
+		./doc/example-httpbin.apib >test/cli || { cat test/cli && exit 1; }
+	./_build/default/bin/katt from-har --apib -- ./doc/example-teapot.har > test/example-teapot.apib && \
+		$(DIFF) -U0 doc/example-teapot.apib test/example-teapot.apib
 endif
 
 .PHONY: eunit
 eunit:
-	$(REBAR) eunit skip_deps=true
+	@ $(MAKE) clean-tests
+	$(REBAR) eunit
+
+# @ rm -rf _build
+
+.PHONY: ct
+ct:
+	@ $(MAKE) clean-tests
+	$(REBAR) ct
+
+.PHONY: xref
+xref:
+	$(REBAR) xref
 
 $(DEPS_PLT):
 	$(DIALYZER) --build_plt --apps $(ERLANG_DIALYZER_APPS) -r deps --output_plt $(DEPS_PLT)
 
 .PHONY: dialyzer
 dialyzer: $(DEPS_PLT)
-	$(DIALYZER) -q --plt $(DEPS_PLT) --src $(shell find src -name *.erl -not -name katt_blueprint.erl) > test/dialyzer_warnings || true
-	diff -U0 test/known_dialyzer_warnings test/dialyzer_warnings
+	$(REBAR) dialyzer
 
-.PHONY: elvis
-elvis:
-	$(ELVIS) rock > test/elvis || true
-	grep "FAIL" test/elvis | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" > test/elvis_warnings
-	diff -U0 test/known_elvis_warnings test/elvis_warnings || cat test/elvis
+.PHONY: cover
+cover:
+	@ $(MAKE) clean-tests
+	$(REBAR) cover -v
+
+.PHONY: rebar3.OTP18
+rebar3.OTP18:
+	$(CURL) -fqsS -L -o $@ https://github.com/erlang/rebar3/releases/download/3.13.3/rebar3
+	$(CHMOD) +x $@
+
+.PHONY: rebar3.OTP19
+rebar3.OTP19:
+	$(CURL) -fqsS -L -o $@ https://github.com/erlang/rebar3/releases/download/3.15.2/rebar3
+	$(CHMOD) +x $@
+
+.PHONY: rebar3.OTP20
+rebar3.OTP20:
+	$(LN) -sf rebar3.OTP19 $@
+
+.PHONY: rebar3.OTP21
+rebar3.OTP21:
+	$(LN) -sf rebar3.OTP19 $@
+
+.PHONY: rebar3.OTP22
+rebar3.OTP22:
+	$(CURL) -fqsS -L -o $@ https://github.com/erlang/rebar3/releases/download/3.16.1/rebar3
+	$(CHMOD) +x $@
+
+.PHONY: rebar3.OTP23
+rebar3.OTP23:
+	$(LN) -sf rebar3.OTP22 $@
+
+.PHONY: rebar3.OTP24
+rebar3.OTP24:
+	$(LN) -sf rebar3.OTP22 $@
