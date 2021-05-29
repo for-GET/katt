@@ -50,7 +50,7 @@
 
 %% @doc Run from CLI with arguments.
 %% @end
--spec main([string()]) -> ok.
+-spec main([string()]) -> ok | {error, katt_bare_mode}.
 main(Args) ->
   katt_cli:main(Args).
 

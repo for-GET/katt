@@ -32,7 +32,7 @@
 
 -ifdef(BARE_MODE).
 main(_) ->
-  throw(bare_mode).
+  {error, katt_bare_mode}.
 -else.
 
 main([]) ->

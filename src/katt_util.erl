@@ -124,7 +124,7 @@ run_result_to_jsx({ PassOrFail
 
 -ifdef(BARE_MODE).
 external_http_request(_Url, _Method, _Hdrs, _Body, _Timeout, []) ->
-  throw(bare_mode).
+  {error, katt_bare_mode}.
 -else.
 external_http_request(Url, Method, Hdrs, Body, Timeout, []) ->
   BUrl = list_to_binary(Url),
