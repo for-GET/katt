@@ -2,6 +2,7 @@
 
 CHMOD := $(shell command -v chmod 2>/dev/null)
 CURL := $(shell command -v curl 2>/dev/null)
+DIFF := $(shell command -v diff 2>/dev/null)
 LN := $(shell command -v ln 2>/dev/null)
 
 OTP_RELEASE = $(shell erl -eval 'io:format("~s", [erlang:system_info(otp_release)]), halt().'  -noshell)
@@ -98,7 +99,7 @@ test: eunit ct xref dialyzer cover
 
 .PHONY: elvis
 elvis:
-	$(REBAR) as test lint
+	$(REBAR) lint
 
 ifdef KATT_BARE_MODE
 .PHONY: test_cli
@@ -106,8 +107,10 @@ test_cli:
 	: Skipping $@ in BARE_MODE
 else
 test_cli: .rebar/DEV_MODE
-	./_build/default/bin/katt hostname=httpbin.org my_name=Joe your_name=Mike protocol=https: -- ./doc/example-httpbin.apib >test/cli || { cat test/cli && exit 1; }
-	./_build/default/bin/katt from-har --apib -- ./doc/example-teapot.har > test/example-teapot.apib && diff -U0 doc/example-teapot.apib test/example-teapot.apib
+	./_build/default/bin/katt hostname=httpbin.org my_name=Joe your_name=Mike protocol=https: -- \
+		./doc/example-httpbin.apib >test/cli || { cat test/cli && exit 1; }
+	./_build/default/bin/katt from-har --apib -- ./doc/example-teapot.har > test/example-teapot.apib && \
+		$(DIFF) -U0 doc/example-teapot.apib test/example-teapot.apib
 endif
 
 .PHONY: eunit
