@@ -81,3 +81,16 @@ jobs:
       - if: ${{ matrix.otp_vsn == 'latest' }}
         shell: bash
         run: make test_cli dialyzer
+
+      # PUBLISH TAGS
+
+      - if: ${{ matrix.otp_vsn == 'latest' && startsWith(github.ref, 'refs/tags/v') }}
+        shell: bash
+        env:
+          HEX_API_KEY: ${{secrets.HEX_API_KEY}}
+        run: |
+          # deps for rebar3 edoc as per https://github.com/erlangpack/github-action/blob/34eda48/Dockerfile
+          apk add --no-cache bsd-compat-headers gcc git libc-dev make
+          mkdir -p $${HOME}/.config/rebar3
+          echo "{plugins, [rebar3_hex]}." > $${HOME}/.config/rebar3/rebar.config
+          make publish
