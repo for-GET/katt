@@ -227,7 +227,7 @@ get_params_and_failures(Result) when not is_list(Result) ->
 get_params_and_failures(Result) ->
   lists:foldl(
     fun({pass, AddParams1}, {AddParams0, Failures0}) ->
-        AddParams = katt_util:merge_proplists(AddParams0, AddParams1),
+        AddParams = merge_proplists(AddParams0, AddParams1),
         {AddParams, Failures0};
        (Failure, {AddParams0, Failures0}) ->
         {AddParams0, [Failure | Failures0]}
