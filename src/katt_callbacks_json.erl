@@ -181,7 +181,7 @@ parse_json(_Bin) ->
 parse_json(Bin) when is_binary(Bin) andalso size(Bin) =:= 0 ->
   [];
 parse_json(Bin) ->
-  normalize_jsx(jsx:decode(Bin)).
+  normalize_jsx(jsx:decode(Bin, [{return_maps, false}])).
 
 %% Convert binary strings,
 %% sort object keys and array items,

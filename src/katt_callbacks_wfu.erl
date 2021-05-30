@@ -56,7 +56,7 @@ recall_body( false = _JustCheck
            , []
            , _Callbacks
            ) ->
-  hackney_url:qs(jsx:decode(Bin));
+  hackney_url:qs(jsx:decode(Bin, [{return_maps, false}]));
 recall_body(false = _JustCheck, [_Hdrs, Bin], [], _Callbacks) ->
   Bin;
 recall_body(false = _JustCheck, [Hdrs, Bin0], [{K0, V0} | Next], Callbacks) ->

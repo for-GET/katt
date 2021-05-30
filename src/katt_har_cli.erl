@@ -89,7 +89,7 @@ hars_to_transactions([], _Options, Transactions, _Step) ->
   Transactions;
 hars_to_transactions([HAR|HARs], Options, Transactions0, Step0) ->
   {ok, Bin} = file:read_file(HAR),
-  Json = jsx:decode(Bin),
+  Json = jsx:decode(Bin, [{return_maps, false}]),
   Log = proplists:get_value(<<"log">>, Json),
   {Transactions, Step} = lists:foldl( fun(Entry, Acc) ->
                                           convert_entry(Entry, Acc, Options)
