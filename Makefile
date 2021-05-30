@@ -129,11 +129,8 @@ ct:
 xref:
 	$(REBAR) xref
 
-$(DEPS_PLT):
-	$(DIALYZER) --build_plt --apps $(ERLANG_DIALYZER_APPS) -r deps --output_plt $(DEPS_PLT)
-
 .PHONY: dialyzer
-dialyzer: $(DEPS_PLT)
+dialyzer:
 	$(REBAR) dialyzer
 
 .PHONY: cover
