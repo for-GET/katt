@@ -165,14 +165,12 @@ parse(Hdrs, Body, Params, Callbacks) ->
              , params()
              , callbacks()
              ) -> response().
-request(R = #katt_request{}, Params, Callbacks) ->
-  ParseFun = proplists:get_value(parse, Callbacks),
+request(R = #katt_request{}, Params, _Callbacks) ->
   case http_request(R, Params) of
     {ok, {{Code, _}, Hdrs, Body}} ->
       #katt_response{ status = Code
                     , headers = Hdrs
                     , body = Body
-                    , parsed_body = ParseFun(Hdrs, Body, Params, Callbacks)
                     };
     Error = {error, _} ->
       Error

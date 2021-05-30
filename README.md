@@ -194,12 +194,14 @@ bin/katt --json base_url=http://httpbin.org my_name=Joe your_name=Mike -- doc/ex
 
 A request can also be configured via HTTP request headers:
 
+* `x-katt-content-type` would set a request content-type, without sending a `content-type` HTTP header
 * `x-katt-description` would take precedence over the transaction's description
 * `x-katt-request-timeout` would take precedence over the `request_timeout` param
 * `x-katt-request-sleep` would delay the request for a specific amount of milliseconds
 * `x-katt-transform` would call the `tranform` callback with its value as `id`
 
 A response can also be configured via HTTP response headers:
+* `x-katt-content-type` would set a response (expected and actual) content-type, without expecting/receiving a `content-type` HTTP header
 * `x-katt-transform` would call the `tranform` callback with its value as `id`
 
 ### If you would like to convert a HAR file to an APIB file
