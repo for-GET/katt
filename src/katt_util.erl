@@ -138,8 +138,7 @@ external_http_request(Url, Method, Hdrs, Body, Timeout, Options0) ->
   DefaultOpts = [ {recv_timeout, Timeout}
                 , {insecure, true}
                 ],
-  Options = lists:ukeymerge(1, lists:ukeysort(1, Options0),
-                               lists:ukeysort(1, DefaultOpts)),
+  Options = merge_proplists(DefaultOpts, Options0),
   case hackney:request(Method, BUrl, BHdrs, Body, Options) of
     OK when element(1, OK) =:= ok ->
       %% lhttpc was the predecesor of hackney
