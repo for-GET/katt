@@ -197,10 +197,10 @@ A request can also be configured via HTTP request headers:
 * `x-katt-description` would take precedence over the transaction's description
 * `x-katt-request-timeout` would take precedence over the `request_timeout` param
 * `x-katt-request-sleep` would delay the request for a specific amount of milliseconds
-* `x-katt-transform` would call the `tranform` callback with it's value as `id`
+* `x-katt-transform` would call the `tranform` callback with its value as `id`
 
 A response can also be configured via HTTP response headers:
-* `x-katt-transform` would call the `tranform` callback with it's value as `id`
+* `x-katt-transform` would call the `tranform` callback with its value as `id`
 
 ### If you would like to convert a HAR file to an APIB file
 
