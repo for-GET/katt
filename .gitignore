@@ -1,8 +1,6 @@
 .#*
 /*.coverdata
 /*.plt
-/.rebar/BARE_MODE
-/.rebar/DEV_MODE
 /_build/
 /bin
 /doc/*.html
@@ -12,9 +10,12 @@
 /ebin
 /erl_crash.dump
 /rebar3.crashdump
-/logs
 /rebar.lock
 /src/katt_blueprint.erl
 /test/*.beam
 /test/cli
 /test/example-teapot.apib
+
+# back compat. REMOVE LATEST 2022-01-01
+/.rebar/BARE_MODE
+/.rebar/DEV_MODE

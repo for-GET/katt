@@ -17,10 +17,20 @@ ifdef CI
 export KATT_DEV_MODE=true
 endif
 
+ifneq (,$(wildcard _build/DEV_MODE))
+export KATT_DEV_MODE=true
+endif
+
+ifneq (,$(wildcard _build/BARE_MODE))
+export KATT_BARE_MODE=true
+endif
+
+# back compat. REMOVE LATEST 2022-01-01
 ifneq (,$(wildcard .rebar/DEV_MODE))
 export KATT_DEV_MODE=true
 endif
 
+# back compat. REMOVE LATEST 2022-01-01
 ifneq (,$(wildcard .rebar/BARE_MODE))
 export KATT_BARE_MODE=true
 endif
@@ -28,13 +38,11 @@ endif
 SRCS := $(wildcard src/* include/* rebar.config)
 SRCS := $(filter-out src/katt_blueprint.erl,$(SRCS))
 
-SRC_BEAMS := $(patsubst src/%.erl, ebin/%.beam, $(wildcard src/*.erl))
-
 .PHONY: all
 ifdef KATT_BARE_MODE
 all: ebin/katt.app
 else
-all: ebin/katt.app escript
+all: ebin/katt.app bin/katt
 endif
 
 # Clean
@@ -70,6 +78,10 @@ docs:
 
 # Compile
 
+bin/katt: escript
+	mkdir -p bin
+	cp -a _build/default/bin/katt bin/katt
+
 ebin/katt.app: compile
 
 .PHONY: escript
@@ -83,13 +95,13 @@ compile: $(SRCS)
 
 # Tests
 
-.rebar/DEV_MODE:
-	mkdir -p .rebar
-	touch .rebar/DEV_MODE
+_build/DEV_MODE:
+	mkdir -p _build
+	touch _build/DEV_MODE
 
-.rebar/BARE_MODE:
-	mkdir -p .rebar
-	touch .rebar/BARE_MODE
+_build/BARE_MODE:
+	mkdir -p _build
+	touch _build/BARE_MODE
 
 .PHONY: test
 # Would be nice to include elvis to test, but it fails on OTP-18
@@ -106,7 +118,7 @@ ifdef KATT_BARE_MODE
 test_cli:
 	: Skipping $@ in BARE_MODE
 else
-test_cli: .rebar/DEV_MODE
+test_cli: _build/DEV_MODE
 	./_build/default/bin/katt hostname=httpbin.org my_name=Joe your_name=Mike protocol=https: -- \
 		./doc/example-httpbin.apib >test/cli || { cat test/cli && exit 1; }
 	./_build/default/bin/katt from-har --apib -- ./doc/example-teapot.har > test/example-teapot.apib && \
@@ -118,12 +130,10 @@ eunit:
 	@ $(MAKE) clean-tests
 	$(REBAR) eunit
 
-# @ rm -rf _build
-
 .PHONY: ct
 ct:
 	@ $(MAKE) clean-tests
-	$(REBAR) ct
+	TEST_DIR=_build/default/test/lib/katt/test $(REBAR) ct
 
 .PHONY: xref
 xref:
