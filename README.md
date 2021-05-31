@@ -249,7 +249,7 @@ See [src/katt_callbacks_json.erl](src/katt_callbacks_json.erl) to see how your
 ``` bash
 export KATT_BARE_MODE=true
 # or
-touch .rebar/BARE_MODE
+touch _build/BARE_MODE
 ```
 
 

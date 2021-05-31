@@ -65,7 +65,7 @@ jobs:
       # - shell: bash
       #   run: make
       - shell: bash
-        run: make clean .rebar/DEV_MODE
+        run: make clean _build/DEV_MODE
       - shell: bash
         run: make all xref eunit
       - if: ${{ matrix.otp_vsn == 'latest' }}
@@ -75,7 +75,7 @@ jobs:
       # BARE_MODE
 
       - shell: bash
-        run: make clean .rebar/BARE_MODE
+        run: make clean _build/BARE_MODE
       - shell: bash
         run: make all xref # eunit
       - if: ${{ matrix.otp_vsn == 'latest' }}
