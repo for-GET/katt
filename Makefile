@@ -8,9 +8,9 @@ LN := $(shell command -v ln 2>/dev/null)
 OTP_RELEASE = $(shell erl -eval 'io:format("~s", [erlang:system_info(otp_release)]), halt().'  -noshell)
 
 ifdef CI
-REBAR = ./rebar3.OTP$(OTP_RELEASE)
+REBAR3 = ./rebar3.OTP$(OTP_RELEASE)
 else
-REBAR ?= $(shell command -v rebar3 2>/dev/null || echo "./rebar3.OTP$(OTP_RELEASE)")
+REBAR3 ?= $(shell command -v rebar3 2>/dev/null || echo "./rebar3.OTP$(OTP_RELEASE)")
 endif
 
 ifdef CI
@@ -53,7 +53,7 @@ conf_clean:
 
 .PHONY: clean
 clean:
-	$(REBAR) clean
+	$(REBAR3) clean
 
 .PHONY: distclean
 distclean:
@@ -74,7 +74,7 @@ clean-tests:
 
 .PHONY: docs
 docs:
-	$(REBAR) edoc
+	$(REBAR3) edoc
 
 # Compile
 
@@ -86,12 +86,12 @@ ebin/katt.app: compile
 
 .PHONY: escript
 escript: ebin/katt.app
-	$(REBAR) escriptize
+	$(REBAR3) escriptize
 	./_build/default/bin/katt --help
 
 .PHONY: compile
 compile: $(SRCS)
-	$(REBAR) compile
+	$(REBAR3) compile
 
 # Tests
 
@@ -111,7 +111,7 @@ test: eunit ct xref dialyzer cover
 
 .PHONY: elvis
 elvis:
-	$(REBAR) lint
+	$(REBAR3) lint
 
 ifdef KATT_BARE_MODE
 .PHONY: test_cli
@@ -128,29 +128,29 @@ endif
 .PHONY: eunit
 eunit:
 	@ $(MAKE) clean-tests
-	$(REBAR) eunit
+	$(REBAR3) eunit
 
 .PHONY: ct
 ct:
 	@ $(MAKE) clean-tests
-	TEST_DIR=_build/default/test/lib/katt/test $(REBAR) ct
+	TEST_DIR=_build/default/test/lib/katt/test $(REBAR3) ct
 
 .PHONY: xref
 xref:
-	$(REBAR) xref
+	$(REBAR3) xref
 
 .PHONY: dialyzer
 dialyzer:
-	$(REBAR) dialyzer
+	$(REBAR3) dialyzer
 
 .PHONY: cover
 cover:
 	@ $(MAKE) clean-tests
-	$(REBAR) cover -v
+	$(REBAR3) cover -v
 
 .PHONY: publish
 publish: docs
-	$(REBAR) hex publish -r hexpm --yes
+	$(REBAR3) hex publish -r hexpm --yes
 
 .PHONY: rebar3.OTP18
 rebar3.OTP18:
