@@ -1,0 +1,12 @@
+--- Examples against mocky.io ---
+
+# Response with "content-type: text/plain" that we want to treat as application/json
+
+The actual response body is literally '{"foo": "bar"}' i.e. without the extra whitespace as below.
+But since we treat it as JSON, the whitespace is ignored.
+
+GET https://run.mocky.io/v3/8ac0bd80-840f-402d-a9ad-421707194110
+< 200
+< content-type: text/plain; {{_}}
+< x-katt-content-type: application/json
+{  "foo": "bar"  }
