@@ -280,7 +280,17 @@ run_transactions( From
   Request = make_katt_request(Req, Params, Callbacks),
   RequestFun = proplists:get_value(request, Callbacks),
   ValidateFun = proplists:get_value(validate, Callbacks),
-  ActualResponse = RequestFun(Request, Params, Callbacks),
+  ActualResponse0 = RequestFun(Request, Params, Callbacks),
+  ActualResponseHdrs = ActualResponse0#katt_response.headers,
+  {_ActualResponseContentType, _ActualResponseHdrs, ActualResponseHdrsCT} =
+    get_headers_content_type(Res#katt_response.headers, ActualResponseHdrs),
+  ParseFun = proplists:get_value(parse, Callbacks),
+  ActualResponseParsedBody = ParseFun( ActualResponseHdrsCT
+                                     , ActualResponse0#katt_response.body
+                                     , Params
+                                     , Callbacks
+                                     ),
+  ActualResponse = ActualResponse0#katt_response{parsed_body = ActualResponseParsedBody},
   ExpectedResponse = make_katt_response(ActualResponse, Res, Params, Callbacks),
   ValidationResult = ValidateFun( ExpectedResponse
                                 , ActualResponse
@@ -326,8 +336,9 @@ make_katt_request( #katt_request{url=Url0, headers=Hdrs0, body=Body0} = Req0
                     , Callbacks
                     )),
   Url = make_request_url(Url1, Params),
-  Hdrs = RecallFun(headers, Hdrs0, Params, Callbacks),
-  [Hdrs, Body] = RecallFun(body, [Hdrs, Body0], Params, Callbacks),
+  Hdrs1 = RecallFun(headers, Hdrs0, Params, Callbacks),
+  {_ContentType, Hdrs, HdrsCT} = get_headers_content_type(Hdrs1),
+  [HdrsCT, Body] = RecallFun(body, [HdrsCT, Body0], Params, Callbacks),
   Req = Req0#katt_request{ url = Url
                          , headers = Hdrs
                          , body = Body
@@ -341,9 +352,10 @@ make_katt_response( ActualResponse
                   ) ->
   RecallFun = proplists:get_value(recall, Callbacks),
   ParseFun = proplists:get_value(parse, Callbacks),
-  Hdrs = RecallFun(headers, Hdrs0, Params, Callbacks),
-  [Hdrs, Body] = RecallFun(body, [Hdrs, Body0], Params, Callbacks),
-  ParsedBody = ParseFun(Hdrs, Body, Params, Callbacks),
+  Hdrs1 = RecallFun(headers, Hdrs0, Params, Callbacks),
+  {_ContentType, Hdrs, HdrsCT} = get_headers_content_type(Hdrs1),
+  [HdrsCT, Body] = RecallFun(body, [HdrsCT, Body0], Params, Callbacks),
+  ParsedBody = ParseFun(HdrsCT, Body, Params, Callbacks),
   Res = Res0#katt_response{ headers = Hdrs
                           , body = Body
                           , parsed_body = ParsedBody
@@ -394,4 +406,22 @@ maybe_transform_response(Res0, Params, Callbacks, ActualResponse) ->
       Hdrs = proplists:delete("x-katt-transform", Hdrs0),
       Res = Res0#katt_response{headers = Hdrs},
       TransformFun(TransformId, {Res, ActualResponse}, Params, Callbacks)
+  end.
+
+get_headers_content_type(Hdrs) ->
+  get_headers_content_type(Hdrs, Hdrs).
+
+get_headers_content_type(HdrsSrc, HdrsTarget0) ->
+  case proplists:get_value("x-katt-content-type", HdrsSrc) of
+    undefined ->
+      {undefined, HdrsTarget0, HdrsTarget0};
+    ContentType ->
+      HdrsTarget = proplists:delete("x-katt-content-type", HdrsTarget0),
+      HdrsTargetCT = case proplists:is_defined("Content-Type", HdrsTarget) of
+                       true ->
+                         katt_util:merge_proplists(HdrsTarget, [{"Content-Type", ContentType}]);
+                       false ->
+                         katt_util:merge_proplists(HdrsTarget, [{"content-type", ContentType}])
+                     end,
+      {ContentType, HdrsTarget, HdrsTargetCT}
   end.
