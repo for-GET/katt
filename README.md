@@ -1,22 +1,43 @@
 # KATT [![Build Status][2]][1] [Docs][3]
 
-KATT (Klarna* API Testing Tool) is an HTTP-based API testing tool for Erlang.
-
-\* Albeit the "Klarna" mention, this repository is not affiliated with Klarna AB.
-KATT was indeed born at Klarna, and Klarna AB holds copyright for parts of the code,
-but it is now being maintained outside the company, by its original authors and new contributors.
-
-
-## Quick start
-
-[An example is worth a 1000 words.](doc/example-httpbin.apib)
+KATT (Klarna API Testing Tool) is an HTTP-based API testing tool for Erlang.
 
 Use for shooting HTTP requests in a sequential order and verifying the response.
 Any relevant difference between expected and actual responses will cause a
 failure.
 
-The builtin validator supports basic text validation and more advanced validation of HTTP headers,
-and media-types (`application/json`, `application/*+json`, `application/x-www-form-urlencoded`).
+
+## Quick start on KATT and APIB files
+
+### Example
+
+[An example is worth a 1000 words. Have a look!](doc/example-httpbin.apib)
+
+
+### Params
+
+If some values are static (constants) and you want to reuse them across multiple requests,
+you can add one or more params like below
+
+```
+PARAM a_string="with some text"
+PARAM a_boolean=true
+PARAM a_null=null
+PARAM a_float=1.1
+PARAM an_integer=1
+```
+
+### Validator
+
+The builtin validator supports
+
+* basic text validation
+* more advanced validation of HTTP headers
+* JSON validation `application/json`, `application/*+json`
+* URL-encoded validation `application/x-www-form-urlencoded`
+
+
+### Tags
 
 The validator makes use of a few tags with special meaning:
 
@@ -44,19 +65,23 @@ default, one can do `{..., "{{_}}": "{{unexpected}}"}` or
 `[..., "{{unexpected}}"]`, effectively making a rule that no properties/items
 are expected beyond the ones defined.
 
-**NOTE** If some values are static (constants) and you want to reuse them across multiple requests,
-you can add one or more params like below
 
-```
-PARAM a_string="with some text"
-PARAM a_boolean=true
-PARAM a_null=null
-PARAM a_float=1.1
-PARAM an_integer=1
-```
+### Headers
 
-For more complex validations, KATT supports extensible validation types.
-Built-in validation types: `set`, `runtime_value`, `runtime_validation`.
+A request can also be configured via HTTP request headers:
+
+* `x-katt-content-type` would set a request content-type, without sending a `content-type` HTTP header
+* `x-katt-description` would take precedence over the transaction's description
+* `x-katt-request-timeout` would take precedence over the `request_timeout` param
+* `x-katt-request-sleep` would delay the request for a specific amount of milliseconds
+* `x-katt-transform` would call the `tranform` callback with its value as `id`
+
+A response can also be configured via HTTP response headers:
+* `x-katt-content-type` would set a response (expected and actual) content-type, without expecting/receiving a `content-type` HTTP header
+* `x-katt-transform` would call the `tranform` callback with its value as `id`
+
+
+### `set` extension
 
 `set` will ignore the order of an array's items, and just check for existence:
 
@@ -72,6 +97,9 @@ Built-in validation types: `set`, `runtime_value`, `runtime_validation`.
 So the above would validate against JSON instances such as
 `{"some_array": [1, 3, 2]}`, or `{"some_array": [3, 2, 1]}`,
 or even `{"some_array": [4, 3, 2, 1]}` unless we add `{{unexpected}}`.
+
+
+### `runtime_value` extension
 
 `runtime_value` would just run code (only `erlang` and `shell` supported for now),
 while having access to `ParentKey`, `Actual`, `ItemsMode` and `Callbacks`,
@@ -101,6 +129,9 @@ or in array format
   }
 }
 ```
+
+
+### `runtime_validation` extension
 
 `runtime_validation` would just run code (only `erlang` and `shell` supported for now),
 while having access to `ParentKey`, `Actual`, `ItemsMode` and `Callbacks`,
@@ -137,23 +168,7 @@ or in array format
 }
 ```
 
-
-## Examples
-
-A simple example that will make requests to a third party server:
-
-```bash
-ERL_LIBS=deps erl -pa ebin -noshell -eval '
-  application:ensure_all_started(katt),
-  BlueprintFile = "doc/example-httpbin.apib",
-  Params = [{base_url, "http://httpbin.org"}, {my_name, "Joe"}, {your_name, "Mike"}],
-  io:format("~p~n", [katt:run(BlueprintFile, Params)]).
-' -s init stop
-```
-... or run the code passed to -eval from the Erlang shell (assuming that you
-have started the Erlang shell from the repo's root directory with `ERL_LIBS=deps
-erl -pa ebin`).
-
+---
 
 ## CLI
 
@@ -169,42 +184,49 @@ You can also output the result in JSON format, with `--json`, and beautify it e.
 bin/katt --json base_url=http://httpbin.org my_name=Joe your_name=Mike -- doc/example-httpbin.apib | python -m json.tool
 ```
 
+---
 
-## Interface
+## Erlang interface
 
-* `katt:run` to be called with
-  * `filename`
-  * `params` (optional)
-    * `base_url`, alternatively you can use the legacy
-      * `protocol`
-      * `hostname`
-      * `port`
-      * `base_path`
-    * `request_timeout`
-    * `scenario_timeout`
-  * `callbacks` (optional)
-    * `ext` to be called with `scope` (recall_body, parse, validate_body, validate_type)
-    * `recall` to be called with `syntax`, `text`, `params`, `callbacks`
-    * `parse` to be called with `headers`, `body`, `params`, `callbacks`
-    * `request` to be called with `request`, `params`, `callbacks`
-    * `validate` to be called with `expected`, `actual`, `params`, `callbacks`
-    * `progress` to be called with `transaction_result`
-    * `text_diff` to be called with `text`, `text`
-    * `transform` to be called with `id`, `katt_request` or `{katt_response, actual_response}`, `params`, `callbacks`
+A simple example that will make requests to a third party server:
 
-A request can also be configured via HTTP request headers:
+```bash
+ERL_LIBS=_build/default/deps erl $(for f in _build/default/lib/*/ebin; do echo "-pa $f"; done) -noshell -eval '
+  application:ensure_all_started(katt),
+  BlueprintFile = "doc/example-httpbin.apib",
+  Params = [{base_url, "http://httpbin.org"}, {my_name, "Joe"}, {your_name, "Mike"}],
+  io:format("~p~n", [katt:run(BlueprintFile, Params)]).
+' -s init stop
+```
+... or run the code passed to -eval from the Erlang shell, assuming that you
+have started the Erlang shell from the repo's root directory with
+`ERL_LIBS=_build/default/deps erl $(for f in _build/default/lib/*/ebin; do echo "-pa $f"; done)` .
 
-* `x-katt-content-type` would set a request content-type, without sending a `content-type` HTTP header
-* `x-katt-description` would take precedence over the transaction's description
-* `x-katt-request-timeout` would take precedence over the `request_timeout` param
-* `x-katt-request-sleep` would delay the request for a specific amount of milliseconds
-* `x-katt-transform` would call the `tranform` callback with its value as `id`
+`katt:run` is to be called with
 
-A response can also be configured via HTTP response headers:
-* `x-katt-content-type` would set a response (expected and actual) content-type, without expecting/receiving a `content-type` HTTP header
-* `x-katt-transform` would call the `tranform` callback with its value as `id`
+* `filename`
+* `params` (optional)
+  * `base_url`, alternatively you can use the legacy
+    * `protocol`
+    * `hostname`
+    * `port`
+    * `base_path`
+  * `request_timeout`
+  * `scenario_timeout`
+* `callbacks` (optional)
+  * `ext` to be called with `scope` (recall_body, parse, validate_body, validate_type)
+  * `recall` to be called with `syntax`, `text`, `params`, `callbacks`
+  * `parse` to be called with `headers`, `body`, `params`, `callbacks`
+  * `request` to be called with `request`, `params`, `callbacks`
+  * `validate` to be called with `expected`, `actual`, `params`, `callbacks`
+  * `progress` to be called with `transaction_result`
+  * `text_diff` to be called with `text`, `text`
+  * `transform` to be called with `id`, `katt_request` or `{katt_response, actual_response}`, `params`, `callbacks`
 
-### If you would like to convert a HAR file to an APIB file
+
+---
+
+## If you would like to convert a HAR file to an APIB file
 
 The HTTP Archive format or HAR, is a JSON-formatted archive file format
 for logging of a web browser's interaction with a site, [standardized by
@@ -224,7 +246,7 @@ OnlyText = fun(_Scope) -> [] end,
 katt:run("text_only_scenario.apib", [], [{ext, OnlyText}]).
 ```
 
-### If you would like to add XML support
+## If you would like to add XML support
 
 ```erlang
 PlusXml =
@@ -246,7 +268,8 @@ katt:run("xml_scenario.apib", [], [{ext, PlusXml}]).
 See [src/katt_callbacks_json.erl](src/katt_callbacks_json.erl) to see how your
 `custom_callbacks_xml` module should be implemented.
 
-### If you would like to build KATT with almost no dependencies
+
+## If you would like to build KATT with almost no dependencies
 
 ``` bash
 export KATT_BARE_MODE=true
@@ -254,6 +277,7 @@ export KATT_BARE_MODE=true
 touch _build/BARE_MODE
 ```
 
+---
 
 ## Contributing
 
@@ -270,6 +294,9 @@ fulfilled before making your pull-request:
 
 [Apache 2.0](LICENSE)
 
+\* Despite the "Klarna" mention, this repository is not affiliated with Klarna AB.
+KATT was indeed born at Klarna, and Klarna AB holds copyright for parts of the code,
+but it is now being maintained outside the company, by its original authors and new contributors.
 
   [1]: https://github.com/for-GET/katt/actions?query=workflow%3ACI+branch%3Amaster
   [2]: https://github.com/for-GET/katt/workflows/CI/badge.svg?branch=master
