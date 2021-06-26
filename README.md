@@ -6,6 +6,8 @@ Use for shooting HTTP requests in a sequential order and verifying the response.
 Any relevant difference between expected and actual responses will cause a
 failure.
 
+Install from git or https://hex.pm/packages/katt .
+
 
 ## Quick start on KATT and APIB files
 
