@@ -170,7 +170,7 @@ or in array format
 
 ---
 
-## CLI
+## Command-line interface
 
 You can also fire up `katt` from the CLI, with
 ```bash
@@ -183,6 +183,9 @@ You can also output the result in JSON format, with `--json`, and beautify it e.
 ```bash
 bin/katt --json base_url=http://httpbin.org my_name=Joe your_name=Mike -- doc/example-httpbin.apib | python -m json.tool
 ```
+
+Check `bin/katt --help` for a full list of arguments.
+
 
 ---
 
@@ -239,7 +242,7 @@ into [doc/example-teapot.apib](doc/example-teapot.apib), run:
 bin/katt from-har --apib -- doc/example-teapot.har > doc/example-teapot.apib
 ```
 
-### If you would like to disable JSON support
+## If you would like to disable JSON support
 
 ```erlang
 OnlyText = fun(_Scope) -> [] end,
