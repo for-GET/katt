@@ -19,28 +19,28 @@ jobs:
       fail-fast: false
       matrix:
         otp_vsn:
-          - 'latest'
-          - '24.0'
-          - '23.3'
-          - '23.2'
-          - '23.1'
-          - '23'
-          - '22.3'
-          - '22.2'
-          - '22.1'
-          - '22'
-          - '21.3'
-          - '21.2'
-          - '21.1'
-          - '21'
-          - '20.3'
-          - '20.2'
-          - '20.1'
-          - '20'
-          - '19.3'
-          - '19.2'
-          - '19.1'
-          - '19'
+          - 'slim'
+          - '24.0-slim'
+          - '23.3-slim'
+          - '23.2-slim'
+          - '23.1-slim'
+          - '23-slim'
+          - '22.3-slim'
+          - '22.2-slim'
+          - '22.1-slim'
+          - '22-slim'
+          - '21.3-slim'
+          - '21.2-slim'
+          - '21.1-slim'
+          - '21-slim'
+          - '20.3-slim'
+          - '20.2-slim'
+          - '20.1-slim'
+          - '20-slim'
+          - '19.3-slim'
+          - '19.2-slim'
+          - '19.1-slim'
+          - '19-slim'
     name: 'ci-erl:${{ matrix.otp_vsn }}'
     runs-on: ubuntu-latest
     container:
@@ -49,7 +49,8 @@ jobs:
       - shell: bash
         run: |
           apt-get update
-          apt-get -y install tcl tcl-dev gettext
+          apt-get -y install wget
+          apt-get -y install libz-dev libssl-dev libcurl4-gnutls-dev libexpat1-dev gettext cmake gcc
           cd /usr/src/
           wget https://github.com/git/git/archive/v2.18.0.tar.gz -O git.tar.gz
           tar -xf git.tar.gz
