@@ -2,11 +2,12 @@
 
 KATT (Klarna API Testing Tool) is an HTTP-based API testing tool for Erlang,
 , though it can work just as well as a CLI tool.
-[Available as a Docker image too for convenience: `docker run ysoftwareab/katt`.
+[Available as a Docker image too for convenience.](https://hub.docker.com/r/ysoftwareab/katt)
+
+`docker run ysoftwareab/katt`
 ![Docker Image Version (latest semver)](https://img.shields.io/docker/v/ysoftwareab/katt?sort=semver)
 ![Docker Image Size (latest semver)](https://img.shields.io/docker/image-size/ysoftwareab/katt?sort=semver)
 ![Docker Pulls](https://img.shields.io/docker/pulls/ysoftwareab/katt)
-](https://hub.docker.com/r/ysoftwareab/katt)
 
 Use for shooting HTTP requests in a sequential order and verifying the response.
 Any relevant difference between expected and actual responses will cause a
