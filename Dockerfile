@@ -13,8 +13,8 @@ LABEL build-date=${LABEL_BUILD_DATE}
 
 
 
-COPY . /jesse
-RUN cd /jesse && ./Dockerfile.build.sh
-RUN cd /jesse && make
+COPY . /katt
+RUN cd /katt && ./Dockerfile.build.sh
+RUN cd /katt && make
 
-CMD /jesse/bin/jesse
+CMD /katt/bin/katt
