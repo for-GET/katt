@@ -1,6 +1,12 @@
 # KATT [![Build Status][2]][1] [Docs][3]
 
-KATT (Klarna API Testing Tool) is an HTTP-based API testing tool for Erlang.
+KATT (Klarna API Testing Tool) is an HTTP-based API testing tool for Erlang,
+, though it can work just as well as a CLI tool.
+[Available as a Docker image too for convenience.
+![Docker Image Version (latest semver)](https://img.shields.io/docker/v/ysoftwareab/katt?sort=semver)
+![Docker Image Size (latest semver)](https://img.shields.io/docker/image-size/ysoftwareab/katt?sort=semver)
+![Docker Pulls](https://img.shields.io/docker/pulls/ysoftwareab/katt)
+](https://hub.docker.com/r/ysoftwareab/katt)
 
 Use for shooting HTTP requests in a sequential order and verifying the response.
 Any relevant difference between expected and actual responses will cause a
@@ -172,9 +178,12 @@ or in array format
 
 ---
 
-## Command-line interface
+## Command-Line Interface
 
-You can also fire up `katt` from the CLI, with
+You can either build the `bin/katt` executable yourself (just type `make`),
+or you can use a Docker image a call it with `docker run ysoftwareab/katt`.
+
+You can fire up `katt` from the CLI, with
 ```bash
 bin/katt base_url=http://httpbin.org my_name=Joe your_name=Mike -- doc/example-httpbin.apib
 ```
@@ -191,7 +200,7 @@ Check `bin/katt --help` for a full list of arguments.
 
 ---
 
-## Erlang interface
+## Erlang Interface
 
 A simple example that will make requests to a third party server:
 
