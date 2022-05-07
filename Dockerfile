@@ -11,10 +11,10 @@ LABEL vcs-ref=${LABEL_VCS_REF}
 ARG LABEL_BUILD_DATE="1970-01-01T00:00:00Z"
 LABEL build-date=${LABEL_BUILD_DATE}
 
-
+LABEL io.whalebrew.name katt
 
 COPY . /katt
 RUN cd /katt && ./Dockerfile.build.sh
 RUN cd /katt && make
 
-CMD /katt/bin/katt
+ENTRYPOINT /katt/bin/katt
