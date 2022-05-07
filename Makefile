@@ -38,6 +38,8 @@ endif
 SRCS := $(wildcard src/* include/* rebar.config)
 SRCS := $(filter-out src/katt_blueprint.erl,$(SRCS))
 
+GIT_DESCRIBE := $(shell git describe --tags --first-parent --always --dirty)
+
 .PHONY: all
 ifdef KATT_BARE_MODE
 all: ebin/katt.app
@@ -182,3 +184,28 @@ rebar3.OTP23:
 .PHONY: rebar3.OTP24
 rebar3.OTP24:
 	$(LN) -sf rebar3.OTP22 $@
+
+.PHONY: docker
+docker:
+	if git tag | grep -q -Fx "$(GIT_DESCRIBE)"; then \
+		$(MAKE) docker-force; \
+	else \
+		echo "Current version $(GIT_DESCRIBE) isn't in 'git tag'."; \
+		echo "Run 'make docker-force' if you really want to build and push a $(GIT_DESCRIBE) version."; \
+		exit 1; \
+	fi
+
+.PHONY: docker-force
+docker-force:
+	# docker context create aws-docker-amd64 --docker host=ssh://ec2-13-51-198-153.eu-north-1.compute.amazonaws.com
+	# docker context create aws-docker-arm64 --docker host=ssh://ec2-13-48-46-86.eu-north-1.compute.amazonaws.com
+	# docker buildx create --name aws-multiarch-builder aws-docker-amd64
+	# docker buildx create --name aws-multiarch-builder --append aws-docker-arm64
+	# docker buildx use aws-multiarch-builder
+	docker buildx build . \
+		--push \
+    --platform linux/amd64,linux/arm64 \
+		--tag ysoftwareab/katt:$(GIT_DESCRIBE) \
+		--build-arg FROM=erlang:latest \
+		--build-arg LABEL_VCS_REF=$$(git rev-parse HEAD) \
+		--build-arg LABEL_BUILD_DATE=$$(date -u +"%Y-%m-%dT%H:%M:%SZ")
