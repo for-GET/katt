@@ -207,6 +207,6 @@ docker-force:
     --platform linux/amd64,linux/arm64 \
 		--tag ysoftwareab/katt:$(GIT_DESCRIBE) \
 		--tag ysoftwareab/katt:latest \
-		--build-arg FROM=erlang:latest \
+		--build-arg FROM=erlang:slim \
 		--build-arg LABEL_VCS_REF=$$(git rev-parse HEAD) \
 		--build-arg LABEL_BUILD_DATE=$$(date -u +"%Y-%m-%dT%H:%M:%SZ")
