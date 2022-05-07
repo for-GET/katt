@@ -13,6 +13,7 @@ LABEL build-date=${LABEL_BUILD_DATE}
 
 LABEL io.whalebrew.name katt
 LABEL io.whalebrew.config.keep_container_user 'true'
+LABEL io.whalebrew.config.working_dir '$PWD'
 
 COPY . /katt
 RUN cd /katt && ./Dockerfile.build.sh
