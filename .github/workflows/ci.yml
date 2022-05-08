@@ -75,7 +75,7 @@ jobs:
         run: make all xref eunit
       - if: ${{ matrix.otp_vsn == 'slim' }}
         shell: bash
-        run: make test_cli dialyzer
+        run: make check test_cli dialyzer
 
       # BARE_MODE
 
@@ -85,7 +85,7 @@ jobs:
         run: make all xref # eunit
       - if: ${{ matrix.otp_vsn == 'slim' }}
         shell: bash
-        run: make test_cli dialyzer
+        run: make check test_cli dialyzer
 
       # PUBLISH TAGS
 

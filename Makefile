@@ -115,6 +115,9 @@ test: eunit ct xref dialyzer cover
 elvis:
 	$(REBAR3) lint
 
+.PHONY: check
+check: elvis
+
 ifdef KATT_BARE_MODE
 .PHONY: test_cli
 test_cli:
