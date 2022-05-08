@@ -2,6 +2,6 @@
 @title Klarna API Testing Tool
 @doc Klarna API Testing Tool
 
-Use for shooting requests against any kind of HTTP interface, and comparing with an expected response
+Use for shooting HTTP requests in a sequential order and verifying the response.
 
 @end
