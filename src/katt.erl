@@ -138,12 +138,20 @@ make_callbacks(Callbacks) ->
 -ifdef(OTP_RELEASE). %% OTP 21+
 http_uri_parse(URI) ->
   case uri_string:parse(URI) of
- 	URIMap when is_map(URIMap) ->
+  URIMap when is_map(URIMap) ->
       Scheme0 = maps:get(scheme, URIMap, <<"no_scheme">>),
-      Scheme = if is_binary(Scheme0) -> binary_to_atom(Scheme0, utf8); true -> list_to_atom(Scheme0) end,
-      Host = maps:get(host, URIMap, if is_binary(URI) -> <<>>; true -> "" end),
+      Scheme = case is_binary(Scheme0) of
+                 true -> binary_to_atom(Scheme0, utf8);
+                 false -> list_to_atom(Scheme0)
+               end,
+      DefaultHost = case is_binary(URI) of
+                      true -> <<>>;
+                      false -> ""
+                    end,
+      Host = maps:get(host, URIMap, DefaultHost),
       %% port defaults as per http_uri:scheme_defaults/0
-      %% see https://github.com/erlang/otp/blob/2831b6c/lib/inets/src/http_lib/http_uri.erl#L101-L107
+      %% see https://github.com/erlang/otp
+      %% ... /blob/2831b6c/lib/inets/src/http_lib/http_uri.erl#L101-L107
       DefaultPort = case Scheme of
                       http -> 80;
                       https -> 443;
@@ -153,14 +161,18 @@ http_uri_parse(URI) ->
                       tftp -> 69
                     end,
       Port = maps:get(port, URIMap, DefaultPort),
-      Path = maps:get(path, URIMap, if is_binary(URI) -> <<"/">>; true -> "" end),
+      DefaultPath = case is_binary(URI) of
+                      true -> <<"/">>;
+                      false -> ""
+                    end,
+      Path = maps:get(path, URIMap, DefaultPath),
       { ok
       , Scheme
       , Host
       , Port
       , Path
       };
- 	{error, Reason, _Info} ->
+  {error, Reason, _Info} ->
       {error, Reason}
   end.
 -else.
@@ -218,7 +230,8 @@ base_url_from_params(ScenarioParams) ->
   Protocol = proplists:get_value("protocol", ScenarioParams, ?DEFAULT_PROTOCOL),
   Hostname = proplists:get_value("hostname", ScenarioParams, ?DEFAULT_HOSTNAME),
   %% port defaults as per http_uri:scheme_defaults/0
-  %% see https://github.com/erlang/otp/blob/2831b6c/lib/inets/src/http_lib/http_uri.erl#L101-L107
+  %% see https://github.com/erlang/otp
+  %% ... /blob/2831b6c/lib/inets/src/http_lib/http_uri.erl#L101-L107
   DefaultPort = case Protocol of
                       "http:" -> 80;
                       "https:" -> 443;
@@ -290,7 +303,8 @@ run_transactions( From
                                      , Params
                                      , Callbacks
                                      ),
-  ActualResponse = ActualResponse0#katt_response{parsed_body = ActualResponseParsedBody},
+  ActualResponse =
+    ActualResponse0#katt_response{parsed_body = ActualResponseParsedBody},
   ExpectedResponse = make_katt_response(ActualResponse, Res, Params, Callbacks),
   ValidationResult = ValidateFun( ExpectedResponse
                                 , ActualResponse
@@ -419,9 +433,15 @@ get_headers_content_type(HdrsSrc, HdrsTarget0) ->
       HdrsTarget = proplists:delete("x-katt-content-type", HdrsTarget0),
       HdrsTargetCT = case proplists:is_defined("Content-Type", HdrsTarget) of
                        true ->
-                         katt_util:merge_proplists(HdrsTarget, [{"Content-Type", ContentType}]);
+                         katt_util:merge_proplists( HdrsTarget
+                                                  , [{ "Content-Type"
+                                                     , ContentType
+                                                     }]);
                        false ->
-                         katt_util:merge_proplists(HdrsTarget, [{"content-type", ContentType}])
+                         katt_util:merge_proplists( HdrsTarget
+                                                  , [{ "content-type"
+                                                     , ContentType
+                                                     }])
                      end,
       {ContentType, HdrsTarget, HdrsTargetCT}
   end.

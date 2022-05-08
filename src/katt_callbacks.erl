@@ -175,7 +175,8 @@ request(R = #katt_request{}, Params, _Callbacks) ->
     Error = {error, _} ->
       Error
   end.
--dialyzer({no_match, request/3}). % support bare mode for http_request -> katt_util:external_http_request
+%% support bare mode for http_request -> katt_util:external_http_request
+-dialyzer({no_match, request/3}).
 
 %% @doc Validate a response.
 %% @end
