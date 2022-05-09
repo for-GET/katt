@@ -11,7 +11,7 @@ Install from git or https://hex.pm/packages/katt .
 
 For convenience, [available as a Docker image too](https://hub.docker.com/r/ysoftwareab/katt): `docker run --rm -it -v $PWD:$PWD -w $PWD ysoftwareab/katt ...`.
 
-And [whalebrew package](https://github.com/whalebrew/whalebrew): `brew install whlebrew && sudo whalebrew install ysoftwareab/katt; katt ...`
+And [whalebrew package](https://github.com/whalebrew/whalebrew): `brew install whalebrew && sudo whalebrew install ysoftwareab/katt; katt ...`
 
 ## Quick start on KATT and APIB files
 
