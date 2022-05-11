@@ -179,7 +179,7 @@ os_cmd(Cmd, Env) ->
   os_cmd_result(Port, []).
 
 blueprint_to_apib(Blueprint) ->
-  io:fwrite( "---- ~s ----~n"
+  io:fwrite( "--- ~s ---~n"
              "~n"
              "---~n"
              "---~n"
