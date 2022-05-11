@@ -37,6 +37,7 @@
                           , url = "/"                   :: string()
                           , headers = []                :: [http_header()]
                           , body = null                 :: binary() | null
+                          , parsed_body = null          :: any()
                           }).
 
 -record(katt_response,    { status = 200                :: integer()

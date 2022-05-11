@@ -254,13 +254,13 @@ transaction_result_to_jsx({ Description
                           , Response
                           , Result
                           }) ->
-  {katt_request, Method, Url, ReqHeaders, ReqBody} = Request,
-  {Status, ResHeaders, ResBody} =
+  {katt_request, Method, Url, ReqHeaders, ReqBody, ReqParsedBody} = Request,
+  {Status, ResHeaders, ResBody, ResParsedBody} =
     case Response of
       {error, ResBody0} ->
-        {500, [], atom_to_binary(ResBody0, utf8)};
-      {katt_response, Status0, ResHeaders0, ResBody0, _ResParsedBody} ->
-        {Status0, ResHeaders0, ResBody0}
+        {500, [], atom_to_binary(ResBody0, utf8), null};
+      {katt_response, Status0, ResHeaders0, ResBody0, ResParsedBody0} ->
+        {Status0, ResHeaders0, ResBody0, ResParsedBody0}
   end,
   Errors = case Result of
              pass ->
@@ -292,12 +292,14 @@ transaction_result_to_jsx({ Description
                 , proplist_to_jsx(ReqHeaders)
                 }
               , {body, value_to_jsx(ReqBody)}
+              , {parsed_body, value_to_jsx(ReqParsedBody)}
               ]}
   , {response, [ {status, Status}
                , { headers
                  , proplist_to_jsx(ResHeaders)
                  }
                , {body, value_to_jsx(ResBody)}
+               , {parsed_body, value_to_jsx(ResParsedBody)}
                ]}
   ] ++ MaybeErrors.
 

@@ -353,9 +353,16 @@ make_katt_request( #katt_request{url=Url0, headers=Hdrs0, body=Body0} = Req0
   Hdrs1 = RecallFun(headers, Hdrs0, Params, Callbacks),
   {_ContentType, Hdrs, HdrsCT} = get_headers_content_type(Hdrs1),
   [HdrsCT, Body] = RecallFun(body, [HdrsCT, Body0], Params, Callbacks),
+  ParseFun = proplists:get_value(parse, Callbacks),
+  ParsedBody = ParseFun( HdrsCT
+                       , Body
+                       , Params
+                       , Callbacks
+                       ),
   Req = Req0#katt_request{ url = Url
                          , headers = Hdrs
                          , body = Body
+                         , parsed_body = ParsedBody
                          },
   maybe_transform_request(Req, Params, Callbacks).
 
