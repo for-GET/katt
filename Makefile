@@ -188,6 +188,10 @@ rebar3.OTP23:
 rebar3.OTP24:
 	$(LN) -sf rebar3.OTP22 $@
 
+.PHONY: rebar3.OTP25
+rebar3.OTP25:
+	$(LN) -sf rebar3.OTP22 $@
+
 .PHONY: docker
 docker:
 	if git tag | grep -q -Fx "$(GIT_DESCRIBE)"; then \
