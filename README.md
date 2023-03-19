@@ -310,6 +310,10 @@ fulfilled before making your pull-request:
 KATT was indeed born at Klarna, and Klarna AB holds copyright for parts of the code,
 but it is now being maintained outside the company, by its original authors and new contributors.
 
+## Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/for-GET/katt.svg)](https://starchart.cc/for-GET/katt)
+
   [1]: https://github.com/for-GET/katt/actions?query=workflow%3ACI+branch%3Amaster
   [2]: https://github.com/for-GET/katt/workflows/CI/badge.svg?branch=master
   [3]: https://dev.erldocs.com/github.com/for-get/katt/
