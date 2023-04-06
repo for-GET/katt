@@ -141,7 +141,7 @@ external_http_request(Url, Method, Hdrs, Body, Timeout, Options0) ->
   Options = merge_proplists(DefaultOpts, Options0),
   case hackney:request(Method, BUrl, BHdrs, Body, Options) of
     OK when element(1, OK) =:= ok ->
-      %% lhttpc was the predecesor of hackney
+      %% lhttpc was the predecessor of hackney
       %% and we're maintaining a backwards compatible return value
       {Status, BResHdrs, ResBody} = case OK of
                                       {ok, Status0, BResHdrs0, Client} ->
