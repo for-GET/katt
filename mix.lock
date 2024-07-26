@@ -1,4 +1,0 @@
-%{"lhttpc": {:git, "git://github.com/waisbrot/lhttpc.git", "824a89316d59353181990f5a461157751ca67907", []},
-  "meck": {:hex, :meck, "0.8.2"},
-  "mochijson3": {:git, "git://github.com/tophitpoker/mochijson3.git", "1a1c913ac80bb45d3de5fbd74d21e96c45e9e844", []},
-  "neotoma": {:git, "git://github.com/seancribbs/neotoma.git", "6c4a6009d3f34da2ec42c4f3585dae0abbb49dfc", []}}
