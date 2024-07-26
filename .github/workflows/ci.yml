@@ -20,6 +20,17 @@ jobs:
       matrix:
         otp_vsn:
           - 'slim'
+          - '27-slim'
+          - '26.2-slim'
+          - '26.1-slim'
+          - '26-slim'
+          - '25.3-slim'
+          - '25.2-slim'
+          - '25.1-slim'
+          - '25-slim'
+          - '24.3-slim'
+          - '24.2-slim'
+          - '24.1-slim'
           - '24.0-slim'
           - '23.3-slim'
           - '23.2-slim'
@@ -30,17 +41,20 @@ jobs:
           - '22.1-slim'
           - '22-slim'
           - '21.3-slim'
-          - '21.2-slim'
-          - '21.1-slim'
-          - '21-slim'
-          - '20.3-slim'
-          - '20.2-slim'
-          - '20.1-slim'
-          - '20-slim'
-          - '19.3-slim'
-          - '19.2-slim'
-          - '19.1-slim'
-          - '19-slim'
+          - '21.3-slim'
+          # NOTE testing disabled for the following versions, as the Docker image is based on Debian 9 (EOL) and
+          # either git depends on libpcre2-8-0 but it is not installable
+          # either actions/checkout's nodejs20 depends on a newer libc
+          # NOTE jesse might still be OTP-compatible though
+          # - '22.1-slim'
+          # - '20.3-slim'
+          # - '19.3-slim'
+          # - '19.2-slim'
+          # - '19.1-slim'
+          # - '19-slim'
+          # - '18.2-slim'
+          # - '18.1-slim'
+          # - '18-slim'
     name: 'ci-erl:${{ matrix.otp_vsn }}'
     runs-on: ubuntu-latest
     container:
@@ -48,22 +62,20 @@ jobs:
     steps:
       - shell: bash
         run: |
-          apt-get update
-          apt-get -y install wget
-          apt-get -y install libz-dev libssl-dev libcurl4-gnutls-dev libexpat1-dev gettext cmake gcc
-          cd /usr/src/
-          wget https://github.com/git/git/archive/v2.18.0.tar.gz -O git.tar.gz
-          tar -xf git.tar.gz
-          (
-            cd git-*
-            make prefix=/usr/local all
-            make prefix=/usr/local install
-          )
-          rm git.tar.gz
-          rm -r git-*
+          # NOTE sync with ./Dockerfile.build.sh
+          apt-get -y update
+          apt-get -y install curl git make
+
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
+          submodules: true
+      # https://github.com/actions/runner/issues/2033
+      # https://github.com/actions/checkout/issues/766
+      - shell: bash
+        run: |
+          chown -R "$(id -u):$(id -g)" "${GITHUB_WORKSPACE}"
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
       # DEV_MODE
 
@@ -95,7 +107,7 @@ jobs:
         shell: bash
         run: |
           if [[ ${{ github.event.ref }} =~ ^refs/tags/[0-9]+\.[0-9]+\.[0-9]+ ]]; then
-              echo ::set-output name=check::true
+              echo "check=true" >> $GITHUB_OUTPUT
           fi
       - if: ${{ matrix.otp_vsn == 'slim' && steps.is-semver-tag.outputs.check == 'true'}}
         name: Run make publish
