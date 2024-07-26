@@ -9,8 +9,9 @@
 /doc/stylesheet.css
 /ebin
 /erl_crash.dump
-/rebar3.crashdump
 /rebar.lock
+/rebar3.OTP*
+/rebar3.crashdump
 /src/katt_blueprint.erl
 /test/*.beam
 /test/cli
