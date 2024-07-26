@@ -237,7 +237,7 @@ response_header <-
   `;
 
 http_status <-
-  [1-5] [0-9] [0-9]
+  [0-9]+
   `
     {Int, _Rest} = string:to_integer(unicode:characters_to_list(concatenate_chars(Node))),
     Int
