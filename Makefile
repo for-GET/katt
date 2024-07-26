@@ -3,15 +3,13 @@
 CHMOD := $(shell command -v chmod 2>/dev/null)
 CURL := $(shell command -v curl 2>/dev/null)
 DIFF := $(shell command -v diff 2>/dev/null)
-LN := $(shell command -v ln 2>/dev/null)
 
 OTP_RELEASE = $(shell erl -eval 'io:format("~s", [erlang:system_info(otp_release)]), halt().'  -noshell)
 
-ifdef CI
-REBAR3 = ./rebar3.OTP$(OTP_RELEASE)
-else
-REBAR3 ?= $(shell command -v rebar3 2>/dev/null || echo "./rebar3.OTP$(OTP_RELEASE)")
-endif
+REBAR3 := ./rebar3.OTP$(OTP_RELEASE)
+GIT_DESCRIBE := $(shell git describe --tags --first-parent --always --dirty)
+SRCS := $(wildcard src/* include/* rebar.config)
+SRCS := $(filter-out src/katt_blueprint.erl,$(SRCS))
 
 ifdef CI
 export KATT_DEV_MODE=true
@@ -35,11 +33,6 @@ ifneq (,$(wildcard .rebar/BARE_MODE))
 export KATT_BARE_MODE=true
 endif
 
-SRCS := $(wildcard src/* include/* rebar.config)
-SRCS := $(filter-out src/katt_blueprint.erl,$(SRCS))
-
-GIT_DESCRIBE := $(shell git describe --tags --first-parent --always --dirty)
-
 .PHONY: all
 ifdef KATT_BARE_MODE
 all: ebin/katt.app
@@ -54,12 +47,11 @@ conf_clean:
 	:
 
 .PHONY: clean
-clean:
+clean: $(REBAR3)
 	$(REBAR3) clean
 
 .PHONY: distclean
-distclean:
-	$(MAKE) clean
+distclean: clean
 	$(RM) -r _build
 	$(RM) doc/*.html
 	$(RM) doc/edoc-info
@@ -75,7 +67,7 @@ clean-tests:
 # Docs
 
 .PHONY: docs
-docs:
+docs: $(REBAR3)
 	$(REBAR3) edoc
 
 # Compile
@@ -87,12 +79,12 @@ bin/katt: escript
 ebin/katt.app: compile
 
 .PHONY: escript
-escript: ebin/katt.app
+escript: $(REBAR3) ebin/katt.app
 	$(REBAR3) escriptize
 	./_build/default/bin/katt --help
 
 .PHONY: compile
-compile: $(SRCS)
+compile: $(REBAR3) $(SRCS)
 	$(REBAR3) compile
 
 # Tests
@@ -112,7 +104,7 @@ test: test_cli
 test: eunit ct xref dialyzer cover
 
 .PHONY: elvis
-elvis:
+elvis: $(REBAR3)
 	$(REBAR3) lint
 
 .PHONY: check
@@ -131,66 +123,50 @@ test_cli: _build/DEV_MODE
 endif
 
 .PHONY: eunit
-eunit:
-	@ $(MAKE) clean-tests
+eunit: $(REBAR3) clean-tests
 	$(REBAR3) eunit
 
 .PHONY: ct
-ct:
-	@ $(MAKE) clean-tests
+ct: $(REBAR3) clean-tests
 	TEST_DIR=_build/default/test/lib/katt/test $(REBAR3) ct
 
 .PHONY: xref
-xref:
+xref: $(REBAR3)
 	$(REBAR3) xref
 
 .PHONY: dialyzer
-dialyzer:
+dialyzer: $(REBAR3)
 	$(REBAR3) dialyzer
 
 .PHONY: cover
-cover:
-	@ $(MAKE) clean-tests
+cover: $(REBAR3) clean-tests
 	$(REBAR3) cover -v
 
 .PHONY: publish
-publish: docs
+publish: $(REBAR3) docs
 	$(REBAR3) hex publish -r hexpm --yes
 
-.PHONY: rebar3.OTP18
-rebar3.OTP18:
-	$(CURL) -fqsS -L -o $@ https://github.com/erlang/rebar3/releases/download/3.13.3/rebar3
-	$(CHMOD) +x $@
-
-.PHONY: rebar3.OTP19
-rebar3.OTP19:
-	$(CURL) -fqsS -L -o $@ https://github.com/erlang/rebar3/releases/download/3.15.2/rebar3
-	$(CHMOD) +x $@
-
-.PHONY: rebar3.OTP20
-rebar3.OTP20:
-	$(LN) -sf rebar3.OTP19 $@
-
-.PHONY: rebar3.OTP21
-rebar3.OTP21:
-	$(LN) -sf rebar3.OTP19 $@
-
-.PHONY: rebar3.OTP22
-rebar3.OTP22:
-	$(CURL) -fqsS -L -o $@ https://github.com/erlang/rebar3/releases/download/3.16.1/rebar3
-	$(CHMOD) +x $@
-
-.PHONY: rebar3.OTP23
-rebar3.OTP23:
-	$(LN) -sf rebar3.OTP22 $@
-
-.PHONY: rebar3.OTP24
-rebar3.OTP24:
-	$(LN) -sf rebar3.OTP22 $@
-
-.PHONY: rebar3.OTP25
-rebar3.OTP25:
-	$(LN) -sf rebar3.OTP22 $@
+# https://github.com/erlang/rebar3/issues/2903
+./rebar3.OTP18:
+	$(CURL) -qfsSL -o $@ https://github.com/erlang/rebar3/releases/download/3.15.3/rebar3 && $(CHMOD) +x $@
+./rebar3.OTP19:
+	$(CURL) -qfsSL -o $@ https://github.com/erlang/rebar3/releases/download/3.15.2/rebar3 && $(CHMOD) +x $@
+./rebar3.OTP20:
+	$(CURL) -qfsSL -o $@ https://github.com/erlang/rebar3/releases/download/3.15.2/rebar3 && $(CHMOD) +x $@
+./rebar3.OTP21:
+	$(CURL) -qfsSL -o $@ https://github.com/erlang/rebar3/releases/download/3.15.2/rebar3 && $(CHMOD) +x $@
+./rebar3.OTP22:
+	$(CURL) -qfsSL -o $@ https://github.com/erlang/rebar3/releases/download/3.18.0/rebar3 && $(CHMOD) +x $@
+./rebar3.OTP23:
+	$(CURL) -qfsSL -o $@ https://github.com/erlang/rebar3/releases/download/3.19.0/rebar3 && $(CHMOD) +x $@
+./rebar3.OTP24:
+	$(CURL) -qfsSL -o $@ https://github.com/erlang/rebar3/releases/download/3.20.0/rebar3 && $(CHMOD) +x $@
+./rebar3.OTP25:
+	$(CURL) -qfsSL -o $@ https://github.com/erlang/rebar3/releases/download/3.21.0/rebar3 && $(CHMOD) +x $@
+./rebar3.OTP26:
+	$(CURL) -qfsSL -o $@ https://github.com/erlang/rebar3/releases/download/3.23.0/rebar3 && $(CHMOD) +x $@
+./rebar3.OTP27:
+	$(CURL) -qfsSL -o $@ https://github.com/erlang/rebar3/releases/download/3.23.0/rebar3 && $(CHMOD) +x $@
 
 .PHONY: docker
 docker:
