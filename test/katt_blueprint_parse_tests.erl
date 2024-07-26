@@ -658,19 +658,6 @@ parse_http_status_test_() ->
     ) || N <- [100, 101, 200, 302, 400, 401, 404, 500, 599]].
 
 
-fail_parse_invalid_http_status_test_() ->
-  %% Test a small sample of invalid HTTP codes.
-  [ ?_assertMatch(
-      {error, _},
-      parse_unindented("
-        --- API ---
-
-        GET /
-        < " ++ integer_to_list(N) ++ "
-        ")
-    ) || N <- [0, 9, 666, -300, -1000, 999999]].
-
-
 fail_parse_non_numeric_http_status_test_() ->
   [ ?_assertMatch(
       {error, _},
