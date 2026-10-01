@@ -70,4 +70,18 @@ OptionalConfig = (
   end
  )(FileMarker([".rebar", "BARE_MODE"]) orelse EnvMarker("KATT_BARE_MODE")).
 
-lists:foldl(MergeConfig, CONFIG, DevOnlyConfig ++ OptionalConfig).
+%% -- Skip the deprecated-catch warning for meck on OTP >= 29 --
+%% * meck 0.9.2 still uses the old `catch' construct while compiling with
+%%   warnings_as_errors, a warning that is now enabled by default in OTP 29+
+%% * meck 1.x would fix it, but it has a minimum OTP of 25, which would
+%%   break the OTP 24 matrix entries
+
+MeckCompileConfig = (
+  fun(true) ->
+      [{overrides, [{add, meck, [{erl_opts, [nowarn_deprecated_catch]}]}]}];
+     (false) ->
+      []
+  end
+ )(try list_to_integer(erlang:system_info(otp_release)) >= 29 catch _:_ -> false end).
+
+lists:foldl(MergeConfig, CONFIG, DevOnlyConfig ++ OptionalConfig ++ MeckCompileConfig).

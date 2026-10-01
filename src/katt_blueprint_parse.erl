@@ -52,7 +52,12 @@ string(Str) ->
 -spec file(file:name()) -> {ok, katt_blueprint()}.
 %% @doc Parse a KATT Blueprint file.
 file(File) ->
-  FileIO = (catch file:open(File, [read])),
+  FileIO =
+    try file:open(File, [read])
+    catch
+      throw:Thrown -> Thrown;
+      _Class:OpenReason:OpenStack -> {'EXIT', {OpenReason, OpenStack}}
+    end,
   case FileIO of
     {ok, IO} ->
       file:close(IO);
