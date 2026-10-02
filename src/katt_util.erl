@@ -34,6 +34,7 @@
         , escape_regex/1
         , maybe_json_string/1
         , run_result_to_jsx/1
+        , value_to_jsx/1
         , is_valid/3
         , validate/3
         , is_valid/5
@@ -384,6 +385,10 @@ value_to_jsx(List) when is_list(List) ->
                , List
                )
   end;
+value_to_jsx(Value) when is_integer(Value) ->
+  Value;
+value_to_jsx(Value) when is_float(Value) ->
+  Value;
 value_to_jsx(Value) when not is_binary(Value) ->
   list_to_binary(erl_to_list(Value));
 value_to_jsx(Value) ->
