@@ -50,6 +50,26 @@ recall_body(false = _JustCheck, [_Hdrs, Bin], [], _Callbacks) ->
   Bin;
 recall_body(JustCheck, Any, [{_K, [H|_]} | Next], Callbacks) when is_tuple(H) ->
   recall_body(JustCheck, Any, Next, Callbacks);
+recall_body( false = _JustCheck
+           , [Hdrs, Bin0]
+           , [{K0, V0} | Next]
+           , Callbacks
+           ) when ?IS_STRUCTURED(V0) ->
+  K = ?RECALL_BEGIN_TAG ++ K0 ++ ?RECALL_END_TAG,
+  REK = katt_util:escape_regex(K),
+  V = jsx:encode(katt_util:value_to_jsx(V0)),
+  REV = katt_util:escape_regex(V),
+  Bin1 = re:replace( Bin0
+                   , "\"" ++ REK ++ "\""
+                   , REV
+                   , [{return, binary}, global]
+                   ),
+  Bin2 = re:replace( Bin1
+                   , REK
+                   , REV
+                   , [{return, binary}, global]
+                   ),
+  recall_body(false, [Hdrs, Bin2], Next, Callbacks);
 recall_body(false = _JustCheck, [Hdrs, Bin0], [{K0, V0} | Next], Callbacks) ->
   K = ?RECALL_BEGIN_TAG ++ K0 ++ ?RECALL_END_TAG,
   REK = katt_util:escape_regex(K),

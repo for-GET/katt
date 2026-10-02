@@ -37,6 +37,9 @@
         , katt_run_with_store_http/6
         , katt_run_with_struct_blueprint/0
         , katt_run_with_struct_http/6
+        , katt_run_with_struct_param/0
+        , katt_run_with_struct_param_blueprint/0
+        , struct_param_http/6
         , katt_run_with_wfu_blueprint/0
         , katt_run_with_wfu_http/6
         , katt_run_with_wfu_json_blueprint/0
@@ -69,6 +72,7 @@ katt_test_() ->
     , katt_run_with_api_mismatch()
     , katt_run_with_store()
     , katt_run_with_struct()
+    , katt_run_with_struct_param()
     , katt_run_with_wfu()
     , katt_run_with_wfu_json()
     ]
@@ -522,6 +526,91 @@ katt_run_with_struct_http( _
     \"not_object\": {}
 }
 "/utf8>>}}.
+
+%%% Test with struct params
+
+%% Recall a struct param from one transaction's JSON body, and inject it
+%% (quoted or not) as the value of a JSON placeholder in the next transaction.
+katt_run_with_struct_param() ->
+  Scenario = ?FUNCTION,
+  ?_assertMatch( { pass
+                 , Scenario
+                 , _
+                 , [ {"base_path", _}
+                   , {"base_url", _}
+                   , {"hostname", _}
+                   , {"param1", {struct, _}}
+                   , {"param2", {array, _}}
+                   | _
+                   ]
+                 , [ {_, _, _, _, pass}
+                   , {_, _, _, _, pass}
+                   ]
+                 }
+               , katt:run(Scenario)
+               ).
+
+katt_run_with_struct_param_blueprint() ->
+  katt_blueprint_parse:string(
+    <<"--- Test 9 ---
+
+GET /struct_param/step1
+< 200
+< Content-Type: application/json
+{
+    \"param1\": \"{{>param1}}\",
+    \"param2\": \"{{>param2}}\"
+}
+
+POST /struct_param/step2
+> Content-Type: application/json
+{
+    \"param1\": \"{{<param1}}\",
+    \"param2\": {{<param2}}
+}
+< 200
+< Content-Type: application/json
+{
+    \"ok\": true
+}
+"/utf8>>).
+
+struct_param_http( "http://127.0.0.1/struct_param/step1"
+                               , "GET"
+                               , _
+                               , _
+                               , _Timeout
+                               , _Options
+                               ) ->
+  {ok, {{200, []}, [{"content-type", "application/json"}], <<"{
+    \"param1\": {\"nested\": {\"b\": \"x\"}, \"a\": 1},
+    \"param2\": [1, 2]
+}"/utf8>>}};
+struct_param_http( "http://127.0.0.1/struct_param/step2"
+                               , "POST"
+                               , _
+                               , Body
+                               , _Timeout
+                               , _Options
+                               ) ->
+  ExpectedBody = <<"{\n"
+                   "    \"param1\": {\"a\":1,\"nested\":{\"b\":\"x\"}},\n"
+                   "    \"param2\": [1,2]\n"
+                   "}">>,
+  case Body of
+    ExpectedBody ->
+      {ok, {{200, []}
+          , [{"content-type", "application/json"}]
+          , <<"{\n    \"ok\": true\n}">>}
+      };
+    _ ->
+      {ok, {{422, []}
+          , [{"content-type", "text/plain"}]
+          , [ {received, Body}
+            , {expected, ExpectedBody}
+            ]}
+      }
+  end.
 
 %%% Test with application/x-www-form-urlencoded
 
