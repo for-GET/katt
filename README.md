@@ -57,10 +57,16 @@ Match anything but undefined (i.e. no real validation, only check existence).
 Match nothing (i.e. no real validation, only check lack of existence)
 
 `"{{>key}}"`
-Store value of the whole string (key must be unique within testcase)
+Store value of the whole string (key must be unique within testcase).
+In a JSON body, storing a whole JSON object or array value saves the
+structured value as the parameter value (e.g. `"param": "{{>big_param}}"`).
 
 `"{{<key}}"`
 Recall stored value.
+In a JSON body, recalling a parameter that holds a structured value injects
+it as a JSON value, in place of the (quoted or unquoted) placeholder.
+The placeholder must stand for a whole value, not part of a string: mixing
+recalled structured values with text content is not supported.
 
 The `"{{_}}"` tag can also be used as a JSON object's property in order to
 validate any other additional properties.
