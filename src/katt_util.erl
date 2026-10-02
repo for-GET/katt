@@ -39,6 +39,7 @@
         , is_valid/5
         , validate/5
         , enumerate/1
+        , is_structured/1
         , external_http_request/6
         , erl_to_list/1
         , os_cmd/2
@@ -66,6 +67,16 @@ to_list(X) when is_float(X) -> io_lib:format("~p", [X]);
 to_list(X) when is_binary(X) -> binary_to_list(X);
 to_list(X) when is_list(X) -> X;
 to_list({struct, _ } = X) -> to_list(jsx:encode(value_to_jsx(X))).
+
+%% Structured terms ({struct, _}, {array, _}) cannot be recalled as text,
+%% they are injected as JSON values when recalling structured bodies,
+%% see katt_callbacks_json:recall_body/4
+is_structured({struct, _}) ->
+  true;
+is_structured({array, _}) ->
+  true;
+is_structured(_) ->
+  false.
 
 %% Transform (possibly utf8 encoded) binary to list, ignore everything else.
 from_utf8(X) when is_binary(X) ->

@@ -35,6 +35,16 @@
 -define(TYPE,                       "{{type}}").
 -define(UNEXPECTED,                 "{{unexpected}}").
 
+%% Guard-sane check for structured values ({struct, _}, {array, _}).
+%% Structured values cannot be recalled as text, they are injected as JSON
+%% values when recalling JSON bodies, see katt_callbacks_json:recall_body/4
+-define(IS_STRUCTURED(V),           is_tuple(V)
+                                    andalso element(1, V) =:= struct
+                                    orelse
+                                    is_tuple(V)
+                                    andalso element(1, V) =:= array
+                                   ).
+
 -define(DEFAULT_SCENARIO_TIMEOUT,   120000).
 -define(DEFAULT_REQUEST_TIMEOUT,    20000).
 
