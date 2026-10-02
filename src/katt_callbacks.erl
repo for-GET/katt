@@ -80,6 +80,8 @@ recall(_Scope, Input, [], _Callbacks) ->
   Input;
 recall(text, Bin, [{_K, [H|_]} | Next], Callbacks) when is_tuple(H) ->
   recall(text, Bin, Next, Callbacks);
+recall(text, Bin, [{_K, V} | Next], Callbacks) when ?IS_STRUCTURED(V) ->
+  recall(text, Bin, Next, Callbacks);
 recall(text, Bin0, [{K0, V} | Next], Callbacks) ->
   K = ?RECALL_BEGIN_TAG ++ K0 ++ ?RECALL_END_TAG,
   REK = katt_util:escape_regex(K),

@@ -59,6 +59,13 @@ recall_body( false = _JustCheck
   hackney_url:qs(jsx:decode(Bin, [{return_maps, false}]));
 recall_body(false = _JustCheck, [_Hdrs, Bin], [], _Callbacks) ->
   Bin;
+recall_body( false = _JustCheck
+           , [Hdrs, Bin]
+           , [{_K, V} | Next]
+           , Callbacks
+           ) when ?IS_STRUCTURED(V) ->
+  %% Structured values cannot be recalled into uncompounded content
+  recall_body(false, [Hdrs, Bin], Next, Callbacks);
 recall_body(false = _JustCheck, [Hdrs, Bin0], [{K0, V0} | Next], Callbacks) ->
   K = ?RECALL_BEGIN_TAG ++ K0 ++ ?RECALL_END_TAG,
   REK = katt_util:escape_regex(K),
