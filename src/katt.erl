@@ -294,6 +294,38 @@ run_transactions( From
   RequestFun = proplists:get_value(request, Callbacks),
   ValidateFun = proplists:get_value(validate, Callbacks),
   ActualResponse0 = RequestFun(Request, Params, Callbacks),
+  case ActualResponse0 of
+    %% The request callback failed early (e.g. {error, econnrefused}),
+    %% and it did not return a katt_response.
+    %% Fail gracefully with the error code as the meaningful failure,
+    %% instead of crashing.
+    Error = {error, Reason} ->
+      Result = { Description
+               , Params
+               , Request
+               , Error
+               , {fail, {error, Reason}}
+               },
+      From ! {progress, transaction_result, Result},
+      {Params, {Count + 1, [Result|Results]}};
+    _ ->
+      run_transaction_response(From, Description, Res, Request, Params,
+                               Callbacks, ActualResponse0, ValidateFun,
+                               Count, Results, T)
+  end.
+
+run_transaction_response( From
+                        , Description
+                        , Res
+                        , Request
+                        , Params
+                        , Callbacks
+                        , ActualResponse0
+                        , ValidateFun
+                        , Count
+                        , Results
+                        , T
+                        ) ->
   ActualResponseHdrs = ActualResponse0#katt_response.headers,
   {_ActualResponseContentType, _ActualResponseHdrs, ActualResponseHdrsCT} =
     get_headers_content_type(Res#katt_response.headers, ActualResponseHdrs),
