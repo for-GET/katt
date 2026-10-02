@@ -258,6 +258,10 @@ proplist_to_jsx(Proplist) ->
 
 maybe_list_to_binary(Str) when is_list(Str) ->
   list_to_binary(Str);
+maybe_list_to_binary({struct, _} = Structured) ->
+  value_to_jsx(Structured);
+maybe_list_to_binary({array, _} = Structured) ->
+  value_to_jsx(Structured);
 maybe_list_to_binary(NonStr) ->
   NonStr.
 
