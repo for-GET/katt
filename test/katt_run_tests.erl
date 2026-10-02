@@ -44,6 +44,9 @@
         , katt_run_with_wfu_http/6
         , katt_run_with_wfu_json_blueprint/0
         , katt_run_with_wfu_json_http/6
+        , katt_run_with_request_error/0
+        , katt_run_with_request_error_blueprint/0
+        , katt_run_with_request_error_http/6
         ]).
 
 %%% Suite
@@ -75,6 +78,7 @@ katt_test_() ->
     , katt_run_with_struct_param()
     , katt_run_with_wfu()
     , katt_run_with_wfu_json()
+    , katt_run_with_request_error()
     ]
   }.
 
@@ -701,6 +705,40 @@ katt_run_with_wfu_json_http( _
        , [{"content-type", "application/x-www-form-urlencoded"}]
        , <<"test_url=http%3A%2F%2Fexample.com&test_space=a%20b%20c"/utf8>>
        }}.
+
+%%% Test with request error (e.g. server unreachable)
+
+katt_run_with_request_error() ->
+  Scenario = ?FUNCTION,
+  ?_assertMatch( { fail
+                 , Scenario
+                 , _
+                 , _
+                 , [ {_, _, _, {error, econnrefused},
+                      {fail, {error, econnrefused}}}
+                   ]
+                 }
+               , katt:run(Scenario)
+               ).
+
+katt_run_with_request_error_blueprint() ->
+  katt_blueprint_parse:string(
+    <<"--- Test 9 ---
+
+GET /katt_run_with_request_error
+< 200
+< Content-Type: application/json
+{ \"ok\": true }
+"/utf8>>).
+
+katt_run_with_request_error_http( _
+                                , "GET"
+                                , _
+                                , _
+                                , _Timeout
+                                , _Options
+                                ) ->
+  {error, econnrefused}.
 
 %%% Helpers
 
