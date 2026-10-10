@@ -95,7 +95,7 @@ validate_type_runtime_value( ParentKey
     end,
   case Error of
     undefined ->
-      katt_util:validate(ParentKey, Expected, Actual, ItemsMode, Callbacks);
+      katt_validate:validate(ParentKey, Expected, Actual, ItemsMode, Callbacks);
     _ ->
       {not_equal, {ParentKey, Error, Actual}}
   end;
@@ -271,7 +271,7 @@ validate_set( ParentKey
             ) ->
   Split =
     lists:splitwith( fun({_Key, Value}) ->
-                         not katt_util:is_valid( _ParentKey = ""
+                         not katt_validate:is_valid( _ParentKey = ""
                                                , EValue
                                                , Value
                                                , ItemsMode
@@ -287,7 +287,7 @@ validate_set( ParentKey
       validate_set(ParentKey, ERest, Actual, ItemsMode, Callbacks, Errors1);
     {ARest1, [{_AKey, AValue}|ARest2]} ->
       ARest = ARest1 ++ ARest2,
-      Errors1 = [katt_util:validate( _ParentKey = ""
+      Errors1 = [katt_validate:validate( _ParentKey = ""
                                    , EValue
                                    , AValue
                                    , ItemsMode

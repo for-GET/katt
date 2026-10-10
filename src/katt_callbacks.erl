@@ -191,12 +191,12 @@ validate( Expected = #katt_response{}
         , Actual = #katt_response{}
         , _Params
         , Callbacks) ->
-  {AddParams0, Failures0} = katt_util:get_params_and_failures(
+  {AddParams0, Failures0} = katt_validate:get_params_and_failures(
                               validate_status(Expected, Actual, Callbacks)),
-  {AddParams1, Failures1} = katt_util:get_params_and_failures(
+  {AddParams1, Failures1} = katt_validate:get_params_and_failures(
                               validate_headers(Expected, Actual, Callbacks)),
   AddParams2 = katt_util:merge_proplists(AddParams0, AddParams1),
-  {AddParams3, Failures2} = katt_util:get_params_and_failures(
+  {AddParams3, Failures2} = katt_validate:get_params_and_failures(
                               validate_body(Expected, Actual, Callbacks)),
   AddParams = katt_util:merge_proplists(AddParams2, AddParams3),
   Failures = Failures0 ++ Failures1 ++ Failures2,
@@ -274,7 +274,7 @@ validate_status( #katt_response{status=E}
                , #katt_response{status=A}
                , _Callbacks
                ) ->
-  katt_util:validate("/status", E, A).
+  katt_validate:validate("/status", E, A).
 
 %% Actual headers are allowed to be a superset of expected headers, since
 %% we don't want tests full of boilerplate like tests for headers such as
@@ -313,7 +313,7 @@ validate_headers( #katt_response{headers=E0}
                            ),
   E = {struct, ConcatenatedE},
   A = {struct, ConcatenatedA},
-  katt_util:validate("/headers", E, A, ?MATCH_ANY, Callbacks).
+  katt_validate:validate("/headers", E, A, ?MATCH_ANY, Callbacks).
 
 concatenate_header(Header, Headers) ->
   Values = proplists:get_all_values(Header, Headers),
@@ -338,7 +338,7 @@ validate_body( #katt_response{parsed_body=E} = ER
                                ),
   case MatchingExt of
     [] ->
-      katt_util:validate("/body", E, A, ?MATCH_ANY, Callbacks);
+      katt_validate:validate("/body", E, A, ?MATCH_ANY, Callbacks);
     [Fun|_] ->
       Fun( _JustCheck = false
          , ER

@@ -91,7 +91,7 @@ run(Options, Params0, [ScenarioFilename|ScenarioFilenames]) ->
     undefined ->
       io:fwrite("~p\n\n", [KattResult]);
     true ->
-      JsonResult = katt_util:run_result_to_jsx(KattResult),
+      JsonResult = katt_result_jsx:run_result_to_jsx(KattResult),
       Result = jsx:encode(JsonResult),
       io:fwrite("~s\n\n", [Result])
   end,
