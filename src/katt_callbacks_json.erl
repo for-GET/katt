@@ -57,7 +57,7 @@ recall_body( false = _JustCheck
            ) when ?IS_STRUCTURED(V0) ->
   K = ?RECALL_BEGIN_TAG ++ K0 ++ ?RECALL_END_TAG,
   REK = katt_util:escape_regex(K),
-  V = jsx:encode(katt_util:value_to_jsx(V0)),
+  V = jsx:encode(katt_result_jsx:value_to_jsx(V0)),
   REV = katt_util:escape_regex(V),
   Bin1 = re:replace( Bin0
                    , "\"" ++ REK ++ "\""
@@ -73,7 +73,7 @@ recall_body( false = _JustCheck
 recall_body(false = _JustCheck, [Hdrs, Bin0], [{K0, V0} | Next], Callbacks) ->
   K = ?RECALL_BEGIN_TAG ++ K0 ++ ?RECALL_END_TAG,
   REK = katt_util:escape_regex(K),
-  V = katt_util:maybe_json_string(V0),
+  V = katt_result_jsx:maybe_json_string(V0),
   REV = katt_util:escape_regex(V),
   Bin1 = re:replace( Bin0
                    , "\"" ++ REK ++ "\""
@@ -116,7 +116,7 @@ validate_body( false = _Justcheck
              , #katt_response{parsed_body=A}
              , Callbacks
              ) ->
-  katt_util:validate("/body", E, A, ?MATCH_ANY, Callbacks).
+  katt_validate:validate("/body", E, A, ?MATCH_ANY, Callbacks).
 
 
 validate_type( true = _JustCheck

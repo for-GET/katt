@@ -23,16 +23,6 @@ ifneq (,$(wildcard _build/BARE_MODE))
 export KATT_BARE_MODE=true
 endif
 
-# back compat. REMOVE LATEST 2022-01-01
-ifneq (,$(wildcard .rebar/DEV_MODE))
-export KATT_DEV_MODE=true
-endif
-
-# back compat. REMOVE LATEST 2022-01-01
-ifneq (,$(wildcard .rebar/BARE_MODE))
-export KATT_BARE_MODE=true
-endif
-
 .PHONY: all
 ifdef KATT_BARE_MODE
 all: ebin/katt.app
@@ -49,6 +39,7 @@ conf_clean:
 .PHONY: clean
 clean: $(REBAR3)
 	$(REBAR3) clean
+	$(RM) *.coverdata erl_crash.dump rebar3.crashdump state.json
 
 .PHONY: distclean
 distclean: clean
