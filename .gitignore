@@ -16,7 +16,3 @@
 /test/*.beam
 /test/cli
 /test/example-teapot.apib
-
-# back compat. REMOVE LATEST 2022-01-01
-/.rebar/BARE_MODE
-/.rebar/DEV_MODE
