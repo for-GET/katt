@@ -49,6 +49,7 @@ conf_clean:
 .PHONY: clean
 clean: $(REBAR3)
 	$(REBAR3) clean
+	$(RM) *.coverdata erl_crash.dump rebar3.crashdump state.json
 
 .PHONY: distclean
 distclean: clean
